@@ -44,13 +44,24 @@ def action(fn: Action) -> Action:
     return fn
 
 
-def _vehicle(sim: Simulation, vehicle_id: str | None, kind: str = "truck"):
+# Stopping in these geozones is normal (rule-breakdown allows parking/docks/restricted; the gate is a queue).
+STOP_ZONE_TYPES = {"parking", "docks", "restricted", "gate"}
+
+
+def _in_stop_zone(sim: Simulation, x: float, y: float) -> bool:
+    return any(a.kind == "geozone" and a.type in STOP_ZONE_TYPES
+               and a.bounds[0] <= x <= a.bounds[2] and a.bounds[1] <= y <= a.bounds[3]
+               for a in sim.world.areas.values())
+
+
+def _vehicle(sim: Simulation, vehicle_id: str | None, kind: str = "truck", on_roadway: bool = False):
     if vehicle_id:
         try:
             return sim.vehicle(vehicle_id)
         except StopIteration:
             raise ScenarioError(f"unknown vehicle {vehicle_id}") from None
-    moving = [v for v in sim.vehicles if v.kind == kind and v.speed_kmh > 0 and 0 < v.x < 800]
+    moving = [v for v in sim.vehicles if v.kind == kind and v.speed_kmh > 0 and 0 < v.x < 800
+              and not (on_roadway and _in_stop_zone(sim, v.x, v.y))]
     if not moving:
         raise ScenarioError(f"no moving {kind} on site right now")
     return sim.rnd.choice(moving)
@@ -64,7 +75,11 @@ def _sensor(sim: Simulation, sensor_id: str, sensor_type: str) -> None:
 
 @action
 def vehicle_breakdown(sim: Simulation, duration_s: float, vehicle: str | None = None) -> list[Outgoing]:
-    v = _vehicle(sim, vehicle)
+    v = _vehicle(sim, vehicle, on_roadway=True)
+    if not (0 < v.x < 800 and 0 < v.y < 500):  # a breakdown beyond the gate is not our alarm
+        raise ScenarioError(f"{v.id} is not on site right now; omit 'vehicle' to pick a moving truck")
+    if _in_stop_zone(sim, v.x, v.y):
+        raise ScenarioError(f"{v.id} is at a dock/parking where stopping is normal; omit 'vehicle'")
     sim.add_effect("breakdown", v.id, duration_s)
     return []
 
@@ -113,6 +128,18 @@ def motion_alarm(sim: Simulation, sensor: str, duration_s: float) -> list[Outgoi
 
 
 @action
+def evacuate(sim: Simulation, building: str, duration_s: float) -> list[Outgoing]:
+    """Everyone leaves through the turnstile and nobody enters for duration_s."""
+    reader = sim.world.entrance(building)
+    if reader is None or building not in sim.inside:
+        raise ScenarioError(f"{building} has no access-control entrance")
+    sim.add_effect("closed", building, duration_s)
+    out = [skud(reader.id, card, "exit", True) for card in sorted(sim.inside[building])]
+    sim.inside[building].clear()
+    return out
+
+
+@action
 def card_swipe(sim: Simulation, reader: str, card: str, granted: bool, event: str = "entry") -> list[Outgoing]:
     """card: an id, or 'unknown' / 'expired' to pick one from the demo gaps in the whitelist."""
     _sensor(sim, reader, "access_control")
@@ -144,7 +171,9 @@ class Runner:
     def validate_first_step(self, scenario: Scenario) -> None:
         """Fail fast on the request for obvious mistakes instead of inside a background task."""
         first = scenario.steps[0]
-        if "action" in first and first.get("vehicle"):
+        if first.get("action") == "vehicle_breakdown":
+            vehicle_breakdown(self.sim, 0, first.get("vehicle"))  # zero duration: a dry run of the checks
+        elif "action" in first and first.get("vehicle"):
             _vehicle(self.sim, first["vehicle"])
 
     def start(self, scenario: Scenario) -> Run:

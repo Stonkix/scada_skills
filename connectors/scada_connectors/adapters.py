@@ -50,8 +50,10 @@ def adapter(cls: type[Adapter]) -> type[Adapter]:
     return cls
 
 
-def derived_event_id(adapter_name: str, sensor_id: str, ts: datetime, vendor_msg_id: str | None = None) -> uuid.UUID:
-    return uuid.uuid5(EVENT_NS, f"{adapter_name}|{sensor_id}|{vendor_msg_id or ts.isoformat()}")
+def derived_event_id(adapter_name: str, sensor_id: str, ts: datetime, discriminator: str = "") -> uuid.UUID:
+    """Same delivery -> same id. The timestamp is always part of the key: a vendor field such as a
+    card number is not unique on its own (the same card passes the same reader many times a day)."""
+    return uuid.uuid5(EVENT_NS, f"{adapter_name}|{sensor_id}|{ts.isoformat()}|{discriminator}")
 
 
 def _from_unix(seconds: float) -> datetime:
@@ -111,7 +113,7 @@ class AnprAdapter(Adapter):
     def convert(self, raw: RawAnpr, georef: Georef) -> dict[str, Any]:
         plate = raw.plate.upper().replace(" ", "").translate(_LATIN_TO_CYRILLIC)
         return {"sensor_id": raw.camera_id, "ts": raw.captured_at,
-                "event_id": derived_event_id(self.name, raw.camera_id, raw.captured_at, raw.event_uid),
+                "event_id": derived_event_id(self.name, raw.camera_id, raw.captured_at, raw.event_uid or ""),
                 "payload": {"plate": plate, "direction": "in" if raw.direction == "approach" else "out",
                             "confidence": round(raw.confidence_pct / 100, 4)}}
 
@@ -142,7 +144,7 @@ class SkudAdapter(Adapter):
     def convert(self, raw: RawSkud, georef: Georef) -> dict[str, Any]:
         card = f"P-{raw.card:06d}" if isinstance(raw.card, int) else raw.card.strip().upper()
         return {"sensor_id": raw.reader_id, "ts": raw.time,
-                "event_id": derived_event_id(self.name, raw.reader_id, raw.time, card),
+                "event_id": derived_event_id(self.name, raw.reader_id, raw.time, f"{card}|{raw.event}"),
                 "payload": {"card_id": card, "direction": "in" if raw.event == "entry" else "out",
                             "granted": raw.result == "granted"}}
 

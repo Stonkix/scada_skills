@@ -48,6 +48,13 @@ def test_retried_delivery_gets_the_same_event_id() -> None:
     assert a["event_id"] == b["event_id"]
 
 
+def test_same_card_passing_again_is_a_new_event() -> None:
+    first = convert("skud", {**ADAPTERS["skud"].example, "time": "2026-10-08T08:00:00+03:00"})
+    later = convert("skud", {**ADAPTERS["skud"].example, "time": "2026-10-08T17:30:00+03:00"})
+    leaving = convert("skud", {**ADAPTERS["skud"].example, "time": "2026-10-08T08:00:00+03:00", "event": "exit"})
+    assert len({first["event_id"], later["event_id"], leaving["event_id"]}) == 3
+
+
 def test_georef_roundtrip_with_rotation() -> None:
     g = Georef(55.7, 37.4, rotation_deg=17)
     assert g.to_local(*g.to_wgs84(123.4, -56.7)) == pytest.approx((123.4, -56.7), abs=1e-6)

@@ -1,1 +1,3 @@
-# worker — этап 3: stream:events → ClickHouse батчами, live-состояние в Redis, движок алертов
+# worker
+
+Обработка потока: ClickHouse, live-состояние, тревоги. См. раздел «Worker» в корневом README.

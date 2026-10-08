@@ -101,6 +101,22 @@ services:
       timeout: 3s
       retries: 20
 
+  # Stream processing: stream:events -> ClickHouse, live state in Redis, alert rules
+  worker:
+    build:
+      context: ..
+      dockerfile: worker/Dockerfile
+    environment:
+      <<: *storage-env
+    depends_on:
+      db-init: {condition: service_completed_successfully}
+    healthcheck:
+      test: ["CMD", "python", "-m", "scada_worker.health"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
   # Demo traffic and scenarios; talks only to connectors, like real devices
   simulator:
     build:

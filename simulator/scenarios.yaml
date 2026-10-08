@@ -3,15 +3,17 @@
 # A scenario is a list of steps run in order. A step is either {wait_s: N} or an action
 # with parameters; actions start a time-limited effect and return immediately.
 # Actions: vehicle_breakdown, vehicle_speeding, vehicle_arrival, climate_drift,
-#          sensor_offline, motion_alarm, card_swipe.
+#          sensor_offline, motion_alarm, card_swipe, evacuate.
 # What becomes an alert is decided by the worker's rules (alert_rules), not here.
 
 scenarios:
   breakdown:
     title: Поломка грузовика на территории
-    description: Грузовик глохнет посреди проезда. Правило rule-breakdown срабатывает через stopped_min.
+    description: >
+      Едущий по территории грузовик глохнет посреди проезда. Правило rule-breakdown
+      срабатывает через stopped_min (3 мин).
     steps:
-      - {action: vehicle_breakdown, vehicle: v-truck-2, duration_s: 600}
+      - {action: vehicle_breakdown, duration_s: 600}
 
   speeding:
     title: Превышение скорости
@@ -42,11 +44,13 @@ scenarios:
       - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 7, ramp_s: 120, duration_s: 720}
 
   after_hours:
-    title: Движение на складе
+    title: Движение в пустом складе
     description: >
-      Датчик движения на складе №3 срабатывает при пустом здании. Алерт будет, если сейчас
-      нерабочее время по расписанию work-hours (иначе это просто движение).
+      Все выходят со склада №3 через СКУД, а датчик движения продолжает срабатывать:
+      внутри кто-то, кто не проходил турникет. Работает в любое время суток.
     steps:
+      - {action: evacuate, building: b-wh3, duration_s: 600}
+      - {wait_s: 10}
       - {action: motion_alarm, sensor: mot-wh3, duration_s: 300}
 
   sensor_offline:
@@ -63,7 +67,7 @@ scenarios:
       - {wait_s: 30}
       - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 7, ramp_s: 60, duration_s: 600}
       - {wait_s: 60}
-      - {action: vehicle_breakdown, vehicle: v-truck-2, duration_s: 600}
+      - {action: vehicle_breakdown, duration_s: 600}
       - {wait_s: 30}
       - {action: vehicle_speeding, vehicle: v-car-1, kmh: 38, duration_s: 60}
       - {wait_s: 30}

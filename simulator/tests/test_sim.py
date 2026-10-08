@@ -102,11 +102,33 @@ def test_truck_entry_is_seen_by_gate_camera(sim: Simulation) -> None:
 
 def test_breakdown_stops_the_vehicle_with_engine_off(sim: Simulation) -> None:
     run(sim, 200)
-    truck = next(v for v in sim.vehicles if v.kind == "truck" and v.speed_kmh > 0 and v.x > 0)
-    sc.vehicle_breakdown(sim, duration_s=60, vehicle=truck.id)
+    sc.vehicle_breakdown(sim, duration_s=60)
+    truck = sim.vehicle(sim.effects[-1].target)
     x, y = truck.x, truck.y
     run(sim, 20)
     assert (truck.x, truck.y, truck.speed_kmh, truck.engine_on) == (x, y, 0, False)
+
+
+def test_breakdown_picks_a_truck_on_the_roadway(sim: Simulation) -> None:
+    run(sim, 200)
+    picked = 0
+    for _ in range(20):
+        run(sim, 7)
+        try:
+            sc.vehicle_breakdown(sim, duration_s=60)
+        except sc.ScenarioError as e:  # sometimes no truck is driving on a roadway: a valid answer
+            assert "no moving truck" in str(e)
+            continue
+        broken = sim.vehicle(sim.effects[-1].target)
+        assert not sc._in_stop_zone(sim, broken.x, broken.y)
+        sim.effects.clear()
+        picked += 1
+    assert picked >= 10
+
+
+def test_breakdown_refuses_a_vehicle_beyond_the_gate(sim: Simulation) -> None:
+    with pytest.raises(sc.ScenarioError, match="not on site"):
+        sc.vehicle_breakdown(sim, duration_s=60, vehicle="v-truck-8")  # waits beyond the gate
 
 
 def test_climate_drift_raises_temperature(sim: Simulation) -> None:
@@ -137,6 +159,15 @@ def test_people_counts_follow_turnstile_events(sim: Simulation) -> None:
             net[b] = net.get(b, 0) + (1 if o.payload["event"] == "entry" else -1)
     assert net == {b: len(p) for b, p in sim.inside.items() if len(p) or b in net}
     assert sum(net.values()) > 20
+
+
+def test_evacuate_empties_building_and_blocks_entries(sim: Simulation) -> None:
+    run(sim, 300)
+    inside = len(sim.inside["b-wh3"])
+    out = sc.evacuate(sim, building="b-wh3", duration_s=600)
+    assert len(out) == inside and all(o.payload["event"] == "exit" for o in out)
+    run(sim, 300)
+    assert sim.inside["b-wh3"] == set()
 
 
 def test_scenarios_file_is_valid(sim: Simulation) -> None:

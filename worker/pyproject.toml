@@ -1,0 +1,23 @@
+[project]
+name = "scada-worker"
+version = "0.1.0"
+description = "Stream processor: stream:events -> ClickHouse, live state in Redis, alert rules"
+requires-python = ">=3.12"
+dependencies = [
+    "scada-common",
+    "scada-db",
+    "redis>=5.0",
+    "clickhouse-connect>=0.8",
+    "shapely>=2.0",
+    "tzdata",
+]
+
+[project.scripts]
+scada-worker = "scada_worker.main:main"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["scada_worker*"]

@@ -21,7 +21,7 @@ from scada_db.postgres import engine
 
 TABLES = ["alerts", "alert_rules", "thresholds", "sensors", "vehicles", "sensor_types", "whitelist", "schedules",
           "layouts", "users", "roles", "api_keys", "checkpoints", "roads", "zones", "buildings"]
-CH_TABLES = ["telemetry", "telemetry_1m", "telemetry_1h", "alerts_log"]
+CH_TABLES = ["telemetry", "telemetry_1m", "telemetry_1h", "alerts_log", "zone_events"]
 
 
 def _geom(geometry: dict):

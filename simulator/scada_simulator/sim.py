@@ -6,11 +6,13 @@ time-limited `Effect`s that agents consult, so normal life resumes on expiry.
 """
 
 import math
+import os
 import random
 import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 from scada_common.geo import heading_deg
 
@@ -24,6 +26,7 @@ PARKING: Node = (100.0, 110.0)  # end of the parking spur, inside z-parking
 GNSS_EVERY_S = 2
 CLIMATE_EVERY_S = 15
 MOTION_EVERY_S = 15
+SITE_TZ = ZoneInfo(os.environ.get("SITE_TZ", "Europe/Moscow"))  # shifts follow the plant clock, not the container
 
 
 def now_utc() -> datetime:
@@ -206,8 +209,10 @@ class Simulation:
 
     def _step_people(self, out: list[Outgoing]) -> None:
         """At most one turnstile pass per tick; occupancy drifts towards a time-of-day target."""
-        hour = datetime.now().hour
+        hour = datetime.now(SITE_TZ).hour
         b = self.rnd.choice(list(self.inside))
+        if self.effect("closed", b):
+            return
         reader = self.world.entrance(b)
         people = self.inside[b]
         target = self._target_occupancy(b, hour)

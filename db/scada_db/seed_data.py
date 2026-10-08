@@ -3,7 +3,7 @@
 The demo scenarios rely on a few deliberate gaps:
   * cards P-000280..P-000289 are expired and P-000290..P-000299 are unknown -> "пропуск вне базы";
   * plate of v-truck-8 is not whitelisted -> "номер вне базы" at КПП-1;
-  * motion in warehouses outside `work-hours` -> "нерабочее время".
+  * motion in a warehouse nobody badged into -> "движение в пустом здании" (simulator: evacuate + motion).
 """
 
 import os
@@ -40,20 +40,24 @@ SCHEDULES = [
 
 # (id, name, kind, severity, params, schedule_id, escalate_after_s)
 ALERT_RULES = [
+    # escalate_after_s: unacknowledged alerts gain a level every N seconds, up to MAX_ESCALATION
     ("rule-threshold", "Выход метрики за пороги", AlertKind.THRESHOLD, Severity.WARNING,
-     {"hysteresis_pct": 5, "min_duration_s": 30, "critical_severity": "critical"}, None, 300),
+     {"hysteresis_pct": 5, "min_duration_s": 30, "critical_severity": "critical",
+      "exclude_metrics": ["speed_kmh", "heading_deg"]}, None, 300),  # speed has its own rule
     ("rule-speed", "Превышение скорости на территории", AlertKind.SPEED, Severity.WARNING,
      {"zone_id": "z-site-speed", "limit_kmh": 20, "critical_kmh": 30, "min_duration_s": 5}, None, None),
     ("rule-whitelist-plate", "Номер вне базы пропусков", AlertKind.WHITELIST, Severity.WARNING,
      {"sensor_type": "anpr_camera", "list": "plate", "zones": ["z-gate"]}, None, 120),
     ("rule-whitelist-card", "Пропуск вне базы или просрочен", AlertKind.WHITELIST, Severity.WARNING,
      {"sensor_type": "access_control", "list": "card"}, None, 300),
-    ("rule-after-hours", "Движение в нерабочее время", AlertKind.SCHEDULE, Severity.CRITICAL,
-     {"sensor_type": "motion", "building_types": ["warehouse", "production"]}, "work-hours", 60),
+    ("rule-after-hours", "Движение без прохода по СКУД", AlertKind.SCHEDULE, Severity.CRITICAL,
+     {"sensor_type": "motion", "building_types": ["warehouse", "production"], "require_empty": True,
+      "min_duration_s": 20, "quiet_s": 300}, "work-hours", 60),
     ("rule-breakdown", "Остановка техники вне стоянки", AlertKind.BREAKDOWN, Severity.CRITICAL,
      {"stopped_min": 3, "allowed_zone_types": ["parking", "docks", "restricted"]}, None, 300),
     ("rule-offline", "Датчик не на связи", AlertKind.OFFLINE, Severity.WARNING,
-     {"timeout_s": 300, "mobile_timeout_s": 120}, None, 900),
+     # cameras and turnstiles report only when someone passes: silence is normal for them
+     {"timeout_s": 300, "mobile_timeout_s": 120, "sensor_types": ["climate", "motion", "gnss"]}, None, 900),
     ("rule-geozone-garage", "Грузовик во дворе ремзоны", AlertKind.GEOZONE, Severity.INFO,
      {"zone_id": "z-garage-yard", "event": "enter", "vehicle_kinds": ["truck"]}, None, None),
 ]
@@ -74,7 +78,7 @@ def cards(now: datetime) -> list[dict]:
             "kind": "card", "value": f"P-{n:06d}", "holder_name": fake.name(), "holder_org": org,
             # contractors only get into the office; staff everywhere
             "allowed_building_ids": ["b-admin"] if org == "ООО «КлинСервис»" else None,
-            "schedule_id": "shift-night" if n % 7 == 0 else None,
+            "schedule_id": None,  # set a shift schedule to restrict a pass in time (checked by rule-whitelist-card)
             "valid_from": now - timedelta(days=365),
             "valid_to": now - timedelta(days=rnd.randint(1, 60)) if n >= CARD_VALID else None,
         })
