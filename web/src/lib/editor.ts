@@ -38,17 +38,27 @@ export const ROOM_TYPES: Record<string, string> = {
   repair: 'Ремонт',
 }
 
+export function onEdge([x, y]: Pt, ring: Pt[]): boolean {
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i]
+    const [xj, yj] = ring[j]
+    if (
+      Math.abs((xj - xi) * (y - yi) - (yj - yi) * (x - xi)) < 1e-6 &&
+      Math.min(xi, xj) - 1e-6 <= x && x <= Math.max(xi, xj) + 1e-6 &&
+      Math.min(yi, yj) - 1e-6 <= y && y <= Math.max(yi, yj) + 1e-6
+    ) return true
+  }
+  return false
+}
+
 /** Ray casting over the outer ring; points on the edge count as inside (sensors sit on walls). */
-export function inPolygon([x, y]: Pt, ring: Pt[]): boolean {
+export function inPolygon(p: Pt, ring: Pt[]): boolean {
+  if (onEdge(p, ring)) return true
+  const [x, y] = p
   let inside = false
   for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
     const [xi, yi] = ring[i]
     const [xj, yj] = ring[j]
-    const onEdge =
-      Math.abs((xj - xi) * (y - yi) - (yj - yi) * (x - xi)) < 1e-6 &&
-      Math.min(xi, xj) - 1e-6 <= x && x <= Math.max(xi, xj) + 1e-6 &&
-      Math.min(yi, yj) - 1e-6 <= y && y <= Math.max(yi, yj) + 1e-6
-    if (onEdge) return true
     if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside
   }
   return inside
@@ -127,15 +137,27 @@ export function newRoom(l: Layout, a: Pt, b: Pt, floor: number, taken: Set<strin
   }
 }
 
-/** After rooms change, sensors must point at a zone that still exists and still contains them. */
-export function relocateSensors(l: Layout): number {
+/**
+ * Keep sensor zones valid after rooms change, touching as little as possible: existing bindings were
+ * chosen by people (an entrance reader on a wall belongs to the building, not to the room it touches).
+ *  - a sensor whose zone disappeared is re-located;
+ *  - a sensor strictly inside a newly drawn room (not on its walls) moves into that room.
+ */
+export function relocateSensors(l: Layout, addedRoom?: Feature): number {
+  const zones = new Set(l.features.filter((f) => ['room', 'geozone', 'building'].includes(f.properties.kind)).map((f) => f.id))
   let changed = 0
   for (const s of of(l, 'sensor')) {
     const p = (s.geometry as { coordinates: Pt }).coordinates
     const floor = Number(s.properties.floor ?? 1)
-    const where = locate(l, p, floor)
-    if (where.zone_id !== s.properties.zone_id || where.building_id !== s.properties.building_id) {
-      Object.assign(s.properties, where)
+    const zone = s.properties.zone_id as string | null
+    if (zone && !zones.has(zone)) {
+      Object.assign(s.properties, locate(l, p, floor))
+      changed++
+    } else if (
+      addedRoom && s.properties.building_id === addedRoom.properties.building_id && floor === addedRoom.properties.floor &&
+      inPolygon(p, outer(addedRoom)) && !onEdge(p, outer(addedRoom)) && zone !== addedRoom.id
+    ) {
+      s.properties.zone_id = addedRoom.id
       changed++
     }
   }

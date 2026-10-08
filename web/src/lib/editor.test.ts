@@ -57,6 +57,20 @@ describe('creating objects', () => {
     expect(newRoom(l, [210, 340], [260, 390], 2, new Set())).toMatch(/1 эт/)
   })
 
+  it('moves only sensors strictly inside a new room; wall-mounted ones keep their binding', () => {
+    const l = plan()
+    l.features.push(
+      f('acs-wh1', 'sensor', [290, 300], { sensor_type: 'access_control', building_id: 'b-wh1', zone_id: 'b-wh1', floor: 1 }),
+      f('mot-in', 'sensor', [250, 360], { sensor_type: 'motion', building_id: 'b-wh1', zone_id: 'b-wh1', floor: 1 }),
+    )
+    const room = newRoom(l, [240, 340], [300, 390], 1, new Set()) as Feature
+    l.features.push(room)
+    expect(relocateSensors(l, room)).toBe(1)
+    expect(l.features.find((x) => x.id === 'mot-in')!.properties.zone_id).toBe(room.id)
+    expect(l.features.find((x) => x.id === 'acs-wh1')!.properties.zone_id).toBe('b-wh1')
+    expect(l.features.find((x) => x.id === 'clim-wh1-dock')!.properties.zone_id).toBe('r-wh1-dock')
+  })
+
   it('re-points sensors when their room disappears', () => {
     const l = plan()
     l.features = l.features.filter((x) => x.id !== 'r-wh1-dock')

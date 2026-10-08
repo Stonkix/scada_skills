@@ -100,7 +100,7 @@ function drawRoom(a: Pt, b: Pt) {
   }
   snapshot()
   working.value!.features.push(room)
-  relocateSensors(working.value!)
+  relocateSensors(working.value!, room)
   selectedId.value = room.id
   mode.value = 'select'
 }
