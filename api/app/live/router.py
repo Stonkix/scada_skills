@@ -1,100 +1,96 @@
 import asyncio
+import contextlib
+import json
 from datetime import UTC, datetime
 from typing import Annotated
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+import jwt
+import redis.asyncio as aioredis
+from fastapi import APIRouter, Depends, Query, Request, WebSocket, WebSocketDisconnect
 from pydantic import ValidationError
+from scada_common import keys
+from scada_common.live import LiveState, SensorLive, VehicleLive, WsSubscribe, ZoneOccupancy
 
-from app.alerts.schemas import Alert, AlertKind, AlertStatus, Severity
-from app.live.schemas import (
-    Layer,
-    LiveState,
-    WsAlert,
-    WsSensorUpdate,
-    WsSubscribe,
-    WsVehicleUpdate,
-    WsZoneUpdate,
-)
-from app.mock import world
+from app.auth.security import Principal, principal_from_access
+from app.deps import redis_async, require
 
 router = APIRouter(tags=["live"])
-
-SITE = "site"
-VEHICLE_EVERY_S = 1
-SENSOR_EVERY_S = 5
-ZONE_EVERY_S = 10
-ALERT_EVERY_S = 45
+WS_UNAUTHORIZED = 4401  # application close codes live in 4000-4999
 
 
 @router.get("/state/live", response_model=LiveState)
-def live_state(building_id: Annotated[str | None, Query(description='"site" — объекты на улице')] = None) -> LiveState:
-    now = datetime.now(UTC)
-    sensors = [world.sensor_live(s, now) for s in world.sensors.values()
-               if not s.is_mobile and building_id in (None, s.building_id or SITE)]
-    vehicles = [world.vehicle_live(v, now) for v in world.vehicles] if building_id in (None, SITE) else []
-    zones = [z for z in world.zones(now) if building_id in (None, z.zone_id)]
-    open_alerts = sum(a.status == AlertStatus.OPEN for a in world.alerts.values())
-    return LiveState(ts=now, sensors=sensors, vehicles=vehicles, zones=zones, open_alerts=open_alerts)
-
-
-def _wants(sub: WsSubscribe, layer: Layer, building: str, sensor_type: str | None = None) -> bool:
-    return ((sub.layers is None or layer in sub.layers)
-            and (sub.buildings is None or building in sub.buildings)
-            and (sensor_type is None or sub.sensor_types is None or sensor_type in sub.sensor_types))
-
-
-def _mock_alert(now: datetime) -> Alert:
-    v = world.vehicle_live("v-car-1", now)
-    alert_id = max(world.alerts, default=0) + 1
-    return Alert(id=alert_id, rule_id="rule-speed", rule_version=1, kind=AlertKind.SPEED, severity=Severity.WARNING,
-                 status=AlertStatus.OPEN, title="Превышение скорости",
-                 message=f"М001ММ77: {v.speed_kmh} км/ч при ограничении 20 км/ч", sensor_id=v.sensor_id,
-                 vehicle_id=v.vehicle_id, zone_id=v.zone_id, value=v.speed_kmh, opened_at=now, last_seen_at=now)
+async def live_state(
+    request: Request,
+    _: Annotated[Principal, Depends(require("map:view"))],
+    redis: Annotated[aioredis.Redis, Depends(redis_async)],
+    building_id: Annotated[str | None, Query(description='"site" — объекты на улице (машины)')] = None,
+) -> LiveState:
+    """Снимок текущего состояния; дальше изменения приходят по `WS /ws/live`."""
+    sensor_keys = [k async for k in redis.scan_iter(keys.live_sensor("*"), count=500)]
+    pipe = redis.pipeline(transaction=False)
+    for k in sensor_keys:
+        pipe.hmget(k, "doc", "kind")
+    sensors, vehicles = [], []
+    for doc, kind in await pipe.execute():
+        if doc is None:
+            continue
+        if kind == "vehicle":
+            if building_id in (None, keys.SITE):
+                vehicles.append(VehicleLive.model_validate_json(doc))
+        else:
+            s = SensorLive.model_validate_json(doc)
+            if building_id is None or (s.building_id or keys.SITE) == building_id:
+                sensors.append(s)
+    buildings = request.app.state.building_ids
+    if building_id is not None:
+        buildings = [b for b in buildings if b == building_id]
+    counts = await redis.mget([keys.zone_people(b) for b in buildings]) if buildings else []
+    open_alerts = sum([1 async for _ in redis.scan_iter(keys.alert_open("*", "*"), count=500)])
+    sensors.sort(key=lambda s: s.sensor_id)
+    vehicles.sort(key=lambda v: v.vehicle_id)
+    return LiveState(ts=datetime.now(UTC), sensors=sensors, vehicles=vehicles, open_alerts=open_alerts,
+                     zones=[ZoneOccupancy(zone_id=b, people=int(c or 0)) for b, c in zip(buildings, counts)])
 
 
 @router.websocket("/ws/live")
-async def ws_live(ws: WebSocket) -> None:
-    """Поток изменений. После подключения клиент шлёт WsSubscribe; без него приходит всё.
+async def ws_live(ws: WebSocket, token: Annotated[str | None, Query(description="access token (JWT)")] = None) -> None:
+    """Поток изменений. Авторизация — `?token=<access_token>` (браузер не умеет заголовки у WebSocket).
 
-    Сообщения сервера — WsServerMessage (поле `type`: sensor | vehicle | zone | alert).
+    После подключения клиент шлёт `WsSubscribe` (можно повторно, чтобы сменить фильтр); без него приходит всё.
+    Сообщения сервера — `WsServerMessage` (`type`: sensor | vehicle | zone | alert), схема в contracts/ws.schema.json.
     """
+    try:
+        user = principal_from_access(token or "")
+    except jwt.InvalidTokenError:
+        await ws.close(code=WS_UNAUTHORIZED, reason="invalid or missing token")
+        return
+    if not user.can("map:view"):
+        await ws.close(code=WS_UNAUTHORIZED, reason="map:view permission required")
+        return
     await ws.accept()
-    sub = WsSubscribe()
+    hub = ws.app.state.broadcaster
+    client = hub.add()
 
     async def read_subscriptions() -> None:
-        nonlocal sub
         while True:
             try:
-                sub = WsSubscribe.model_validate_json(await ws.receive_text())
+                client.sub = WsSubscribe.model_validate_json(await ws.receive_text())
             except ValidationError as e:
-                await ws.send_json({"type": "error", "message": e.errors(include_url=False)[0]["msg"]})
+                await ws.send_text(json.dumps({"type": "error", "message": e.errors(include_url=False)[0]["msg"]}))
 
     reader = asyncio.create_task(read_subscriptions())
-    tick = 0
     try:
         while not reader.done():
-            now = datetime.now(UTC)
-            msgs = []
-            if tick % VEHICLE_EVERY_S == 0:
-                msgs += [WsVehicleUpdate(ts=now, building_id=SITE, data=world.vehicle_live(v, now))
-                         for v in world.vehicles if _wants(sub, Layer.VEHICLES, SITE)]
-            if tick % SENSOR_EVERY_S == 0:
-                msgs += [WsSensorUpdate(ts=now, building_id=s.building_id or SITE, data=world.sensor_live(s, now))
-                         for s in world.sensors.values()
-                         if not s.is_mobile and _wants(sub, Layer.SENSORS, s.building_id or SITE, s.type)]
-            if tick % ZONE_EVERY_S == 0:
-                msgs += [WsZoneUpdate(ts=now, building_id=z.zone_id, data=z)
-                         for z in world.zones(now) if _wants(sub, Layer.PEOPLE, z.zone_id)]
-            if tick and tick % ALERT_EVERY_S == 0:
-                alert = _mock_alert(now)
-                world.alerts[alert.id] = alert
-                if _wants(sub, Layer.ALERTS, SITE):
-                    msgs.append(WsAlert(ts=now, building_id=SITE, data=alert))
-            for m in msgs:
-                await ws.send_text(m.model_dump_json())
-            tick += 1
-            await asyncio.sleep(1)
+            get = asyncio.create_task(client.queue.get())
+            done, _ = await asyncio.wait({get, reader}, return_when=asyncio.FIRST_COMPLETED)
+            if get in done:
+                await ws.send_text(get.result())
+            else:
+                get.cancel()
     except WebSocketDisconnect:
         pass
     finally:
+        hub.remove(client)
         reader.cancel()
+        with contextlib.suppress(asyncio.CancelledError, WebSocketDisconnect):
+            await reader

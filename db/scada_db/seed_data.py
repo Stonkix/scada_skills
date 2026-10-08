@@ -17,7 +17,7 @@ DEMO_PASSWORD = "demo"
 
 ROLES = [
     (Role.DISPATCHER, "Диспетчер", ["map:view", "alerts:ack", "kpi:view", "sensors:view"]),
-    (Role.SECURITY, "Охрана", ["map:view", "alerts:ack", "people:view_pii", "whitelist:edit"]),
+    (Role.SECURITY, "Охрана", ["map:view", "sensors:view", "alerts:ack", "people:view_pii", "whitelist:edit"]),
     (Role.ADMIN, "Администратор", ["*"]),
 ]
 

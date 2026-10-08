@@ -1,95 +1,238 @@
+"""Integration tests against the running stack (`python dev.py up`): real Postgres, Redis, ClickHouse.
+
+The simulator and worker must be running for the live/history assertions. Tests clean up what they create.
+"""
+
 import json
+import time
+import uuid
 
-from fastapi.testclient import TestClient
-from shapely.geometry import Point, shape
+import pytest
+from scada_db import models as m
+from scada_db.postgres import engine
+from sqlalchemy import delete
+from sqlalchemy.orm import Session
 
-from app.live.schemas import WS_SERVER_ADAPTER
-from app.main import app
-from app.mock import LAYOUT_PATH
+from scada_db import redis_init
 
-client = TestClient(app)
+try:
+    redis_init.client().ping()
+    with engine().connect():
+        pass
+except Exception as e:  # noqa: BLE001
+    pytest.skip(f"stack is not running: {e}", allow_module_level=True)
 
+from fastapi.testclient import TestClient  # noqa: E402
 
-def test_layout_is_consistent() -> None:
-    layout = json.loads(LAYOUT_PATH.read_text(encoding="utf-8"))
-    features = layout["features"]
-    ids = [f["id"] for f in features]
-    assert len(ids) == len(set(ids)), "feature ids must be unique"
-    by_id = {f["id"]: f for f in features}
-    for f in features:
-        p = f["properties"]
-        if p["kind"] in ("sensor", "room") and p.get("building_id"):
-            assert p["building_id"] in by_id, f"{f['id']}: unknown building"
-            # sensors may sit on the wall (entrance readers), so allow touching the boundary
-            assert shape(by_id[p["building_id"]]["geometry"]).buffer(0.01).contains(
-                shape(f["geometry"]) if p["kind"] == "room" else Point(f["geometry"]["coordinates"])), f["id"]
-        if p.get("zone_id"):
-            assert p["zone_id"] in by_id, f"{f['id']}: unknown zone {p['zone_id']}"
+from app.live.schemas import WS_SERVER_ADAPTER  # noqa: E402
+from app.main import app  # noqa: E402
 
 
-def test_objects() -> None:
-    body = client.get("/objects").json()
-    assert body["layout_version"] == 1
-    assert len(body["buildings"]) == 7
-    assert {s["id"] for s in body["sensors"]} >= {"cam-gate-in", "gnss-truck-1"}
+@pytest.fixture(scope="module")
+def client():
+    with TestClient(app) as c:
+        yield c
 
 
-def test_live_state_and_filter() -> None:
-    body = client.get("/state/live").json()
-    assert body["vehicles"] and body["sensors"] and body["zones"]
-    wh1 = client.get("/state/live", params={"building_id": "b-wh1"}).json()
-    assert wh1["vehicles"] == []
-    assert {s["building_id"] for s in wh1["sensors"]} == {"b-wh1"}
+def login(client: TestClient, username: str) -> dict:
+    r = client.post("/auth/login", json={"username": username, "password": "demo"})
+    assert r.status_code == 200, r.text
+    return r.json()
 
 
-def test_history_and_route() -> None:
-    h = client.get("/sensors/clim-wh2-storage/history", params={"metric": "temperature_c"})
-    assert h.status_code == 200 and h.json()["step"] == "raw"
-    assert client.get("/sensors/clim-wh2-storage/history", params={"metric": "plate"}).status_code == 422
-    r = client.get("/vehicles/v-truck-1/route").json()
-    assert len(r["points"]) > 10
+@pytest.fixture(scope="module")
+def tokens(client: TestClient) -> dict[str, dict]:
+    return {u: login(client, u) for u in ("dispatcher", "security", "admin")}
 
 
-def test_alert_lifecycle() -> None:
-    open_ = client.get("/alerts", params={"status": "open"}).json()["items"]
-    alert_id = open_[0]["id"]
-    acked = client.post(f"/alerts/{alert_id}/ack", json={"comment": "выехали"}).json()
-    assert acked["status"] == "ack" and acked["comment"] == "выехали"
-    assert client.post(f"/alerts/{alert_id}/ack", json={}).status_code == 409
-    assert client.post(f"/alerts/{alert_id}/resolve", json={}).json()["status"] == "resolved"
+def auth(tokens: dict, user: str) -> dict:
+    return {"Authorization": f"Bearer {tokens[user]['access_token']}"}
 
 
-def test_layout_version_conflict() -> None:
-    doc = client.get("/layout").json()
-    ok = client.post("/layout", json={"base_version": doc["version"], "geojson": doc["geojson"]})
-    assert ok.status_code == 200 and ok.json()["version"] == doc["version"] + 1
-    stale = client.post("/layout", json={"base_version": doc["version"], "geojson": doc["geojson"]})
-    assert stale.status_code == 409
+@pytest.fixture
+def cleanup():
+    sensors: list[str] = []
+    alerts: list[int] = []
+    yield sensors, alerts
+    with Session(engine()) as s:
+        if alerts:
+            s.execute(delete(m.Alert).where(m.Alert.id.in_(alerts)))
+        if sensors:
+            s.execute(delete(m.Sensor).where(m.Sensor.id.in_(sensors)))
+        s.commit()
 
 
-def test_bulk_dry_run_reports_rows_and_creates_nothing() -> None:
-    csv = ("id,type,name,building_id,zone_id,x,y\n"
-           "clim-new-1,climate,Новый датчик,b-wh1,r-wh1-storage,250,350\n"
-           "bad-1,thermometer,Плохой тип,,,1,1\n"
-           "cam-gate-in,anpr_camera,Дубль,,,1,1\n")
-    r = client.post("/sensors/bulk", params={"dry_run": True}, files={"file": ("s.csv", csv, "text/csv")}).json()
-    assert (r["total"], r["valid"], r["created"]) == (3, 1, 0)
-    assert {e["row"] for e in r["errors"]} == {2, 3}
-    good = "id,type,name,x,y\nclim-new-2,climate,Ещё датчик,250,350\n"
-    r = client.post("/sensors/bulk", params={"dry_run": False}, files={"file": ("s.csv", good, "text/csv")}).json()
-    assert r["created"] == 1
-    assert client.get("/sensors/clim-new-2").status_code == 200
+# --- auth ------------------------------------------------------------------------------------------
 
 
-def test_auth() -> None:
+def test_login_refresh_me(client: TestClient, tokens: dict) -> None:
     assert client.post("/auth/login", json={"username": "admin", "password": "nope"}).status_code == 401
-    tokens = client.post("/auth/login", json={"username": "admin", "password": "demo"}).json()
-    me = client.get("/auth/me", headers={"Authorization": f"Bearer {tokens['access_token']}"}).json()
-    assert me["role"] == "admin"
+    me = client.get("/auth/me", headers=auth(tokens, "security")).json()
+    assert me["role"] == "security"
+    refreshed = client.post("/auth/refresh", json={"refresh_token": tokens["admin"]["refresh_token"]})
+    assert refreshed.status_code == 200 and refreshed.json()["user"]["username"] == "admin"
+    # an access token is not a refresh token
+    assert client.post("/auth/refresh", json={"refresh_token": tokens["admin"]["access_token"]}).status_code == 401
 
 
-def test_ws_subscription_filters_layers() -> None:
-    with client.websocket_connect("/ws/live") as ws:
+def test_endpoints_require_auth_and_permissions(client: TestClient, tokens: dict) -> None:
+    assert client.get("/objects").status_code == 401
+    assert client.get("/objects", headers={"Authorization": "Bearer garbage"}).status_code == 401
+    r = client.post("/sensors", headers=auth(tokens, "dispatcher"), json={"id": "x", "type": "climate", "name": "x"})
+    assert r.status_code == 403
+
+
+# --- objects & live --------------------------------------------------------------------------------
+
+
+def test_objects_come_from_the_registry(client: TestClient, tokens: dict) -> None:
+    body = client.get("/objects", headers=auth(tokens, "dispatcher")).json()
+    assert len(body["buildings"]) == 7 and len(body["vehicles"]) == 15
+    assert len(body["sensors"]) >= 67 and body["layout_version"] >= 1
+    clim = next(s for s in body["sensors"] if s["id"] == "clim-wh2-storage")
+    assert clim["geo"] and {t["metric"] for t in clim["thresholds"]} == {"temperature_c", "humidity_pct"}
+
+
+def test_live_state_from_worker(client: TestClient, tokens: dict) -> None:
+    body = client.get("/state/live", headers=auth(tokens, "dispatcher")).json()
+    assert body["vehicles"] and body["sensors"] and len(body["zones"]) == 7
+    wh1 = client.get("/state/live", params={"building_id": "b-wh1"}, headers=auth(tokens, "dispatcher")).json()
+    assert wh1["vehicles"] == [] and {s["building_id"] for s in wh1["sensors"]} == {"b-wh1"}
+
+
+def test_websocket_auth_and_layer_filter(client: TestClient, tokens: dict) -> None:
+    with pytest.raises(Exception):  # closed with 4401 before accept
+        with client.websocket_connect("/ws/live") as ws:
+            ws.receive_text()
+    with client.websocket_connect(f"/ws/live?token={tokens['dispatcher']['access_token']}") as ws:
         ws.send_text(json.dumps({"op": "subscribe", "layers": ["vehicles"]}))
-        types = {WS_SERVER_ADAPTER.validate_json(ws.receive_text()).type for _ in range(6)}
+        time.sleep(0.5)  # let the filter apply before counting
+        types = {WS_SERVER_ADAPTER.validate_json(ws.receive_text()).type for _ in range(10)}
     assert types == {"vehicle"}
+
+
+# --- registry --------------------------------------------------------------------------------------
+
+
+def test_sensor_lifecycle_and_threshold_versions(client: TestClient, tokens: dict, cleanup) -> None:
+    sid = f"clim-test-{uuid.uuid4().hex[:6]}"
+    cleanup[0].append(sid)
+    admin = auth(tokens, "admin")
+    r = client.post("/sensors", headers=admin, json={"id": sid, "type": "climate", "name": "Тест",
+                                                       "building_id": "b-wh1", "zone_id": "r-wh1-storage",
+                                                       "geo": {"x": 250, "y": 350}})
+    assert r.status_code == 201, r.text
+    assert {t["version"] for t in r.json()["thresholds"]} == {1}, "typical thresholds from the catalogue"
+    assert client.post("/sensors", headers=admin, json={"id": sid, "type": "climate", "name": "x"}).status_code == 409
+    r = client.put(f"/sensors/{sid}/thresholds", headers=admin,
+                   json=[{"metric": "temperature_c", "min": 10, "max": 20, "critical_max": 25}])
+    assert r.status_code == 200 and r.json()["thresholds"] == [
+        {"metric": "temperature_c", "nominal": None, "min": 10.0, "max": 20.0, "critical_min": None,
+         "critical_max": 25.0, "version": 2}]
+    bad = client.put(f"/sensors/{sid}/thresholds", headers=admin, json=[{"metric": "plate"}])
+    assert bad.status_code == 422
+    r = client.patch(f"/sensors/{sid}", headers=admin, json={"name": "Переименован", "enabled": False})
+    assert r.json()["name"] == "Переименован" and r.json()["enabled"] is False
+
+
+def test_bulk_dry_run_then_apply(client: TestClient, tokens: dict, cleanup) -> None:
+    good = f"clim-bulk-{uuid.uuid4().hex[:6]}"
+    cleanup[0].append(good)
+    csv = ("id,type,name,building_id,zone_id,x,y\n"
+           f"{good},climate,Новый,b-wh1,r-wh1-storage,250,350\n"
+           "bad-1,thermometer,Плохой тип,,,1,1\n"
+           "cam-gate-in,anpr_camera,Дубль,,,1,1\n"
+           "nowhere-1,climate,Нет здания,b-nope,,1,1\n")
+    admin = auth(tokens, "admin")
+    r = client.post("/sensors/bulk", params={"dry_run": True}, headers=admin, files={"file": ("s.csv", csv, "text/csv")}).json()
+    assert (r["total"], r["valid"], r["created"]) == (4, 1, 0)
+    assert {e["row"] for e in r["errors"]} == {2, 3, 4}
+    r = client.post("/sensors/bulk", params={"dry_run": False}, headers=admin,
+                    files={"file": ("s.csv", csv, "text/csv")}).json()
+    assert r["created"] == 0, "all or nothing"
+    only_good = "id,type,name,building_id,zone_id,x,y\n" + csv.splitlines()[1] + "\n"
+    r = client.post("/sensors/bulk", params={"dry_run": False}, headers=admin,
+                    files={"file": ("s.csv", only_good, "text/csv")}).json()
+    assert r["created"] == 1
+    assert client.get(f"/sensors/{good}", headers=admin).status_code == 200
+
+
+def test_history_and_route(client: TestClient, tokens: dict) -> None:
+    h = auth(tokens, "dispatcher")
+    raw = client.get("/sensors/clim-wh1-storage/history", params={"metric": "temperature_c"}, headers=h).json()
+    assert raw["step"] == "raw" and raw["points"], "simulator + worker must have been running"
+    agg = client.get("/sensors/clim-wh1-storage/history", headers=h,
+                     params={"metric": "temperature_c", "from": "2026-01-01T00:00:00Z", "to": "2026-01-01T12:00:00Z"})
+    assert agg.json()["step"] == "1m"
+    assert client.get("/sensors/clim-wh1-storage/history", params={"metric": "plate"}, headers=h).status_code == 422
+    route = client.get("/vehicles/v-truck-1/route", headers=h).json()
+    assert route["points"] and all("x" in p for p in route["points"])
+
+
+def test_whitelist_masks_names_without_pii_permission(client: TestClient, tokens: dict) -> None:
+    params = {"kind": "card", "q": "P-000001"}
+    masked = client.get("/whitelist", params=params, headers=auth(tokens, "dispatcher")).json()["items"][0]
+    clear = client.get("/whitelist", params=params, headers=auth(tokens, "security")).json()["items"][0]
+    assert "*" in masked["holder_name"] and "*" not in clear["holder_name"]
+    assert masked["holder_name"][0] == clear["holder_name"][0]
+
+
+# --- layout ----------------------------------------------------------------------------------------
+
+
+def test_layout_versioning_and_validation(client: TestClient, tokens: dict) -> None:
+    admin = auth(tokens, "admin")
+    doc = client.get("/layout", headers=admin).json()
+    stale = client.post("/layout", headers=admin, json={"base_version": doc["version"] - 1, "geojson": doc["geojson"]})
+    assert stale.status_code == 409
+    broken = json.loads(json.dumps(doc["geojson"]))
+    broken["features"].append(broken["features"][1])  # duplicate id
+    r = client.post("/layout", headers=admin, json={"base_version": doc["version"], "geojson": broken})
+    assert r.status_code == 422 and any("duplicate" in e for e in r.json()["detail"])
+    assert client.post("/layout", headers=auth(tokens, "dispatcher"),
+                       json={"base_version": doc["version"], "geojson": doc["geojson"]}).status_code == 403
+    ok = client.post("/layout", headers=admin, json={"base_version": doc["version"], "geojson": doc["geojson"]})
+    assert ok.status_code == 200 and ok.json()["version"] == doc["version"] + 1
+    assert client.get("/objects", headers=admin).json()["layout_version"] == doc["version"] + 1
+
+
+# --- alerts ----------------------------------------------------------------------------------------
+
+
+def test_alert_ack_resolve_flow(client: TestClient, tokens: dict, cleanup) -> None:
+    with Session(engine()) as s:
+        row = m.Alert(rule_id="rule-offline", rule_version=1, kind="offline", severity="warning", title="Тест",
+                      message="Тестовая тревога", sensor_id="clim-wh1-dock", dedup_key=f"rule-offline:test-{uuid.uuid4().hex}")
+        s.add(row)
+        s.commit()
+        alert_id = row.id
+    cleanup[1].append(alert_id)
+    h = auth(tokens, "dispatcher")
+    listed = client.get("/alerts", params={"status": "open", "sensor_id": "clim-wh1-dock"}, headers=h).json()
+    assert alert_id in [a["id"] for a in listed["items"]]
+    acked = client.post(f"/alerts/{alert_id}/ack", json={"comment": "выехали"}, headers=h).json()
+    assert acked["status"] == "ack" and acked["ack_by"] == "dispatcher" and "выехали" in acked["comment"]
+    assert client.post(f"/alerts/{alert_id}/ack", json={}, headers=h).status_code == 409
+    resolved = client.post(f"/alerts/{alert_id}/resolve", json={"comment": "заменили батарею"}, headers=h).json()
+    assert resolved["status"] == "resolved" and resolved["comment"].count("\n") == 1
+    assert client.post(f"/alerts/{alert_id}/resolve", json={}, headers=h).status_code == 409
+
+
+# --- analytics -------------------------------------------------------------------------------------
+
+
+def test_kpi_heatmap_replay(client: TestClient, tokens: dict) -> None:
+    h = auth(tokens, "dispatcher")
+    kpi = client.get("/kpi", headers=h)
+    assert kpi.status_code == 200, kpi.text
+    body = kpi.json()
+    assert body["vehicles"] and len(body["buildings"]) == 7
+    assert any(v["mileage_km"] > 0 for v in body["vehicles"])
+    heat = client.get("/heatmap", params={"cell": 20}, headers=h).json()
+    assert heat["cells"] and heat["max_count"] > 0
+    rep = client.get("/replay", params={"step": 10}, headers=h).json()
+    assert rep["tracks"] and rep["tracks"][0]["points"]
+
+
+def test_health(client: TestClient) -> None:
+    assert client.get("/health").json() == {"status": "ok", "postgres": "ok", "clickhouse": "ok", "redis": "ok"}

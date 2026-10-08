@@ -3,11 +3,11 @@ FROM python:3.12-slim
 
 WORKDIR /app
 COPY common/ common/
+COPY db/pyproject.toml db/
+COPY db/scada_db/ db/scada_db/
 COPY api/pyproject.toml api/
 COPY api/app/ api/app/
-RUN pip install --no-cache-dir ./common ./api
-
-COPY deploy/seed/layout.geojson deploy/seed/fleet.json deploy/seed/
+RUN pip install --no-cache-dir ./common ./db ./api
 
 WORKDIR /app/api
 EXPOSE 8000

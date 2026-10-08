@@ -1,46 +1,69 @@
-"""Mock auth: any of the demo users with password "demo". Real JWT + argon2 arrive in stage 4."""
+import jwt
+from fastapi import APIRouter, HTTPException, status
+from scada_db import models as m
+from sqlalchemy import select
 
-from typing import Annotated
-
-from fastapi import APIRouter, Header, HTTPException, status
-
-from app.auth.schemas import LoginRequest, RefreshRequest, Role, TokenPair, User
+from app.auth.schemas import LoginRequest, RefreshRequest, TokenPair, User
+from app.auth.security import Principal, decode, hash_password, issue, needs_rehash, verify_password
+from app.config import api_settings
+from app.deps import DB
+from app.deps import User as CurrentUser
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-_USERS = {
-    "dispatcher": User(id=1, username="dispatcher", full_name="Иванов И. И.", role=Role.DISPATCHER),
-    "security": User(id=2, username="security", full_name="Петров П. П.", role=Role.SECURITY),
-    "admin": User(id=3, username="admin", full_name="Смирнова А. А.", role=Role.ADMIN),
+PERMISSIONS = {
+    "map:view": "карта и live-состояние",
+    "sensors:view": "реестр датчиков, история",
+    "sensors:edit": "создание и правка датчиков, порогов",
+    "layout:edit": "сохранение плана предприятия",
+    "alerts:ack": "подтверждение и закрытие тревог",
+    "kpi:view": "KPI, replay, heatmap",
+    "people:view_pii": "ФИО владельцев пропусков без маскировки",
+    "whitelist:edit": "правка списков допуска",
 }
-_MOCK_PASSWORD = "demo"
 
 
-def _tokens(user: User) -> TokenPair:
-    return TokenPair(access_token=f"mock-access.{user.username}", refresh_token=f"mock-refresh.{user.username}",
-                     expires_in=900, user=user)
+def _principal(db: DB, user: m.User) -> Principal:
+    role = db.get(m.RoleRow, user.role_id)
+    return Principal(user.id, user.username, user.full_name, str(user.role_id), frozenset(role.permissions if role else []))
 
 
-def _user_from_token(token: str, prefix: str) -> User:
-    username = token.removeprefix(prefix)
-    if not token.startswith(prefix) or username not in _USERS:
-        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
-    return _USERS[username]
+def _tokens(p: Principal) -> TokenPair:
+    return TokenPair(access_token=issue(p, "access"), refresh_token=issue(p, "refresh"),
+                     expires_in=api_settings.access_ttl_s,
+                     user=User(id=p.id, username=p.username, full_name=p.full_name, role=p.role))
 
 
-@router.post("/login", response_model=TokenPair)
-def login(body: LoginRequest) -> TokenPair:
-    user = _USERS.get(body.username)
-    if user is None or body.password != _MOCK_PASSWORD:
+@router.post("/login", response_model=TokenPair, responses={401: {"description": "Wrong username or password"}})
+def login(body: LoginRequest, db: DB) -> TokenPair:
+    user = db.scalars(select(m.User).where(m.User.username == body.username, m.User.is_active)).first()
+    if user is None or not verify_password(user.password_hash, body.password):
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid username or password")
-    return _tokens(user)
+    if needs_rehash(user.password_hash):
+        user.password_hash = hash_password(body.password)
+        db.commit()
+    return _tokens(_principal(db, user))
 
 
-@router.post("/refresh", response_model=TokenPair)
-def refresh(body: RefreshRequest) -> TokenPair:
-    return _tokens(_user_from_token(body.refresh_token, "mock-refresh."))
+@router.post("/refresh", response_model=TokenPair, responses={401: {"description": "Invalid or expired refresh token"}})
+def refresh(body: RefreshRequest, db: DB) -> TokenPair:
+    """New token pair; role and permissions are re-read, so role changes apply on the next refresh."""
+    try:
+        user_id = int(decode(body.refresh_token, "refresh")["sub"])
+    except jwt.InvalidTokenError as e:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, f"Invalid refresh token: {e}") from e
+    user = db.get(m.User, user_id)
+    if user is None or not user.is_active:
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "User is disabled")
+    return _tokens(_principal(db, user))
 
 
 @router.get("/me", response_model=User)
-def me(authorization: Annotated[str, Header()]) -> User:
-    return _user_from_token(authorization.removeprefix("Bearer "), "mock-access.")
+def me(user: CurrentUser) -> User:
+    return User(id=user.id, username=user.username, full_name=user.full_name, role=user.role)
+
+
+@router.get("/permissions", response_model=dict[str, str])
+def permissions() -> dict[str, str]:
+    """Справочник прав (роль `admin` имеет `*`)."""
+    return PERMISSIONS

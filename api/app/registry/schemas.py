@@ -59,6 +59,38 @@ class Sensor(SensorBase):
     created_at: datetime
 
 
+class SensorUpdate(BaseModel):
+    """Частичное обновление: передаются только меняемые поля. Пороги — отдельным PUT /sensors/{id}/thresholds."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    name: str | None = Field(None, min_length=1)
+    description: str | None = None
+    building_id: str | None = None
+    zone_id: str | None = None
+    floor: int | None = None
+    geo: Geo | None = None
+    enabled: bool | None = None
+
+
+class WhitelistEntry(BaseModel):
+    id: int
+    kind: Literal["card", "plate"]
+    value: str = Field(..., examples=["P-000123"])
+    holder_name: str | None = Field(None, description="ФИО; маскируется без права people:view_pii")
+    holder_org: str | None = None
+    allowed_building_ids: list[str] | None = None
+    schedule_id: str | None = None
+    valid_from: datetime
+    valid_to: datetime | None
+    active: bool
+
+
+class WhitelistPage(BaseModel):
+    items: list[WhitelistEntry]
+    total: int
+
+
 class BulkRowError(BaseModel):
     row: int = Field(..., description="Номер строки, начиная с 1 (без заголовка CSV)")
     field: str | None = Field(None, examples=["type"])

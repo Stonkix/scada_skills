@@ -31,7 +31,7 @@ venv/Scripts/python dev.py api
 |---|---|---|
 | `common/` | Общий пакет: контракт события, каталог типов датчиков, enum'ы, ключи Redis | 0 ✅ |
 | `db/` | Хранилища: модели Postgres + Alembic, схема ClickHouse, Redis-группы, демо-сиды | 1 ✅ |
-| `api/` | Модульный монолит: auth, registry, layout, live, alerts (сейчас на моках) | 0 ✅ / 4 |
+| `api/` | Модульный монолит: auth, registry, layout, live, alerts, kpi — на настоящих хранилищах | 4 ✅ |
 | `contracts/` | Сгенерированные контракты: `openapi.json`, `event.schema.json`, `ws.schema.json` | 0 ✅ |
 | `deploy/` | docker-compose, конфиги, план (`seed/layout.geojson`) и парк машин (`seed/fleet.json`) | 0 ✅ |
 | `connectors/` | Приём HTTP/MQTT, API-ключи, лимиты, адаптеры датчиков → `stream:events` | 2 ✅ |
@@ -44,7 +44,7 @@ venv/Scripts/python dev.py api
 
 | Сервис | Адрес | Что это |
 |---|---|---|
-| API | http://localhost:8000/docs | для фронта (пока на моках) |
+| API | http://localhost:8000/docs | для фронта (JWT; в Swagger — кнопка Authorize) |
 | Connectors | http://localhost:8001/docs | приём данных с датчиков, каталог форматов `GET /adapters` |
 | Simulator | http://localhost:8010/docs | живое предприятие и «чит-меню» сценариев |
 
@@ -122,7 +122,39 @@ curl -X POST localhost:8010/scenario/overheat
 
 ## Для фронта
 
-API уже отвечает реальными по форме данными: `/objects` отдаёт план предприятия, машины ездят по дорогам, WebSocket шлёт обновления. Когда подключим настоящие хранилища, контракт не поменяется.
+API работает на настоящих данных: план и реестр из Postgres, live-состояние из Redis (его ведёт worker), история и аналитика из ClickHouse. По сравнению с моком контракт только расширился, существующие схемы не менялись. Новое — **везде нужен токен**.
+
+### Авторизация
+
+1. `POST /auth/login` `{"username": "dispatcher", "password": "demo"}` → `access_token` (15 мин), `refresh_token` (7 дней), `user`.
+2. Запросы: заголовок `Authorization: Bearer <access_token>`. На 401 — `POST /auth/refresh` `{"refresh_token": ...}`, затем повторить запрос.
+3. WebSocket: `ws://localhost:8000/ws/live?token=<access_token>` (браузер не умеет заголовки у WebSocket). Без токена соединение закрывается с кодом 4401.
+
+| Право | dispatcher | security | admin |
+|---|---|---|---|
+| `map:view` — карта, live, тревоги (просмотр) | ✓ | ✓ | ✓ |
+| `sensors:view` — реестр, история, маршруты | ✓ | ✓ | ✓ |
+| `alerts:ack` — подтверждать, закрывать, комментировать | ✓ | ✓ | ✓ |
+| `kpi:view` — KPI, heatmap, replay | ✓ | | ✓ |
+| `people:view_pii` — ФИО в `/whitelist` без маски | | ✓ | ✓ |
+| `sensors:edit`, `layout:edit` — датчики, пороги, загрузка CSV, план | | | ✓ |
+
+Права приходят в access-токене (`perm`), по ним удобно прятать кнопки. 403 — права нет.
+
+### Эндпоинты
+
+| Что | Эндпоинт |
+|---|---|
+| Статика для карты | `GET /objects` (кэш по `layout_version`) |
+| План для редактора | `GET /layout`, `POST /layout` `{base_version, geojson}` → 409, если план уже сохранил кто-то другой |
+| Live | `GET /state/live?building_id=`, `WS /ws/live` |
+| Датчики | `GET /sensors`, `GET /sensors/{id}`, `POST /sensors`, `PATCH /sensors/{id}`, `PUT /sensors/{id}/thresholds` (новая версия порогов) |
+| Загрузка списка датчиков | `POST /sensors/bulk?dry_run=true` (multipart, CSV или JSON) — ошибки построчно, применяется всё или ничего |
+| История | `GET /sensors/{id}/history?metric=&from=&to=` (до 1 ч — сырые точки, до суток — 1m, дальше — 1h) |
+| Машины | `GET /vehicles`, `GET /vehicles/{id}/route?from=&to=` |
+| Тревоги | `GET /alerts?status=&severity=&kind=&building_id=&from=&to=`, `POST /alerts/{id}/ack`, `/resolve`, `/comment` |
+| Аналитика | `GET /kpi?from=&to=`, `GET /heatmap?cell=10&source=vehicles\|stops`, `GET /replay?from=&to=&step=5` |
+| Пропуска и номера | `GET /whitelist?kind=card&q=` |
 
 - **Типы:** `npx openapi-typescript contracts/openapi.json -o src/api/schema.ts`
 - **Координаты:** метры локального плана, (0, 0) — юго-западный угол, x на восток, y на север. Размер площадки — `extent` из `/objects`. Для подложки WGS84 — `georef`.
@@ -141,12 +173,12 @@ API уже отвечает реальными по форме данными: `
 
 Сервер шлёт сообщения с полем `type`:
 
-| type | data | Частота в моке |
+| type | data | Когда приходит |
 |---|---|---|
-| `vehicle` | `VehicleLive` — позиция, скорость, курс, топливо, геозона | 1 с |
-| `sensor` | `SensorLive` — статус ok/warning/critical/offline и значения | 5 с |
-| `zone` | `ZoneOccupancy` — людей в здании | 10 с |
-| `alert` | `Alert` | 45 с |
+| `vehicle` | `VehicleLive` — позиция, скорость, курс, топливо, геозона | каждый замер трекера (~2 с) |
+| `sensor` | `SensorLive` — статус ok/warning/critical/offline и значения | каждое показание датчика |
+| `zone` | `ZoneOccupancy` — людей в здании | каждый проход через СКУД |
+| `alert` | `Alert` | открытие, рост критичности, эскалация, подтверждение, закрытие |
 
 Схемы — в `contracts/ws.schema.json`.
 

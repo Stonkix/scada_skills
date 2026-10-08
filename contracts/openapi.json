@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "SCADA Logistics API",
-    "description": "Мониторинг логистической инфраструктуры предприятия.\n\nКоординаты — метры локального плана (см. `GET /objects`). Время — ISO 8601 с таймзоной.\n\n**Режим мока:** данные генерируются в памяти (`app/mock.py`), контракт совпадает с боевым. Вход: `dispatcher` / `security` / `admin`, пароль `demo`.\n\nWebSocket `/ws/live`: формат сообщений — `contracts/ws.schema.json`.",
-    "version": "0.1.0"
+    "description": "Мониторинг логистической инфраструктуры предприятия.\n\n**Авторизация:** `POST /auth/login` → `Authorization: Bearer <access_token>`; access живёт 15 мин, обновление — `POST /auth/refresh`. WebSocket: `/ws/live?token=<access_token>`. Демо-пользователи: `dispatcher`, `security`, `admin`, пароль `demo`.\n\nКоординаты — метры локального плана (см. `GET /objects`). Время — ISO 8601 с таймзоной.\n\nWebSocket `/ws/live`: формат сообщений — `contracts/ws.schema.json`.",
+    "version": "0.2.0"
   },
   "paths": {
     "/auth/login": {
@@ -34,6 +34,9 @@
               }
             }
           },
+          "401": {
+            "description": "Wrong username or password"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -53,6 +56,7 @@
           "auth"
         ],
         "summary": "Refresh",
+        "description": "New token pair; role and permissions are re-read, so role changes apply on the next refresh.",
         "operationId": "refresh_auth_refresh_post",
         "requestBody": {
           "content": {
@@ -75,6 +79,9 @@
               }
             }
           },
+          "401": {
+            "description": "Invalid or expired refresh token"
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -95,17 +102,6 @@
         ],
         "summary": "Me",
         "operationId": "me_auth_me_get",
-        "parameters": [
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "title": "Authorization"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -116,13 +112,34 @@
                 }
               }
             }
-          },
-          "422": {
-            "description": "Validation Error",
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/auth/permissions": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Permissions",
+        "description": "Справочник прав (роль `admin` имеет `*`).",
+        "operationId": "permissions_auth_permissions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Permissions Auth Permissions Get"
                 }
               }
             }
@@ -136,6 +153,7 @@
           "layout"
         ],
         "summary": "Get Objects",
+        "description": "Вся статика одним ответом. Кэшируйте по `layout_version`: она растёт при каждом сохранении плана.",
         "operationId": "get_objects_objects_get",
         "responses": {
           "200": {
@@ -148,7 +166,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/layout": {
@@ -169,13 +192,19 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       },
       "post": {
         "tags": [
           "layout"
         ],
         "summary": "Save Layout",
+        "description": "Сохраняет новую версию плана и применяет её к реестру: здания, помещения, геозоны, дороги, КПП и\nположение неподвижных датчиков. Новые датчики на плане создаются с типовыми порогами; убранные с плана\nотключаются. Worker, коннекторы и симулятор подхватывают изменения в течение минуты.",
         "operationId": "save_layout_layout_post",
         "requestBody": {
           "content": {
@@ -199,7 +228,109 @@
             }
           },
           "409": {
-            "description": "Layout was changed by someone else"
+            "description": "The plan was saved by someone else since `base_version`"
+          },
+          "422": {
+            "description": "Invalid plan; `detail` lists every problem"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/sensor-types": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Sensor Types",
+        "operationId": "list_sensor_types_sensor_types_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SensorTypeInfo"
+                  },
+                  "type": "array",
+                  "title": "Response List Sensor Types Sensor Types Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/sensors": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Sensors",
+        "operationId": "list_sensors_sensors_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SensorType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Type"
+            }
+          },
+          {
+            "name": "building_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Building Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Sensor"
+                  },
+                  "title": "Response List Sensors Sensors Get"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -212,47 +343,28 @@
             }
           }
         }
-      }
-    },
-    "/sensors": {
-      "get": {
-        "tags": [
-          "registry"
-        ],
-        "summary": "List Sensors",
-        "operationId": "list_sensors_sensors_get",
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "items": {
-                    "$ref": "#/components/schemas/Sensor"
-                  },
-                  "type": "array",
-                  "title": "Response List Sensors Sensors Get"
-                }
-              }
-            }
-          }
-        }
       },
       "post": {
         "tags": [
           "registry"
         ],
         "summary": "Create Sensor",
+        "description": "Без `thresholds` датчик получает типовые пороги своего типа. Начинает принимать данные сразу (коннекторы\nперечитывают реестр), симулятор подхватывает климат и движение в течение минуты.",
         "operationId": "create_sensor_sensors_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SensorCreate"
               }
             }
-          },
-          "required": true
+          }
         },
         "responses": {
           "201": {
@@ -264,6 +376,9 @@
                 }
               }
             }
+          },
+          "409": {
+            "description": "Sensor id already exists"
           },
           "422": {
             "description": "Validation Error",
@@ -285,6 +400,11 @@
         ],
         "summary": "Get Sensor",
         "operationId": "get_sensor_sensors__sensor_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "sensor_id",
@@ -318,6 +438,123 @@
             }
           }
         }
+      },
+      "patch": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Update Sensor",
+        "operationId": "update_sensor_sensors__sensor_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sensor Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensorUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/{sensor_id}/thresholds": {
+      "put": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Set Thresholds",
+        "description": "Новые пороги становятся следующей версией; старые закрываются (`valid_to`). Поле `version` во входе игнорируется.\nWorker перечитывает пороги каждые 30 с.",
+        "operationId": "set_thresholds_sensors__sensor_id__thresholds_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sensor Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Threshold"
+                },
+                "title": "Body"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/sensors/bulk": {
@@ -326,8 +563,13 @@
           "registry"
         ],
         "summary": "Bulk Create Sensors",
-        "description": "CSV (колонки как у SensorCreate, `thresholds` — JSON-строка) или JSON-массив.\n\nПрименяется всё или ничего: при любой ошибке не создаётся ни один датчик.",
+        "description": "CSV (колонки как у SensorCreate; `x`,`y` — координаты; `thresholds` — JSON-строка) или JSON-массив.\n\nВсё или ничего: при любой ошибке не создаётся ни один датчик, ошибки возвращаются построчно.",
         "operationId": "bulk_create_sensors_sensors_bulk_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "dry_run",
@@ -382,8 +624,13 @@
           "registry"
         ],
         "summary": "Sensor History",
-        "description": "Шаг выбирается по длине периода: до 1 ч — raw, до суток — 1m, дальше — 1h.",
+        "description": "Шаг выбирается по длине периода: до 1 ч — сырые точки, до суток — минутные агрегаты, дальше — часовые.",
         "operationId": "sensor_history_sensors__sensor_id__history_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "sensor_id",
@@ -490,7 +737,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
       }
     },
     "/vehicles/{vehicle_id}/route": {
@@ -499,7 +751,13 @@
           "registry"
         ],
         "summary": "Vehicle Route",
+        "description": "Трек машины по ГЛОНАСС; длинные периоды прореживаются до ~2000 точек (последняя точка в интервале).",
         "operationId": "vehicle_route_vehicles__vehicle_id__route_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "vehicle_id",
@@ -573,13 +831,132 @@
         }
       }
     },
+    "/whitelist": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Whitelist",
+        "description": "Пропуска и номера. ФИО видны только с правом `people:view_pii` (охрана, админ), остальным — маскированные.",
+        "operationId": "list_whitelist_whitelist_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^(card|plate)$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Поиск по номеру пропуска / гос. номеру",
+              "title": "Q"
+            },
+            "description": "Поиск по номеру пропуска / гос. номеру"
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Active"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WhitelistPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/state/live": {
       "get": {
         "tags": [
           "live"
         ],
         "summary": "Live State",
+        "description": "Снимок текущего состояния; дальше изменения приходят по `WS /ws/live`.",
         "operationId": "live_state_state_live_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "building_id",
@@ -594,10 +971,10 @@
                   "type": "null"
                 }
               ],
-              "description": "\"site\" — объекты на улице",
+              "description": "\"site\" — объекты на улице (машины)",
               "title": "Building Id"
             },
-            "description": "\"site\" — объекты на улице"
+            "description": "\"site\" — объекты на улице (машины)"
           }
         ],
         "responses": {
@@ -630,8 +1007,13 @@
           "alerts"
         ],
         "summary": "List Alerts",
-        "description": "Новые сверху.",
+        "description": "Новые сверху. `from`/`to` — по времени открытия.",
         "operationId": "list_alerts_alerts_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "status",
@@ -672,6 +1054,25 @@
             }
           },
           {
+            "name": "kind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertKind"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Kind"
+            }
+          },
+          {
             "name": "sensor_id",
             "in": "query",
             "required": false,
@@ -688,6 +1089,22 @@
             }
           },
           {
+            "name": "vehicle_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vehicle Id"
+            }
+          },
+          {
             "name": "building_id",
             "in": "query",
             "required": false,
@@ -701,6 +1118,40 @@
                 }
               ],
               "title": "Building Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To"
             }
           },
           {
@@ -751,13 +1202,187 @@
         }
       }
     },
+    "/alerts/{alert_id}": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Get Alert",
+        "operationId": "get_alert_alerts__alert_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/alerts/{alert_id}/ack": {
       "post": {
         "tags": [
           "alerts"
         ],
         "summary": "Ack Alert",
+        "description": "Подтвердить: эскалация останавливается, тревога остаётся живой до нормализации или ручного закрытия.",
         "operationId": "ack_alert_alerts__alert_id__ack_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Alert is not open"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts/{alert_id}/resolve": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Resolve Alert",
+        "description": "Закрыть вручную. Если условие всё ещё выполняется, worker откроет новую тревогу.",
+        "operationId": "resolve_alert_alerts__alert_id__resolve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Already resolved"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts/{alert_id}/comment": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Comment Alert",
+        "operationId": "comment_alert_alerts__alert_id__comment_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
             "name": "alert_id",
@@ -803,41 +1428,264 @@
         }
       }
     },
-    "/alerts/{alert_id}/resolve": {
-      "post": {
+    "/kpi": {
+      "get": {
         "tags": [
-          "alerts"
+          "analytics"
         ],
-        "summary": "Resolve Alert",
-        "operationId": "resolve_alert_alerts__alert_id__resolve_post",
+        "summary": "Kpi",
+        "description": "Показатели за период (по умолчанию — последний час).",
+        "operationId": "kpi_kpi_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "parameters": [
           {
-            "name": "alert_id",
-            "in": "path",
-            "required": true,
+            "name": "from",
+            "in": "query",
+            "required": false,
             "schema": {
-              "type": "integer",
-              "title": "Alert Id"
-            }
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — час назад",
+              "title": "From"
+            },
+            "description": "По умолчанию — час назад"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — сейчас",
+              "title": "To"
+            },
+            "description": "По умолчанию — сейчас"
           }
         ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AlertAction"
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Alert"
+                  "$ref": "#/components/schemas/KpiResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/heatmap": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Heatmap",
+        "description": "Загруженность территории по ГЛОНАСС: сколько замеров попало в каждую ячейку сетки.",
+        "operationId": "heatmap_heatmap_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — час назад",
+              "title": "From"
+            },
+            "description": "По умолчанию — час назад"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — сейчас",
+              "title": "To"
+            },
+            "description": "По умолчанию — сейчас"
+          },
+          {
+            "name": "cell",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "maximum": 100,
+              "minimum": 2,
+              "description": "Размер ячейки, м",
+              "default": 10,
+              "title": "Cell"
+            },
+            "description": "Размер ячейки, м"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "vehicles",
+                "stops"
+              ],
+              "type": "string",
+              "description": "vehicles — все позиции; stops — где стоят",
+              "default": "vehicles",
+              "title": "Source"
+            },
+            "description": "vehicles — все позиции; stops — где стоят"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Heatmap"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/replay": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Replay",
+        "description": "Треки всех машин за окно (до 6 ч) с шагом `step` и тревоги этого окна — для таймлайна воспроизведения.",
+        "operationId": "replay_replay_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — час назад",
+              "title": "From"
+            },
+            "description": "По умолчанию — час назад"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — сейчас",
+              "title": "To"
+            },
+            "description": "По умолчанию — сейчас"
+          },
+          {
+            "name": "step",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 600,
+              "minimum": 1,
+              "description": "Шаг выборки, с",
+              "default": 5,
+              "title": "Step"
+            },
+            "description": "Шаг выборки, с"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Replay"
                 }
               }
             }
@@ -861,19 +1709,14 @@
           "system"
         ],
         "summary": "Health",
+        "description": "Доступность хранилищ; 503, если какое-то недоступно.",
         "operationId": "health_health_get",
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": {
-                  "additionalProperties": {
-                    "type": "string"
-                  },
-                  "type": "object",
-                  "title": "Response Health Health Get"
-                }
+                "schema": {}
               }
             }
           }
@@ -1131,6 +1974,53 @@
         ],
         "title": "AlertStatus"
       },
+      "AlertsKpi": {
+        "properties": {
+          "opened": {
+            "type": "integer",
+            "title": "Opened"
+          },
+          "by_severity": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "By Severity"
+          },
+          "top_rules": {
+            "items": {
+              "$ref": "#/components/schemas/RuleCount"
+            },
+            "type": "array",
+            "title": "Top Rules"
+          },
+          "mean_ack_s": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mean Ack S",
+            "description": "Среднее время от открытия до подтверждения"
+          },
+          "open_now": {
+            "type": "integer",
+            "title": "Open Now"
+          }
+        },
+        "type": "object",
+        "required": [
+          "opened",
+          "by_severity",
+          "top_rules",
+          "mean_ack_s",
+          "open_now"
+        ],
+        "title": "AlertsKpi"
+      },
       "Body_bulk_create_sensors_sensors_bulk_post": {
         "properties": {
           "file": {
@@ -1189,6 +2079,35 @@
           "geometry"
         ],
         "title": "Building"
+      },
+      "BuildingTraffic": {
+        "properties": {
+          "building_id": {
+            "type": "string",
+            "title": "Building Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "entries": {
+            "type": "integer",
+            "title": "Entries",
+            "description": "Проходов внутрь по СКУД"
+          },
+          "people_now": {
+            "type": "integer",
+            "title": "People Now"
+          }
+        },
+        "type": "object",
+        "required": [
+          "building_id",
+          "name",
+          "entries",
+          "people_now"
+        ],
+        "title": "BuildingTraffic"
       },
       "BulkResult": {
         "properties": {
@@ -1308,6 +2227,39 @@
         ],
         "title": "Checkpoint"
       },
+      "GateKpi": {
+        "properties": {
+          "entries": {
+            "type": "integer",
+            "title": "Entries",
+            "description": "Въезды в зону КПП-1 по ГЛОНАСС"
+          },
+          "exits": {
+            "type": "integer",
+            "title": "Exits"
+          },
+          "plates_recognized": {
+            "type": "integer",
+            "title": "Plates Recognized",
+            "description": "Распознаваний номеров камерами КПП"
+          },
+          "by_hour": {
+            "items": {
+              "$ref": "#/components/schemas/HourCount"
+            },
+            "type": "array",
+            "title": "By Hour"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entries",
+          "exits",
+          "plates_recognized",
+          "by_hour"
+        ],
+        "title": "GateKpi"
+      },
       "Geo": {
         "properties": {
           "x": {
@@ -1425,6 +2377,61 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HeatCell": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X",
+            "description": "Центр ячейки, м"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "x",
+          "y",
+          "count"
+        ],
+        "title": "HeatCell"
+      },
+      "Heatmap": {
+        "properties": {
+          "cell_m": {
+            "type": "number",
+            "title": "Cell M"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "max_count": {
+            "type": "integer",
+            "title": "Max Count"
+          },
+          "cells": {
+            "items": {
+              "$ref": "#/components/schemas/HeatCell"
+            },
+            "type": "array",
+            "title": "Cells"
+          }
+        },
+        "type": "object",
+        "required": [
+          "cell_m",
+          "source",
+          "max_count",
+          "cells"
+        ],
+        "title": "Heatmap"
+      },
       "HistoryPoint": {
         "properties": {
           "ts": {
@@ -1453,6 +2460,74 @@
           "max"
         ],
         "title": "HistoryPoint"
+      },
+      "HourCount": {
+        "properties": {
+          "hour": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Hour"
+          },
+          "entries": {
+            "type": "integer",
+            "title": "Entries"
+          },
+          "exits": {
+            "type": "integer",
+            "title": "Exits"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hour",
+          "entries",
+          "exits"
+        ],
+        "title": "HourCount"
+      },
+      "KpiResponse": {
+        "properties": {
+          "period_from": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period From"
+          },
+          "period_to": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period To"
+          },
+          "vehicles": {
+            "items": {
+              "$ref": "#/components/schemas/VehicleKpi"
+            },
+            "type": "array",
+            "title": "Vehicles"
+          },
+          "gate": {
+            "$ref": "#/components/schemas/GateKpi"
+          },
+          "buildings": {
+            "items": {
+              "$ref": "#/components/schemas/BuildingTraffic"
+            },
+            "type": "array",
+            "title": "Buildings"
+          },
+          "alerts": {
+            "$ref": "#/components/schemas/AlertsKpi"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_from",
+          "period_to",
+          "vehicles",
+          "gate",
+          "buildings",
+          "alerts"
+        ],
+        "title": "KpiResponse"
       },
       "LayoutDocument": {
         "properties": {
@@ -1799,6 +2874,69 @@
         ],
         "title": "RefreshRequest"
       },
+      "Replay": {
+        "properties": {
+          "period_from": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period From"
+          },
+          "period_to": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Period To"
+          },
+          "step_s": {
+            "type": "integer",
+            "title": "Step S"
+          },
+          "tracks": {
+            "items": {
+              "$ref": "#/components/schemas/ReplayTrack"
+            },
+            "type": "array",
+            "title": "Tracks"
+          },
+          "alerts": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Alerts",
+            "description": "Тревоги, открытые в этом окне: для отметок на таймлайне"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_from",
+          "period_to",
+          "step_s",
+          "tracks",
+          "alerts"
+        ],
+        "title": "Replay"
+      },
+      "ReplayTrack": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/RoutePoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "points"
+        ],
+        "title": "ReplayTrack"
+      },
       "Road": {
         "properties": {
           "id": {
@@ -1914,6 +3052,24 @@
           "speed_kmh"
         ],
         "title": "RoutePoint"
+      },
+      "RuleCount": {
+        "properties": {
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_id",
+          "count"
+        ],
+        "title": "RuleCount"
       },
       "Sensor": {
         "properties": {
@@ -2329,6 +3485,91 @@
         ],
         "title": "SensorTypeInfo"
       },
+      "SensorUpdate": {
+        "properties": {
+          "name": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "building_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Id"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id"
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor"
+          },
+          "geo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Geo"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "SensorUpdate",
+        "description": "Частичное обновление: передаются только меняемые поля. Пороги — отдельным PUT /sensors/{id}/thresholds."
+      },
       "Severity": {
         "type": "string",
         "enum": [
@@ -2608,6 +3849,54 @@
         ],
         "title": "VehicleKind"
       },
+      "VehicleKpi": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "plate": {
+            "type": "string",
+            "title": "Plate"
+          },
+          "mileage_km": {
+            "type": "number",
+            "title": "Mileage Km",
+            "description": "По одометру трекера за период"
+          },
+          "moving_min": {
+            "type": "number",
+            "title": "Moving Min",
+            "description": "Скорость > 1 км/ч"
+          },
+          "idle_min": {
+            "type": "number",
+            "title": "Idle Min",
+            "description": "Стоит с работающим двигателем"
+          },
+          "stopped_min": {
+            "type": "number",
+            "title": "Stopped Min",
+            "description": "Стоит с заглушенным двигателем"
+          },
+          "utilization_pct": {
+            "type": "number",
+            "title": "Utilization Pct",
+            "description": "Доля времени в движении; всё считается только на территории"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "plate",
+          "mileage_km",
+          "moving_min",
+          "idle_min",
+          "stopped_min",
+          "utilization_pct"
+        ],
+        "title": "VehicleKpi"
+      },
       "VehicleLive": {
         "properties": {
           "vehicle_id": {
@@ -2712,6 +4001,129 @@
         ],
         "title": "VehicleStatus"
       },
+      "WhitelistEntry": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "card",
+              "plate"
+            ],
+            "title": "Kind"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "examples": [
+              "P-000123"
+            ]
+          },
+          "holder_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holder Name",
+            "description": "ФИО; маскируется без права people:view_pii"
+          },
+          "holder_org": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Holder Org"
+          },
+          "allowed_building_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allowed Building Ids"
+          },
+          "schedule_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schedule Id"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Valid To"
+          },
+          "active": {
+            "type": "boolean",
+            "title": "Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "value",
+          "valid_from",
+          "valid_to",
+          "active"
+        ],
+        "title": "WhitelistEntry"
+      },
+      "WhitelistPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/WhitelistEntry"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "WhitelistPage"
+      },
       "ZoneOccupancy": {
         "properties": {
           "zone_id": {
@@ -2735,6 +4147,12 @@
           "people"
         ],
         "title": "ZoneOccupancy"
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
       }
     }
   }
