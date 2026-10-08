@@ -11,6 +11,7 @@ Live state (written by worker, read by api)
   last_seen                ZSET  sensor_id -> unix ts of the last event (offline detection)
   alert:open:{rule}:{obj}  STRING alert id while the alert is not resolved (dedup / hysteresis)
   seen:event:{event_id}    STRING with TTL; SET NX before processing to drop duplicates
+  ratelimit:{key}:{minute} STRING counter of accepted events per API key (connectors)
 
 Pub/sub
   live:{building}:{layer}  building id or "site" (outdoors); layer = sensors|vehicles|people|alerts
@@ -57,3 +58,8 @@ def seen_event(event_id: str) -> str:
 
 def live_channel(building_id: str, layer: str) -> str:
     return f"live:{building_id}:{layer}"
+
+
+def rate_limit(api_key_id: int, minute: int) -> str:
+    """Fixed-window counter of events per API key per minute (connectors)."""
+    return f"ratelimit:{api_key_id}:{minute}"

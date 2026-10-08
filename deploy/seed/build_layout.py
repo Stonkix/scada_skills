@@ -100,13 +100,13 @@ add(feature(line((790, 30), (790, 470)), id="road-east", kind="road", name="Во
 add(feature(line((190, 30), (790, 30)), id="road-south", kind="road", name="Южный проезд", width_m=8, speed_limit_kmh=20))
 add(feature(line((190, 470), (790, 470)), id="road-north", kind="road", name="Северный проезд", width_m=8, speed_limit_kmh=20))
 for i, x in enumerate((290, 470, 650), start=1):
-    add(feature(line((x, 250), (x, 300)), id=f"road-dock-wh{i}", kind="road", name=f"Подъезд к складу №{i}",
+    add(feature(line((x, 250), (x, 290)), id=f"road-dock-wh{i}", kind="road", name=f"Подъезд к складу №{i}",
                 width_m=8, speed_limit_kmh=10))
 for i, x in enumerate((310, 550), start=1):
     add(feature(line((x, 250), (x, 200)), id=f"road-prod{i}", kind="road", name=f"Подъезд к цеху №{i}",
                 width_m=8, speed_limit_kmh=10))
 add(feature(line((725, 250), (725, 160)), id="road-garage", kind="road", name="Подъезд к гаражу", width_m=8, speed_limit_kmh=10))
-add(feature(line((190, 110), (110, 110)), id="road-parking", kind="road", name="Въезд на стоянку", width_m=8, speed_limit_kmh=10))
+add(feature(line((190, 110), (100, 110)), id="road-parking", kind="road", name="Въезд на стоянку", width_m=8, speed_limit_kmh=10))
 
 # --- Geozones -------------------------------------------------------------------------------
 add(feature(rect(0, 230, 40, 270), id="z-gate", kind="geozone", name="КПП-1: въездная зона", zone_type="gate"))

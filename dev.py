@@ -79,7 +79,7 @@ def contracts() -> None:
 
 
 def test() -> None:
-    run(PY, "-m", "pytest", "-q", "common/tests", "api/tests", "db/tests")
+    run(PY, "-m", "pytest", "-q", "common/tests", "api/tests", "db/tests", "connectors/tests", "simulator/tests")
 
 
 def api() -> None:

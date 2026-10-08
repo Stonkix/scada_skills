@@ -1,0 +1,23 @@
+[project]
+name = "scada-simulator"
+version = "0.1.0"
+description = "Simulated enterprise: vehicles, turnstiles, climate, motion and demo scenarios; talks only to connectors"
+requires-python = ">=3.12"
+dependencies = [
+    "scada-common",
+    "scada-db",
+    "scada-connectors",
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "httpx>=0.27",
+    "aiomqtt>=2.3",
+    "shapely>=2.0",
+    "pyyaml>=6",
+]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["scada_simulator*"]

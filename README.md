@@ -7,7 +7,7 @@
 Нужны Docker и Python 3.12.
 
 ```bash
-python dev.py up      # PG+PostGIS, ClickHouse, Redis, Mosquitto, API; db-init накатывает миграции и сиды
+python dev.py up      # хранилища, db-init (миграции + сиды), connectors, simulator, API
 python dev.py seed    # вернуть все хранилища к демо-состоянию (без пересоздания контейнеров)
 python dev.py reset   # стереть все данные и поднять заново
 python dev.py down
@@ -34,11 +34,52 @@ venv/Scripts/python dev.py api
 | `api/` | Модульный монолит: auth, registry, layout, live, alerts (сейчас на моках) | 0 ✅ / 4 |
 | `contracts/` | Сгенерированные контракты: `openapi.json`, `event.schema.json`, `ws.schema.json` | 0 ✅ |
 | `deploy/` | docker-compose, конфиги, план (`seed/layout.geojson`) и парк машин (`seed/fleet.json`) | 0 ✅ |
-| `connectors/` | Приём HTTP/MQTT, адаптеры датчиков → `stream:events` | 2 |
-| `simulator/` | Машины, турникеты, сценарии для демо | 2 |
+| `connectors/` | Приём HTTP/MQTT, API-ключи, лимиты, адаптеры датчиков → `stream:events` | 2 ✅ |
+| `simulator/` | Машины по дорогам, турникеты, климат, движение, сценарии для демо | 2 ✅ |
 | `worker/` | Стрим → ClickHouse, live-состояние в Redis, алерты | 3 |
 | `mock-1c/` | Мок 1С-ЭПД | 6 |
 | `web/` | Фронтенд (Vue 3) | 5 |
+
+## Сервисы
+
+| Сервис | Адрес | Что это |
+|---|---|---|
+| API | http://localhost:8000/docs | для фронта (пока на моках) |
+| Connectors | http://localhost:8001/docs | приём данных с датчиков, каталог форматов `GET /adapters` |
+| Simulator | http://localhost:8010/docs | живое предприятие и «чит-меню» сценариев |
+
+## Коннекторы: как подключить датчик
+
+HTTP: `POST /ingest/{adapter}`, заголовок `X-API-Key`, тело — объект или массив. MQTT: топик `sensors/{adapter}/{device_id}`, ключ — в MQTT 5 user property `x-api-key`.
+
+```bash
+curl -X POST localhost:8001/ingest/climate -H "X-API-Key: sk_vendordemo_8c1e2a9f4b7d4e01b5a6c3d2e1f09a7b" -H "Content-Type: application/json" -d '{"device": "clim-wh1-storage", "temperature": 64.4, "unit": "F", "humidity": 48, "ts_ms": 1791450000000}'
+```
+
+Адаптеры: `native` (наш контракт как есть), `anpr`, `skud`, `gnss` (lat/lon → метры плана), `motion`, `climate` (°F → °C). Новый формат производителя — один класс в [adapters.py](connectors/scada_connectors/adapters.py).
+
+Коннектор проверяет ключ, лимит событий в минуту, что датчик есть в реестре, включён и его тип совпадает с адаптером. Он же подставляет координаты и зону неподвижных датчиков. Всё отклонённое уходит в `stream:dlq` с причиной (`unknown_sensor`, `type_mismatch`, `invalid_payload`, `clock_skew`, `forbidden_type`, `topic_mismatch`…). Повторная доставка того же сообщения получает тот же `event_id`.
+
+## Симулятор и сценарии
+
+Грузовики заезжают через КПП-1 (камера видит номер), едут к рампам, разгружаются и уезжают. Погрузчики ходят между складами, люди проходят через турникеты по времени суток, климат колеблется вокруг номинала (датчики цехов шлют °F). ГЛОНАСС, климат и движение идут по MQTT, камеры и СКУД — по HTTP; всё только через коннекторы.
+
+```bash
+curl -X POST localhost:8010/scenario/overheat
+```
+
+| Сценарий | Что происходит |
+|---|---|
+| `breakdown` | грузовик глохнет посреди проезда на 10 мин |
+| `speeding` | служебная машина едет 38 км/ч |
+| `unknown_plate` | грузовик с номером вне базы заезжает через КПП-1 |
+| `unknown_card` | неизвестный пропуск (отказ) и просроченный (контроллер пропустил) |
+| `overheat` | холодный склад нагревается на 7 °C |
+| `after_hours` | движение на складе при пустом здании |
+| `sensor_offline` | датчик климата замолкает на 10 мин |
+| `demo` | всё подряд для показа |
+
+`GET /status` — где машины, сколько людей в зданиях, активные эффекты; `POST /scenarios/stop` — вернуть всё в норму. Сценарии описаны в [simulator/scenarios.yaml](simulator/scenarios.yaml).
 
 ## Хранилища
 

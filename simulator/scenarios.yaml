@@ -1,0 +1,70 @@
+# Demo scenarios. Run: POST http://localhost:8010/scenario/{name}  (list: GET /scenarios)
+#
+# A scenario is a list of steps run in order. A step is either {wait_s: N} or an action
+# with parameters; actions start a time-limited effect and return immediately.
+# Actions: vehicle_breakdown, vehicle_speeding, vehicle_arrival, climate_drift,
+#          sensor_offline, motion_alarm, card_swipe.
+# What becomes an alert is decided by the worker's rules (alert_rules), not here.
+
+scenarios:
+  breakdown:
+    title: Поломка грузовика на территории
+    description: Грузовик глохнет посреди проезда. Правило rule-breakdown срабатывает через stopped_min.
+    steps:
+      - {action: vehicle_breakdown, vehicle: v-truck-2, duration_s: 600}
+
+  speeding:
+    title: Превышение скорости
+    description: Служебная машина едет 38 км/ч при ограничении 20.
+    steps:
+      - {action: vehicle_speeding, vehicle: v-car-1, kmh: 38, duration_s: 90}
+
+  unknown_plate:
+    title: Номер вне базы на КПП
+    description: Грузовик v-truck-8 (номер не в списке допуска) заезжает через КПП-1.
+    steps:
+      - {action: vehicle_arrival, vehicle: v-truck-8}
+
+  unknown_card:
+    title: Пропуск вне базы
+    description: >
+      Неизвестный пропуск — контроллер отказал; просроченный пропуск — контроллер пропустил,
+      но в нашей базе он недействителен (контроллер со старым списком).
+    steps:
+      - {action: card_swipe, reader: acs-wh2, card: unknown, granted: false}
+      - {wait_s: 5}
+      - {action: card_swipe, reader: acs-prod1, card: expired, granted: true}
+
+  overheat:
+    title: Перегрев холодного склада
+    description: Температура на складе №2 растёт на 7 °C за 2 минуты и держится 10 минут.
+    steps:
+      - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 7, ramp_s: 120, duration_s: 720}
+
+  after_hours:
+    title: Движение на складе
+    description: >
+      Датчик движения на складе №3 срабатывает при пустом здании. Алерт будет, если сейчас
+      нерабочее время по расписанию work-hours (иначе это просто движение).
+    steps:
+      - {action: motion_alarm, sensor: mot-wh3, duration_s: 300}
+
+  sensor_offline:
+    title: Датчик пропал со связи
+    description: Датчик климата в цехе №2 перестаёт отправлять данные на 10 минут.
+    steps:
+      - {action: sensor_offline, sensor: clim-prod2-stock, duration_s: 600}
+
+  demo:
+    title: Полный сценарий показа
+    description: Номер вне базы → перегрев → поломка → превышение скорости → чужой пропуск.
+    steps:
+      - {action: vehicle_arrival, vehicle: v-truck-8}
+      - {wait_s: 30}
+      - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 7, ramp_s: 60, duration_s: 600}
+      - {wait_s: 60}
+      - {action: vehicle_breakdown, vehicle: v-truck-2, duration_s: 600}
+      - {wait_s: 30}
+      - {action: vehicle_speeding, vehicle: v-car-1, kmh: 38, duration_s: 60}
+      - {wait_s: 30}
+      - {action: card_swipe, reader: acs-wh2, card: unknown, granted: false}

@@ -51,7 +51,7 @@ ALERT_RULES = [
     ("rule-after-hours", "Движение в нерабочее время", AlertKind.SCHEDULE, Severity.CRITICAL,
      {"sensor_type": "motion", "building_types": ["warehouse", "production"]}, "work-hours", 60),
     ("rule-breakdown", "Остановка техники вне стоянки", AlertKind.BREAKDOWN, Severity.CRITICAL,
-     {"stopped_min": 10, "allowed_zone_types": ["parking", "docks", "restricted"]}, None, 300),
+     {"stopped_min": 3, "allowed_zone_types": ["parking", "docks", "restricted"]}, None, 300),
     ("rule-offline", "Датчик не на связи", AlertKind.OFFLINE, Severity.WARNING,
      {"timeout_s": 300, "mobile_timeout_s": 120}, None, 900),
     ("rule-geozone-garage", "Грузовик во дворе ремзоны", AlertKind.GEOZONE, Severity.INFO,
