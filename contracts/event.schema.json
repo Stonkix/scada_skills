@@ -1,0 +1,633 @@
+{
+  "title": "Event",
+  "$defs": {
+    "AccessControlEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "description": "Ключ идемпотентности",
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "schema_v": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema V",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "ts": {
+          "description": "Время измерения на датчике; агрегаты считаются по нему",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "received_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Время приёма коннектором; ставит коннектор",
+          "title": "Received At"
+        },
+        "geo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Зона плана; ставит датчик (СКУД) или worker (point-in-polygon)",
+          "title": "Zone Id"
+        },
+        "type": {
+          "const": "access_control",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AccessControlPayload"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "AccessControlEvent",
+      "type": "object"
+    },
+    "AccessControlPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "card_id": {
+          "examples": [
+            "P-000123"
+          ],
+          "title": "Card Id",
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/Direction"
+        },
+        "granted": {
+          "description": "Решение контроллера СКУД",
+          "title": "Granted",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "card_id",
+        "direction",
+        "granted"
+      ],
+      "title": "AccessControlPayload",
+      "type": "object"
+    },
+    "AnprCameraEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "description": "Ключ идемпотентности",
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "schema_v": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema V",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "ts": {
+          "description": "Время измерения на датчике; агрегаты считаются по нему",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "received_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Время приёма коннектором; ставит коннектор",
+          "title": "Received At"
+        },
+        "geo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Зона плана; ставит датчик (СКУД) или worker (point-in-polygon)",
+          "title": "Zone Id"
+        },
+        "type": {
+          "const": "anpr_camera",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/AnprCameraPayload"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "AnprCameraEvent",
+      "type": "object"
+    },
+    "AnprCameraPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "plate": {
+          "description": "Гос. номер, кириллица, без пробелов",
+          "examples": [
+            "А123ВС77"
+          ],
+          "title": "Plate",
+          "type": "string"
+        },
+        "direction": {
+          "$ref": "#/$defs/Direction"
+        },
+        "confidence": {
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        }
+      },
+      "required": [
+        "plate",
+        "direction",
+        "confidence"
+      ],
+      "title": "AnprCameraPayload",
+      "type": "object"
+    },
+    "ClimateEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "description": "Ключ идемпотентности",
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "schema_v": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema V",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "ts": {
+          "description": "Время измерения на датчике; агрегаты считаются по нему",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "received_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Время приёма коннектором; ставит коннектор",
+          "title": "Received At"
+        },
+        "geo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Зона плана; ставит датчик (СКУД) или worker (point-in-polygon)",
+          "title": "Zone Id"
+        },
+        "type": {
+          "const": "climate",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/ClimatePayload"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "ClimateEvent",
+      "type": "object"
+    },
+    "ClimatePayload": {
+      "additionalProperties": false,
+      "properties": {
+        "temperature_c": {
+          "title": "Temperature C",
+          "type": "number"
+        },
+        "humidity_pct": {
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Humidity Pct",
+          "type": "number"
+        }
+      },
+      "required": [
+        "temperature_c",
+        "humidity_pct"
+      ],
+      "title": "ClimatePayload",
+      "type": "object"
+    },
+    "Direction": {
+      "enum": [
+        "in",
+        "out"
+      ],
+      "title": "Direction",
+      "type": "string"
+    },
+    "Geo": {
+      "additionalProperties": false,
+      "description": "Point in local plan coordinates, metres from the site origin (south-west corner).",
+      "properties": {
+        "x": {
+          "title": "X",
+          "type": "number"
+        },
+        "y": {
+          "title": "Y",
+          "type": "number"
+        },
+        "floor": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Этаж внутри здания; null — улица",
+          "title": "Floor"
+        }
+      },
+      "required": [
+        "x",
+        "y"
+      ],
+      "title": "Geo",
+      "type": "object"
+    },
+    "GnssEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "description": "Ключ идемпотентности",
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "schema_v": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema V",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "ts": {
+          "description": "Время измерения на датчике; агрегаты считаются по нему",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "received_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Время приёма коннектором; ставит коннектор",
+          "title": "Received At"
+        },
+        "geo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Зона плана; ставит датчик (СКУД) или worker (point-in-polygon)",
+          "title": "Zone Id"
+        },
+        "type": {
+          "const": "gnss",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/GnssPayload"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "GnssEvent",
+      "type": "object"
+    },
+    "GnssPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "speed_kmh": {
+          "minimum": 0,
+          "title": "Speed Kmh",
+          "type": "number"
+        },
+        "heading_deg": {
+          "exclusiveMaximum": 360,
+          "minimum": 0,
+          "title": "Heading Deg",
+          "type": "number"
+        },
+        "fuel_pct": {
+          "anyOf": [
+            {
+              "maximum": 100,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fuel Pct"
+        },
+        "odometer_km": {
+          "anyOf": [
+            {
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Odometer Km"
+        },
+        "engine_on": {
+          "title": "Engine On",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "speed_kmh",
+        "heading_deg",
+        "engine_on"
+      ],
+      "title": "GnssPayload",
+      "type": "object"
+    },
+    "MotionEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "description": "Ключ идемпотентности",
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "schema_v": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema V",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "ts": {
+          "description": "Время измерения на датчике; агрегаты считаются по нему",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "received_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Время приёма коннектором; ставит коннектор",
+          "title": "Received At"
+        },
+        "geo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Зона плана; ставит датчик (СКУД) или worker (point-in-polygon)",
+          "title": "Zone Id"
+        },
+        "type": {
+          "const": "motion",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/MotionPayload"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "MotionEvent",
+      "type": "object"
+    },
+    "MotionPayload": {
+      "additionalProperties": false,
+      "properties": {
+        "detected": {
+          "title": "Detected",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "detected"
+      ],
+      "title": "MotionPayload",
+      "type": "object"
+    }
+  },
+  "discriminator": {
+    "mapping": {
+      "access_control": "#/$defs/AccessControlEvent",
+      "anpr_camera": "#/$defs/AnprCameraEvent",
+      "climate": "#/$defs/ClimateEvent",
+      "gnss": "#/$defs/GnssEvent",
+      "motion": "#/$defs/MotionEvent"
+    },
+    "propertyName": "type"
+  },
+  "oneOf": [
+    {
+      "$ref": "#/$defs/AnprCameraEvent"
+    },
+    {
+      "$ref": "#/$defs/AccessControlEvent"
+    },
+    {
+      "$ref": "#/$defs/GnssEvent"
+    },
+    {
+      "$ref": "#/$defs/MotionEvent"
+    },
+    {
+      "$ref": "#/$defs/ClimateEvent"
+    }
+  ]
+}

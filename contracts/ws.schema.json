@@ -1,0 +1,733 @@
+{
+  "title": "WebSocket /ws/live",
+  "description": "client → server: WsSubscribe; server → client: WsServerMessage",
+  "$defs": {
+    "WsSubscribe": {
+      "$defs": {
+        "Layer": {
+          "enum": [
+            "sensors",
+            "vehicles",
+            "people",
+            "alerts"
+          ],
+          "title": "Layer",
+          "type": "string"
+        },
+        "SensorType": {
+          "enum": [
+            "anpr_camera",
+            "access_control",
+            "gnss",
+            "motion",
+            "climate"
+          ],
+          "title": "SensorType",
+          "type": "string"
+        }
+      },
+      "description": "Клиент → сервер. Можно слать повторно, чтобы сменить фильтр. null в поле = без фильтра.",
+      "properties": {
+        "op": {
+          "const": "subscribe",
+          "default": "subscribe",
+          "title": "Op",
+          "type": "string"
+        },
+        "buildings": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "\"site\" — объекты на улице",
+          "examples": [
+            [
+              "b-wh1",
+              "site"
+            ]
+          ],
+          "title": "Buildings"
+        },
+        "layers": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/WsSubscribe/$defs/Layer"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Layers"
+        },
+        "sensor_types": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/WsSubscribe/$defs/SensorType"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sensor Types"
+        }
+      },
+      "title": "WsSubscribe",
+      "type": "object"
+    },
+    "WsServerMessage": {
+      "$defs": {
+        "Alert": {
+          "properties": {
+            "id": {
+              "title": "Id",
+              "type": "integer"
+            },
+            "rule_id": {
+              "examples": [
+                "rule-cold-storage-temp"
+              ],
+              "title": "Rule Id",
+              "type": "string"
+            },
+            "rule_version": {
+              "title": "Rule Version",
+              "type": "integer"
+            },
+            "kind": {
+              "$ref": "#/$defs/WsServerMessage/$defs/AlertKind"
+            },
+            "severity": {
+              "$ref": "#/$defs/WsServerMessage/$defs/Severity"
+            },
+            "status": {
+              "$ref": "#/$defs/WsServerMessage/$defs/AlertStatus"
+            },
+            "title": {
+              "examples": [
+                "Перегрев холодного склада"
+              ],
+              "title": "Title",
+              "type": "string"
+            },
+            "message": {
+              "examples": [
+                "Температура 9.4 °C выше критического порога 8.0 °C"
+              ],
+              "title": "Message",
+              "type": "string"
+            },
+            "sensor_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "examples": [
+                "clim-wh2-storage"
+              ],
+              "title": "Sensor Id"
+            },
+            "vehicle_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Vehicle Id"
+            },
+            "building_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "examples": [
+                "b-wh2"
+              ],
+              "title": "Building Id"
+            },
+            "zone_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "examples": [
+                "r-wh2-storage"
+              ],
+              "title": "Zone Id"
+            },
+            "value": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "examples": [
+                9.4
+              ],
+              "title": "Value"
+            },
+            "opened_at": {
+              "format": "date-time",
+              "title": "Opened At",
+              "type": "string"
+            },
+            "last_seen_at": {
+              "description": "Последнее событие, подтвердившее алерт (дедупликация)",
+              "format": "date-time",
+              "title": "Last Seen At",
+              "type": "string"
+            },
+            "ack_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ack At"
+            },
+            "ack_by": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Ack By"
+            },
+            "resolved_at": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Resolved At"
+            },
+            "comment": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Comment"
+            },
+            "escalation_level": {
+              "default": 0,
+              "description": "Растёт по таймеру, пока алерт не подтверждён",
+              "minimum": 0,
+              "title": "Escalation Level",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "id",
+            "rule_id",
+            "rule_version",
+            "kind",
+            "severity",
+            "status",
+            "title",
+            "message",
+            "opened_at",
+            "last_seen_at"
+          ],
+          "title": "Alert",
+          "type": "object"
+        },
+        "AlertKind": {
+          "enum": [
+            "threshold",
+            "geozone",
+            "schedule",
+            "whitelist",
+            "speed",
+            "offline",
+            "breakdown"
+          ],
+          "title": "AlertKind",
+          "type": "string"
+        },
+        "AlertStatus": {
+          "enum": [
+            "open",
+            "ack",
+            "resolved"
+          ],
+          "title": "AlertStatus",
+          "type": "string"
+        },
+        "Geo": {
+          "additionalProperties": false,
+          "description": "Point in local plan coordinates, metres from the site origin (south-west corner).",
+          "properties": {
+            "x": {
+              "title": "X",
+              "type": "number"
+            },
+            "y": {
+              "title": "Y",
+              "type": "number"
+            },
+            "floor": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Этаж внутри здания; null — улица",
+              "title": "Floor"
+            }
+          },
+          "required": [
+            "x",
+            "y"
+          ],
+          "title": "Geo",
+          "type": "object"
+        },
+        "SensorLive": {
+          "properties": {
+            "sensor_id": {
+              "examples": [
+                "clim-wh2-storage"
+              ],
+              "title": "Sensor Id",
+              "type": "string"
+            },
+            "type": {
+              "$ref": "#/$defs/WsServerMessage/$defs/SensorType"
+            },
+            "building_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Building Id"
+            },
+            "status": {
+              "$ref": "#/$defs/WsServerMessage/$defs/SensorStatus"
+            },
+            "last_seen": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Last Seen"
+            },
+            "values": {
+              "additionalProperties": {
+                "anyOf": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              },
+              "description": "Последний payload датчика",
+              "examples": [
+                {
+                  "humidity_pct": 61.0,
+                  "temperature_c": 4.2
+                }
+              ],
+              "title": "Values",
+              "type": "object"
+            }
+          },
+          "required": [
+            "sensor_id",
+            "type",
+            "status",
+            "last_seen",
+            "values"
+          ],
+          "title": "SensorLive",
+          "type": "object"
+        },
+        "SensorStatus": {
+          "enum": [
+            "ok",
+            "warning",
+            "critical",
+            "offline"
+          ],
+          "title": "SensorStatus",
+          "type": "string"
+        },
+        "SensorType": {
+          "enum": [
+            "anpr_camera",
+            "access_control",
+            "gnss",
+            "motion",
+            "climate"
+          ],
+          "title": "SensorType",
+          "type": "string"
+        },
+        "Severity": {
+          "enum": [
+            "info",
+            "warning",
+            "critical"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "VehicleLive": {
+          "properties": {
+            "vehicle_id": {
+              "examples": [
+                "v-truck-1"
+              ],
+              "title": "Vehicle Id",
+              "type": "string"
+            },
+            "sensor_id": {
+              "title": "Sensor Id",
+              "type": "string"
+            },
+            "status": {
+              "$ref": "#/$defs/WsServerMessage/$defs/VehicleStatus"
+            },
+            "geo": {
+              "$ref": "#/$defs/WsServerMessage/$defs/Geo"
+            },
+            "speed_kmh": {
+              "title": "Speed Kmh",
+              "type": "number"
+            },
+            "heading_deg": {
+              "title": "Heading Deg",
+              "type": "number"
+            },
+            "fuel_pct": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Fuel Pct"
+            },
+            "engine_on": {
+              "title": "Engine On",
+              "type": "boolean"
+            },
+            "zone_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Геозона, в которой сейчас машина",
+              "title": "Zone Id"
+            },
+            "last_seen": {
+              "format": "date-time",
+              "title": "Last Seen",
+              "type": "string"
+            }
+          },
+          "required": [
+            "vehicle_id",
+            "sensor_id",
+            "status",
+            "geo",
+            "speed_kmh",
+            "heading_deg",
+            "engine_on",
+            "last_seen"
+          ],
+          "title": "VehicleLive",
+          "type": "object"
+        },
+        "VehicleStatus": {
+          "enum": [
+            "moving",
+            "idle",
+            "stopped",
+            "offline"
+          ],
+          "title": "VehicleStatus",
+          "type": "string"
+        },
+        "WsAlert": {
+          "properties": {
+            "ts": {
+              "format": "date-time",
+              "title": "Ts",
+              "type": "string"
+            },
+            "building_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Здание объекта; \"site\" — улица",
+              "title": "Building Id"
+            },
+            "type": {
+              "const": "alert",
+              "default": "alert",
+              "title": "Type",
+              "type": "string"
+            },
+            "data": {
+              "$ref": "#/$defs/WsServerMessage/$defs/Alert"
+            }
+          },
+          "required": [
+            "ts",
+            "data"
+          ],
+          "title": "WsAlert",
+          "type": "object"
+        },
+        "WsSensorUpdate": {
+          "properties": {
+            "ts": {
+              "format": "date-time",
+              "title": "Ts",
+              "type": "string"
+            },
+            "building_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Здание объекта; \"site\" — улица",
+              "title": "Building Id"
+            },
+            "type": {
+              "const": "sensor",
+              "default": "sensor",
+              "title": "Type",
+              "type": "string"
+            },
+            "data": {
+              "$ref": "#/$defs/WsServerMessage/$defs/SensorLive"
+            }
+          },
+          "required": [
+            "ts",
+            "data"
+          ],
+          "title": "WsSensorUpdate",
+          "type": "object"
+        },
+        "WsVehicleUpdate": {
+          "properties": {
+            "ts": {
+              "format": "date-time",
+              "title": "Ts",
+              "type": "string"
+            },
+            "building_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Здание объекта; \"site\" — улица",
+              "title": "Building Id"
+            },
+            "type": {
+              "const": "vehicle",
+              "default": "vehicle",
+              "title": "Type",
+              "type": "string"
+            },
+            "data": {
+              "$ref": "#/$defs/WsServerMessage/$defs/VehicleLive"
+            }
+          },
+          "required": [
+            "ts",
+            "data"
+          ],
+          "title": "WsVehicleUpdate",
+          "type": "object"
+        },
+        "WsZoneUpdate": {
+          "properties": {
+            "ts": {
+              "format": "date-time",
+              "title": "Ts",
+              "type": "string"
+            },
+            "building_id": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "description": "Здание объекта; \"site\" — улица",
+              "title": "Building Id"
+            },
+            "type": {
+              "const": "zone",
+              "default": "zone",
+              "title": "Type",
+              "type": "string"
+            },
+            "data": {
+              "$ref": "#/$defs/WsServerMessage/$defs/ZoneOccupancy"
+            }
+          },
+          "required": [
+            "ts",
+            "data"
+          ],
+          "title": "WsZoneUpdate",
+          "type": "object"
+        },
+        "ZoneOccupancy": {
+          "properties": {
+            "zone_id": {
+              "description": "Здание или помещение",
+              "examples": [
+                "b-wh1"
+              ],
+              "title": "Zone Id",
+              "type": "string"
+            },
+            "people": {
+              "description": "Людей внутри по событиям СКУД вход/выход",
+              "minimum": 0,
+              "title": "People",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "zone_id",
+            "people"
+          ],
+          "title": "ZoneOccupancy",
+          "type": "object"
+        }
+      },
+      "discriminator": {
+        "mapping": {
+          "alert": "#/$defs/WsServerMessage/$defs/WsAlert",
+          "sensor": "#/$defs/WsServerMessage/$defs/WsSensorUpdate",
+          "vehicle": "#/$defs/WsServerMessage/$defs/WsVehicleUpdate",
+          "zone": "#/$defs/WsServerMessage/$defs/WsZoneUpdate"
+        },
+        "propertyName": "type"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/WsServerMessage/$defs/WsSensorUpdate"
+        },
+        {
+          "$ref": "#/$defs/WsServerMessage/$defs/WsVehicleUpdate"
+        },
+        {
+          "$ref": "#/$defs/WsServerMessage/$defs/WsZoneUpdate"
+        },
+        {
+          "$ref": "#/$defs/WsServerMessage/$defs/WsAlert"
+        }
+      ]
+    }
+  }
+}

@@ -4,3 +4,7 @@ __pycache__/
 *.pyc
 .env
 .claude/settings.local.json
+*.egg-info/
+.pytest_cache/
+build/
+node_modules/

@@ -1,0 +1,2146 @@
+{
+ "type": "FeatureCollection",
+ "metadata": {
+  "units": "m",
+  "extent": [
+   0,
+   0,
+   800,
+   500
+  ],
+  "georef": {
+   "origin_lat": 55.7,
+   "origin_lon": 37.4,
+   "rotation_deg": 0.0
+  }
+ },
+ "features": [
+  {
+   "type": "Feature",
+   "id": "site",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       800,
+       0
+      ],
+      [
+       800,
+       500
+      ],
+      [
+       0,
+       500
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "site",
+    "kind": "site",
+    "name": "Производственная площадка"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-admin",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       60,
+       380
+      ],
+      [
+       160,
+       380
+      ],
+      [
+       160,
+       450
+      ],
+      [
+       60,
+       450
+      ],
+      [
+       60,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-admin",
+    "kind": "building",
+    "name": "Административный корпус",
+    "building_type": "office",
+    "floors": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-wh1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       300
+      ],
+      [
+       360,
+       300
+      ],
+      [
+       360,
+       400
+      ],
+      [
+       220,
+       400
+      ],
+      [
+       220,
+       300
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-wh1",
+    "kind": "building",
+    "name": "Склад №1",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-wh2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       400,
+       300
+      ],
+      [
+       540,
+       300
+      ],
+      [
+       540,
+       400
+      ],
+      [
+       400,
+       400
+      ],
+      [
+       400,
+       300
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-wh2",
+    "kind": "building",
+    "name": "Склад №2 (холодный)",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-wh3",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       580,
+       300
+      ],
+      [
+       720,
+       300
+      ],
+      [
+       720,
+       400
+      ],
+      [
+       580,
+       400
+      ],
+      [
+       580,
+       300
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-wh3",
+    "kind": "building",
+    "name": "Склад №3",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-prod1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       80
+      ],
+      [
+       400,
+       80
+      ],
+      [
+       400,
+       200
+      ],
+      [
+       220,
+       200
+      ],
+      [
+       220,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-prod1",
+    "kind": "building",
+    "name": "Цех №1",
+    "building_type": "production",
+    "floors": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-prod2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       460,
+       80
+      ],
+      [
+       640,
+       80
+      ],
+      [
+       640,
+       200
+      ],
+      [
+       460,
+       200
+      ],
+      [
+       460,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-prod2",
+    "kind": "building",
+    "name": "Цех №2",
+    "building_type": "production",
+    "floors": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-garage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       680,
+       60
+      ],
+      [
+       770,
+       60
+      ],
+      [
+       770,
+       160
+      ],
+      [
+       680,
+       160
+      ],
+      [
+       680,
+       60
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-garage",
+    "kind": "building",
+    "name": "Гараж и ремзона",
+    "building_type": "garage",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-wh1-dock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       300
+      ],
+      [
+       360,
+       300
+      ],
+      [
+       360,
+       330
+      ],
+      [
+       220,
+       330
+      ],
+      [
+       220,
+       300
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-wh1-dock",
+    "kind": "room",
+    "name": "Склад №1: зона отгрузки",
+    "building_id": "b-wh1",
+    "floor": 1,
+    "room_type": "dock"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-wh1-storage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       330
+      ],
+      [
+       360,
+       330
+      ],
+      [
+       360,
+       400
+      ],
+      [
+       220,
+       400
+      ],
+      [
+       220,
+       330
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-wh1-storage",
+    "kind": "room",
+    "name": "Склад №1: зона хранения",
+    "building_id": "b-wh1",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-wh2-dock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       400,
+       300
+      ],
+      [
+       540,
+       300
+      ],
+      [
+       540,
+       330
+      ],
+      [
+       400,
+       330
+      ],
+      [
+       400,
+       300
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-wh2-dock",
+    "kind": "room",
+    "name": "Склад №2: зона отгрузки",
+    "building_id": "b-wh2",
+    "floor": 1,
+    "room_type": "dock"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-wh2-storage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       400,
+       330
+      ],
+      [
+       540,
+       330
+      ],
+      [
+       540,
+       400
+      ],
+      [
+       400,
+       400
+      ],
+      [
+       400,
+       330
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-wh2-storage",
+    "kind": "room",
+    "name": "Склад №2: зона хранения",
+    "building_id": "b-wh2",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-wh3-dock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       580,
+       300
+      ],
+      [
+       720,
+       300
+      ],
+      [
+       720,
+       330
+      ],
+      [
+       580,
+       330
+      ],
+      [
+       580,
+       300
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-wh3-dock",
+    "kind": "room",
+    "name": "Склад №3: зона отгрузки",
+    "building_id": "b-wh3",
+    "floor": 1,
+    "room_type": "dock"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-wh3-storage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       580,
+       330
+      ],
+      [
+       720,
+       330
+      ],
+      [
+       720,
+       400
+      ],
+      [
+       580,
+       400
+      ],
+      [
+       580,
+       330
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-wh3-storage",
+    "kind": "room",
+    "name": "Склад №3: зона хранения",
+    "building_id": "b-wh3",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-admin-f1-west",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       60,
+       380
+      ],
+      [
+       110,
+       380
+      ],
+      [
+       110,
+       450
+      ],
+      [
+       60,
+       450
+      ],
+      [
+       60,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-admin-f1-west",
+    "kind": "room",
+    "name": "Админ. корпус, 1 эт.: западное крыло",
+    "building_id": "b-admin",
+    "floor": 1,
+    "room_type": "lobby"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-admin-f1-east",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       110,
+       380
+      ],
+      [
+       160,
+       380
+      ],
+      [
+       160,
+       450
+      ],
+      [
+       110,
+       450
+      ],
+      [
+       110,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-admin-f1-east",
+    "kind": "room",
+    "name": "Админ. корпус, 1 эт.: восточное крыло",
+    "building_id": "b-admin",
+    "floor": 1,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-admin-f2-west",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       60,
+       380
+      ],
+      [
+       110,
+       380
+      ],
+      [
+       110,
+       450
+      ],
+      [
+       60,
+       450
+      ],
+      [
+       60,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-admin-f2-west",
+    "kind": "room",
+    "name": "Админ. корпус, 2 эт.: западное крыло",
+    "building_id": "b-admin",
+    "floor": 2,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-admin-f2-east",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       110,
+       380
+      ],
+      [
+       160,
+       380
+      ],
+      [
+       160,
+       450
+      ],
+      [
+       110,
+       450
+      ],
+      [
+       110,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-admin-f2-east",
+    "kind": "room",
+    "name": "Админ. корпус, 2 эт.: восточное крыло",
+    "building_id": "b-admin",
+    "floor": 2,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-admin-f3-west",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       60,
+       380
+      ],
+      [
+       110,
+       380
+      ],
+      [
+       110,
+       450
+      ],
+      [
+       60,
+       450
+      ],
+      [
+       60,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-admin-f3-west",
+    "kind": "room",
+    "name": "Админ. корпус, 3 эт.: западное крыло",
+    "building_id": "b-admin",
+    "floor": 3,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-admin-f3-east",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       110,
+       380
+      ],
+      [
+       160,
+       380
+      ],
+      [
+       160,
+       450
+      ],
+      [
+       110,
+       450
+      ],
+      [
+       110,
+       380
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-admin-f3-east",
+    "kind": "room",
+    "name": "Админ. корпус, 3 эт.: восточное крыло",
+    "building_id": "b-admin",
+    "floor": 3,
+    "room_type": "server"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-prod1-line",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       80
+      ],
+      [
+       310.0,
+       80
+      ],
+      [
+       310.0,
+       200
+      ],
+      [
+       220,
+       200
+      ],
+      [
+       220,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-prod1-line",
+    "kind": "room",
+    "name": "Цех №1: производственная линия",
+    "building_id": "b-prod1",
+    "floor": 1,
+    "room_type": "production"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-prod1-stock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       310.0,
+       80
+      ],
+      [
+       400,
+       80
+      ],
+      [
+       400,
+       200
+      ],
+      [
+       310.0,
+       200
+      ],
+      [
+       310.0,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-prod1-stock",
+    "kind": "room",
+    "name": "Цех №1: склад сырья",
+    "building_id": "b-prod1",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-prod1-f2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       80
+      ],
+      [
+       400,
+       80
+      ],
+      [
+       400,
+       200
+      ],
+      [
+       220,
+       200
+      ],
+      [
+       220,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-prod1-f2",
+    "kind": "room",
+    "name": "Цех №1, 2 эт.: офис мастеров",
+    "building_id": "b-prod1",
+    "floor": 2,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-prod2-line",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       460,
+       80
+      ],
+      [
+       550.0,
+       80
+      ],
+      [
+       550.0,
+       200
+      ],
+      [
+       460,
+       200
+      ],
+      [
+       460,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-prod2-line",
+    "kind": "room",
+    "name": "Цех №2: производственная линия",
+    "building_id": "b-prod2",
+    "floor": 1,
+    "room_type": "production"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-prod2-stock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       550.0,
+       80
+      ],
+      [
+       640,
+       80
+      ],
+      [
+       640,
+       200
+      ],
+      [
+       550.0,
+       200
+      ],
+      [
+       550.0,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-prod2-stock",
+    "kind": "room",
+    "name": "Цех №2: склад сырья",
+    "building_id": "b-prod2",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-prod2-f2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       460,
+       80
+      ],
+      [
+       640,
+       80
+      ],
+      [
+       640,
+       200
+      ],
+      [
+       460,
+       200
+      ],
+      [
+       460,
+       80
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-prod2-f2",
+    "kind": "room",
+    "name": "Цех №2, 2 эт.: офис мастеров",
+    "building_id": "b-prod2",
+    "floor": 2,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-garage-bay",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       680,
+       60
+      ],
+      [
+       770,
+       60
+      ],
+      [
+       770,
+       160
+      ],
+      [
+       680,
+       160
+      ],
+      [
+       680,
+       60
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-garage-bay",
+    "kind": "room",
+    "name": "Ремзона: боксы",
+    "building_id": "b-garage",
+    "floor": 1,
+    "room_type": "repair"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-main",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      0,
+      250
+     ],
+     [
+      790,
+      250
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-main",
+    "kind": "road",
+    "name": "Главный проезд",
+    "width_m": 12,
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-west",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      190,
+      30
+     ],
+     [
+      190,
+      470
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-west",
+    "kind": "road",
+    "name": "Западный проезд",
+    "width_m": 8,
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-east",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      790,
+      30
+     ],
+     [
+      790,
+      470
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-east",
+    "kind": "road",
+    "name": "Восточный проезд",
+    "width_m": 8,
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-south",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      190,
+      30
+     ],
+     [
+      790,
+      30
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-south",
+    "kind": "road",
+    "name": "Южный проезд",
+    "width_m": 8,
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-north",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      190,
+      470
+     ],
+     [
+      790,
+      470
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-north",
+    "kind": "road",
+    "name": "Северный проезд",
+    "width_m": 8,
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dock-wh1",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      290,
+      250
+     ],
+     [
+      290,
+      300
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dock-wh1",
+    "kind": "road",
+    "name": "Подъезд к складу №1",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dock-wh2",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      470,
+      250
+     ],
+     [
+      470,
+      300
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dock-wh2",
+    "kind": "road",
+    "name": "Подъезд к складу №2",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dock-wh3",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      650,
+      250
+     ],
+     [
+      650,
+      300
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dock-wh3",
+    "kind": "road",
+    "name": "Подъезд к складу №3",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-prod1",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      310,
+      250
+     ],
+     [
+      310,
+      200
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-prod1",
+    "kind": "road",
+    "name": "Подъезд к цеху №1",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-prod2",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      550,
+      250
+     ],
+     [
+      550,
+      200
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-prod2",
+    "kind": "road",
+    "name": "Подъезд к цеху №2",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-garage",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      725,
+      250
+     ],
+     [
+      725,
+      160
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-garage",
+    "kind": "road",
+    "name": "Подъезд к гаражу",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-parking",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      190,
+      110
+     ],
+     [
+      110,
+      110
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-parking",
+    "kind": "road",
+    "name": "Въезд на стоянку",
+    "width_m": 8,
+    "speed_limit_kmh": 10
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-gate",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       230
+      ],
+      [
+       40,
+       230
+      ],
+      [
+       40,
+       270
+      ],
+      [
+       0,
+       270
+      ],
+      [
+       0,
+       230
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-gate",
+    "kind": "geozone",
+    "name": "КПП-1: въездная зона",
+    "zone_type": "gate"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-docks-wh1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       220,
+       270
+      ],
+      [
+       360,
+       270
+      ],
+      [
+       360,
+       300
+      ],
+      [
+       220,
+       300
+      ],
+      [
+       220,
+       270
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-docks-wh1",
+    "kind": "geozone",
+    "name": "Рампа склада №1",
+    "zone_type": "docks"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-docks-wh2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       400,
+       270
+      ],
+      [
+       540,
+       270
+      ],
+      [
+       540,
+       300
+      ],
+      [
+       400,
+       300
+      ],
+      [
+       400,
+       270
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-docks-wh2",
+    "kind": "geozone",
+    "name": "Рампа склада №2",
+    "zone_type": "docks"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-docks-wh3",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       580,
+       270
+      ],
+      [
+       720,
+       270
+      ],
+      [
+       720,
+       300
+      ],
+      [
+       580,
+       300
+      ],
+      [
+       580,
+       270
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-docks-wh3",
+    "kind": "geozone",
+    "name": "Рампа склада №3",
+    "zone_type": "docks"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-parking",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       30,
+       40
+      ],
+      [
+       110,
+       40
+      ],
+      [
+       110,
+       180
+      ],
+      [
+       30,
+       180
+      ],
+      [
+       30,
+       40
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-parking",
+    "kind": "geozone",
+    "name": "Стоянка грузовиков",
+    "zone_type": "parking"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-garage-yard",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       645,
+       40
+      ],
+      [
+       795,
+       40
+      ],
+      [
+       795,
+       175
+      ],
+      [
+       645,
+       175
+      ],
+      [
+       645,
+       40
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-garage-yard",
+    "kind": "geozone",
+    "name": "Двор ремзоны",
+    "zone_type": "restricted"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-site-speed",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       0,
+       0
+      ],
+      [
+       800,
+       0
+      ],
+      [
+       800,
+       500
+      ],
+      [
+       0,
+       500
+      ],
+      [
+       0,
+       0
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-site-speed",
+    "kind": "geozone",
+    "name": "Ограничение скорости по территории",
+    "zone_type": "speed",
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cp-1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     20,
+     250
+    ]
+   },
+   "properties": {
+    "id": "cp-1",
+    "kind": "checkpoint",
+    "name": "КПП-1 (транспорт)",
+    "checkpoint_type": "vehicle",
+    "zone_id": "z-gate"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cp-2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     50,
+     415
+    ]
+   },
+   "properties": {
+    "id": "cp-2",
+    "kind": "checkpoint",
+    "name": "КПП-2 (проходная)",
+    "checkpoint_type": "pedestrian",
+    "zone_id": "b-admin"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-gate-in",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     25,
+     258
+    ]
+   },
+   "properties": {
+    "id": "cam-gate-in",
+    "kind": "sensor",
+    "name": "Камера КПП-1, въезд",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-gate",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-gate-out",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     25,
+     242
+    ]
+   },
+   "properties": {
+    "id": "cam-gate-out",
+    "kind": "sensor",
+    "name": "Камера КПП-1, выезд",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-gate",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-kpp2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     60,
+     415
+    ]
+   },
+   "properties": {
+    "id": "acs-kpp2",
+    "kind": "sensor",
+    "name": "Турникет КПП-2",
+    "sensor_type": "access_control",
+    "zone_id": "b-admin",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-wh1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     290,
+     300
+    ]
+   },
+   "properties": {
+    "id": "acs-wh1",
+    "kind": "sensor",
+    "name": "СКУД: вход, b-wh1",
+    "sensor_type": "access_control",
+    "zone_id": "b-wh1",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-wh2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     470,
+     300
+    ]
+   },
+   "properties": {
+    "id": "acs-wh2",
+    "kind": "sensor",
+    "name": "СКУД: вход, b-wh2",
+    "sensor_type": "access_control",
+    "zone_id": "b-wh2",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-wh3",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     650,
+     300
+    ]
+   },
+   "properties": {
+    "id": "acs-wh3",
+    "kind": "sensor",
+    "name": "СКУД: вход, b-wh3",
+    "sensor_type": "access_control",
+    "zone_id": "b-wh3",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-prod1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     310,
+     200
+    ]
+   },
+   "properties": {
+    "id": "acs-prod1",
+    "kind": "sensor",
+    "name": "СКУД: вход, b-prod1",
+    "sensor_type": "access_control",
+    "zone_id": "b-prod1",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-prod2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     550,
+     200
+    ]
+   },
+   "properties": {
+    "id": "acs-prod2",
+    "kind": "sensor",
+    "name": "СКУД: вход, b-prod2",
+    "sensor_type": "access_control",
+    "zone_id": "b-prod2",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-garage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     725,
+     160
+    ]
+   },
+   "properties": {
+    "id": "acs-garage",
+    "kind": "sensor",
+    "name": "СКУД: вход, b-garage",
+    "sensor_type": "access_control",
+    "zone_id": "b-garage",
+    "building_id": "b-garage",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-admin-server",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     135,
+     415
+    ]
+   },
+   "properties": {
+    "id": "acs-admin-server",
+    "kind": "sensor",
+    "name": "СКУД: серверная",
+    "sensor_type": "access_control",
+    "zone_id": "r-admin-f3-east",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-wh1-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     290.0,
+     365
+    ]
+   },
+   "properties": {
+    "id": "clim-wh1-storage",
+    "kind": "sensor",
+    "name": "Климат, склад №1: хранение",
+    "sensor_type": "climate",
+    "zone_id": "r-wh1-storage",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-wh1-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     290.0,
+     315
+    ]
+   },
+   "properties": {
+    "id": "clim-wh1-dock",
+    "kind": "sensor",
+    "name": "Климат, склад №1: отгрузка",
+    "sensor_type": "climate",
+    "zone_id": "r-wh1-dock",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-wh1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     235,
+     385
+    ]
+   },
+   "properties": {
+    "id": "mot-wh1",
+    "kind": "sensor",
+    "name": "Движение, склад №1",
+    "sensor_type": "motion",
+    "zone_id": "r-wh1-storage",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-wh2-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     470.0,
+     365
+    ]
+   },
+   "properties": {
+    "id": "clim-wh2-storage",
+    "kind": "sensor",
+    "name": "Климат, склад №2: хранение",
+    "sensor_type": "climate",
+    "zone_id": "r-wh2-storage",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-wh2-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     470.0,
+     315
+    ]
+   },
+   "properties": {
+    "id": "clim-wh2-dock",
+    "kind": "sensor",
+    "name": "Климат, склад №2: отгрузка",
+    "sensor_type": "climate",
+    "zone_id": "r-wh2-dock",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-wh2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     415,
+     385
+    ]
+   },
+   "properties": {
+    "id": "mot-wh2",
+    "kind": "sensor",
+    "name": "Движение, склад №2",
+    "sensor_type": "motion",
+    "zone_id": "r-wh2-storage",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-wh3-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     650.0,
+     365
+    ]
+   },
+   "properties": {
+    "id": "clim-wh3-storage",
+    "kind": "sensor",
+    "name": "Климат, склад №3: хранение",
+    "sensor_type": "climate",
+    "zone_id": "r-wh3-storage",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-wh3-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     650.0,
+     315
+    ]
+   },
+   "properties": {
+    "id": "clim-wh3-dock",
+    "kind": "sensor",
+    "name": "Климат, склад №3: отгрузка",
+    "sensor_type": "climate",
+    "zone_id": "r-wh3-dock",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-wh3",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     595,
+     385
+    ]
+   },
+   "properties": {
+    "id": "mot-wh3",
+    "kind": "sensor",
+    "name": "Движение, склад №3",
+    "sensor_type": "motion",
+    "zone_id": "r-wh3-storage",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-admin-server",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     145,
+     440
+    ]
+   },
+   "properties": {
+    "id": "clim-admin-server",
+    "kind": "sensor",
+    "name": "Климат, серверная",
+    "sensor_type": "climate",
+    "zone_id": "r-admin-f3-east",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-prod1-stock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     355.0,
+     140
+    ]
+   },
+   "properties": {
+    "id": "clim-prod1-stock",
+    "kind": "sensor",
+    "name": "Климат, цех №1: склад сырья",
+    "sensor_type": "climate",
+    "zone_id": "r-prod1-stock",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-prod1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     265.0,
+     140
+    ]
+   },
+   "properties": {
+    "id": "mot-prod1",
+    "kind": "sensor",
+    "name": "Движение, цех №1",
+    "sensor_type": "motion",
+    "zone_id": "r-prod1-line",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-prod2-stock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     595.0,
+     140
+    ]
+   },
+   "properties": {
+    "id": "clim-prod2-stock",
+    "kind": "sensor",
+    "name": "Климат, цех №2: склад сырья",
+    "sensor_type": "climate",
+    "zone_id": "r-prod2-stock",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-prod2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     505.0,
+     140
+    ]
+   },
+   "properties": {
+    "id": "mot-prod2",
+    "kind": "sensor",
+    "name": "Движение, цех №2",
+    "sensor_type": "motion",
+    "zone_id": "r-prod2-line",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-garage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     725,
+     110
+    ]
+   },
+   "properties": {
+    "id": "mot-garage",
+    "kind": "sensor",
+    "name": "Движение, ремзона",
+    "sensor_type": "motion",
+    "zone_id": "r-garage-bay",
+    "building_id": "b-garage",
+    "floor": 1
+   }
+  }
+ ]
+}

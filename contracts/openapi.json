@@ -1,0 +1,2741 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "SCADA Logistics API",
+    "description": "Мониторинг логистической инфраструктуры предприятия.\n\nКоординаты — метры локального плана (см. `GET /objects`). Время — ISO 8601 с таймзоной.\n\n**Режим мока:** данные генерируются в памяти (`app/mock.py`), контракт совпадает с боевым. Вход: `dispatcher` / `security` / `admin`, пароль `demo`.\n\nWebSocket `/ws/live`: формат сообщений — `contracts/ws.schema.json`.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login",
+        "operationId": "login_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPair"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Refresh",
+        "operationId": "refresh_auth_refresh_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenPair"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Me",
+        "operationId": "me_auth_me_get",
+        "parameters": [
+          {
+            "name": "authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/User"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/objects": {
+      "get": {
+        "tags": [
+          "layout"
+        ],
+        "summary": "Get Objects",
+        "operationId": "get_objects_objects_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/layout": {
+      "get": {
+        "tags": [
+          "layout"
+        ],
+        "summary": "Get Layout",
+        "operationId": "get_layout_layout_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutDocument"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "layout"
+        ],
+        "summary": "Save Layout",
+        "operationId": "save_layout_layout_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutDocument"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Layout was changed by someone else"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Sensors",
+        "operationId": "list_sensors_sensors_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Sensor"
+                  },
+                  "type": "array",
+                  "title": "Response List Sensors Sensors Get"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Create Sensor",
+        "operationId": "create_sensor_sensors_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SensorCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/{sensor_id}": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Get Sensor",
+        "operationId": "get_sensor_sensors__sensor_id__get",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sensor Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Sensor"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/bulk": {
+      "post": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Bulk Create Sensors",
+        "description": "CSV (колонки как у SensorCreate, `thresholds` — JSON-строка) или JSON-массив.\n\nПрименяется всё или ничего: при любой ошибке не создаётся ни один датчик.",
+        "operationId": "bulk_create_sensors_sensors_bulk_post",
+        "parameters": [
+          {
+            "name": "dry_run",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Только проверить, ничего не создавать",
+              "default": true,
+              "title": "Dry Run"
+            },
+            "description": "Только проверить, ничего не создавать"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_bulk_create_sensors_sensors_bulk_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/sensors/{sensor_id}/history": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Sensor History",
+        "description": "Шаг выбирается по длине периода: до 1 ч — raw, до суток — 1m, дальше — 1h.",
+        "operationId": "sensor_history_sensors__sensor_id__history_get",
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sensor Id"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "description": "Числовая метрика типа датчика, напр. temperature_c",
+              "title": "Metric"
+            },
+            "description": "Числовая метрика типа датчика, напр. temperature_c"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — час назад",
+              "title": "From"
+            },
+            "description": "По умолчанию — час назад"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — сейчас",
+              "title": "To"
+            },
+            "description": "По умолчанию — сейчас"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SensorHistory"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "List Vehicles",
+        "operationId": "list_vehicles_vehicles_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/Vehicle"
+                  },
+                  "type": "array",
+                  "title": "Response List Vehicles Vehicles Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{vehicle_id}/route": {
+      "get": {
+        "tags": [
+          "registry"
+        ],
+        "summary": "Vehicle Route",
+        "operationId": "vehicle_route_vehicles__vehicle_id__route_get",
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — час назад",
+              "title": "From"
+            },
+            "description": "По умолчанию — час назад"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию — сейчас",
+              "title": "To"
+            },
+            "description": "По умолчанию — сейчас"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VehicleRoute"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/state/live": {
+      "get": {
+        "tags": [
+          "live"
+        ],
+        "summary": "Live State",
+        "operationId": "live_state_state_live_get",
+        "parameters": [
+          {
+            "name": "building_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "\"site\" — объекты на улице",
+              "title": "Building Id"
+            },
+            "description": "\"site\" — объекты на улице"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts": {
+      "get": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "List Alerts",
+        "description": "Новые сверху.",
+        "operationId": "list_alerts_alerts_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AlertStatus"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "severity",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Severity"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Severity"
+            }
+          },
+          {
+            "name": "sensor_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sensor Id"
+            }
+          },
+          {
+            "name": "building_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Building Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertPage"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts/{alert_id}/ack": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Ack Alert",
+        "operationId": "ack_alert_alerts__alert_id__ack_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/alerts/{alert_id}/resolve": {
+      "post": {
+        "tags": [
+          "alerts"
+        ],
+        "summary": "Resolve Alert",
+        "operationId": "resolve_alert_alerts__alert_id__resolve_post",
+        "parameters": [
+          {
+            "name": "alert_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Alert Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AlertAction"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Alert": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "rule_id": {
+            "type": "string",
+            "title": "Rule Id",
+            "examples": [
+              "rule-cold-storage-temp"
+            ]
+          },
+          "rule_version": {
+            "type": "integer",
+            "title": "Rule Version"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/AlertKind"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/Severity"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AlertStatus"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "examples": [
+              "Перегрев холодного склада"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "examples": [
+              "Температура 9.4 °C выше критического порога 8.0 °C"
+            ]
+          },
+          "sensor_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Id",
+            "examples": [
+              "clim-wh2-storage"
+            ]
+          },
+          "vehicle_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Id"
+          },
+          "building_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Id",
+            "examples": [
+              "b-wh2"
+            ]
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id",
+            "examples": [
+              "r-wh2-storage"
+            ]
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value",
+            "examples": [
+              9.4
+            ]
+          },
+          "opened_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Opened At"
+          },
+          "last_seen_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen At",
+            "description": "Последнее событие, подтвердившее алерт (дедупликация)"
+          },
+          "ack_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ack At"
+          },
+          "ack_by": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ack By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "escalation_level": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Escalation Level",
+            "description": "Растёт по таймеру, пока алерт не подтверждён",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "rule_id",
+          "rule_version",
+          "kind",
+          "severity",
+          "status",
+          "title",
+          "message",
+          "opened_at",
+          "last_seen_at"
+        ],
+        "title": "Alert"
+      },
+      "AlertAction": {
+        "properties": {
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 1000
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          }
+        },
+        "type": "object",
+        "title": "AlertAction"
+      },
+      "AlertKind": {
+        "type": "string",
+        "enum": [
+          "threshold",
+          "geozone",
+          "schedule",
+          "whitelist",
+          "speed",
+          "offline",
+          "breakdown"
+        ],
+        "title": "AlertKind"
+      },
+      "AlertPage": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/Alert"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "total"
+        ],
+        "title": "AlertPage"
+      },
+      "AlertStatus": {
+        "type": "string",
+        "enum": [
+          "open",
+          "ack",
+          "resolved"
+        ],
+        "title": "AlertStatus"
+      },
+      "Body_bulk_create_sensors_sensors_bulk_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_bulk_create_sensors_sensors_bulk_post"
+      },
+      "Building": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "b-wh2"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "examples": [
+              "Склад №2 (холодный)"
+            ]
+          },
+          "building_type": {
+            "type": "string",
+            "enum": [
+              "office",
+              "warehouse",
+              "production",
+              "garage"
+            ],
+            "title": "Building Type"
+          },
+          "floors": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Floors"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "building_type",
+          "floors",
+          "geometry"
+        ],
+        "title": "Building"
+      },
+      "BulkResult": {
+        "properties": {
+          "dry_run": {
+            "type": "boolean",
+            "title": "Dry Run"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "valid": {
+            "type": "integer",
+            "title": "Valid"
+          },
+          "created": {
+            "type": "integer",
+            "title": "Created",
+            "description": "Сколько датчиков создано; 0 при dry_run или при любой ошибке"
+          },
+          "errors": {
+            "items": {
+              "$ref": "#/components/schemas/BulkRowError"
+            },
+            "type": "array",
+            "title": "Errors"
+          }
+        },
+        "type": "object",
+        "required": [
+          "dry_run",
+          "total",
+          "valid",
+          "created",
+          "errors"
+        ],
+        "title": "BulkResult"
+      },
+      "BulkRowError": {
+        "properties": {
+          "row": {
+            "type": "integer",
+            "title": "Row",
+            "description": "Номер строки, начиная с 1 (без заголовка CSV)"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Field",
+            "examples": [
+              "type"
+            ]
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "examples": [
+              "Input should be 'anpr_camera', 'access_control', ..."
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "row",
+          "message"
+        ],
+        "title": "BulkRowError"
+      },
+      "Checkpoint": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "cp-1"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "checkpoint_type": {
+            "type": "string",
+            "enum": [
+              "vehicle",
+              "pedestrian"
+            ],
+            "title": "Checkpoint Type"
+          },
+          "zone_id": {
+            "type": "string",
+            "title": "Zone Id"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "checkpoint_type",
+          "zone_id",
+          "x",
+          "y"
+        ],
+        "title": "Checkpoint"
+      },
+      "Geo": {
+        "properties": {
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor",
+            "description": "Этаж внутри здания; null — улица"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "x",
+          "y"
+        ],
+        "title": "Geo",
+        "description": "Point in local plan coordinates, metres from the site origin (south-west corner)."
+      },
+      "Georef": {
+        "properties": {
+          "origin_lat": {
+            "type": "number",
+            "title": "Origin Lat"
+          },
+          "origin_lon": {
+            "type": "number",
+            "title": "Origin Lon"
+          },
+          "rotation_deg": {
+            "type": "number",
+            "title": "Rotation Deg",
+            "default": 0.0
+          }
+        },
+        "type": "object",
+        "required": [
+          "origin_lat",
+          "origin_lon"
+        ],
+        "title": "Georef",
+        "description": "Привязка локальных метров к WGS84: точка (0, 0) плана = (origin_lat, origin_lon)."
+      },
+      "Geozone": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "z-gate"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "zone_type": {
+            "type": "string",
+            "enum": [
+              "gate",
+              "docks",
+              "parking",
+              "restricted",
+              "speed"
+            ],
+            "title": "Zone Type"
+          },
+          "speed_limit_kmh": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Speed Limit Kmh"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "zone_type",
+          "geometry"
+        ],
+        "title": "Geozone"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "HistoryPoint": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "min": {
+            "type": "number",
+            "title": "Min"
+          },
+          "avg": {
+            "type": "number",
+            "title": "Avg"
+          },
+          "max": {
+            "type": "number",
+            "title": "Max"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "min",
+          "avg",
+          "max"
+        ],
+        "title": "HistoryPoint"
+      },
+      "LayoutDocument": {
+        "properties": {
+          "version": {
+            "type": "integer",
+            "title": "Version"
+          },
+          "geojson": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Geojson",
+            "description": "FeatureCollection в формате deploy/seed/layout.geojson"
+          }
+        },
+        "type": "object",
+        "required": [
+          "version",
+          "geojson"
+        ],
+        "title": "LayoutDocument"
+      },
+      "LayoutUpdate": {
+        "properties": {
+          "base_version": {
+            "type": "integer",
+            "title": "Base Version",
+            "description": "Версия, от которой редактировали; при расхождении — 409"
+          },
+          "geojson": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Geojson"
+          }
+        },
+        "type": "object",
+        "required": [
+          "base_version",
+          "geojson"
+        ],
+        "title": "LayoutUpdate"
+      },
+      "LineGeometry": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "LineString",
+            "title": "Type",
+            "default": "LineString"
+          },
+          "coordinates": {
+            "items": {
+              "prefixItems": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "number"
+                }
+              ],
+              "type": "array",
+              "maxItems": 2,
+              "minItems": 2
+            },
+            "type": "array",
+            "title": "Coordinates"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coordinates"
+        ],
+        "title": "LineGeometry"
+      },
+      "LiveState": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "sensors": {
+            "items": {
+              "$ref": "#/components/schemas/SensorLive"
+            },
+            "type": "array",
+            "title": "Sensors"
+          },
+          "vehicles": {
+            "items": {
+              "$ref": "#/components/schemas/VehicleLive"
+            },
+            "type": "array",
+            "title": "Vehicles"
+          },
+          "zones": {
+            "items": {
+              "$ref": "#/components/schemas/ZoneOccupancy"
+            },
+            "type": "array",
+            "title": "Zones"
+          },
+          "open_alerts": {
+            "type": "integer",
+            "title": "Open Alerts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "sensors",
+          "vehicles",
+          "zones",
+          "open_alerts"
+        ],
+        "title": "LiveState"
+      },
+      "LoginRequest": {
+        "properties": {
+          "username": {
+            "type": "string",
+            "title": "Username"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "username",
+          "password"
+        ],
+        "title": "LoginRequest"
+      },
+      "MetricSpec": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Ключ поля в payload события",
+            "examples": [
+              "temperature_c"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "examples": [
+              "Температура"
+            ]
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit",
+            "examples": [
+              "°C"
+            ]
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "number",
+              "bool",
+              "string"
+            ],
+            "title": "Kind",
+            "default": "number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "name"
+        ],
+        "title": "MetricSpec"
+      },
+      "ObjectsResponse": {
+        "properties": {
+          "layout_version": {
+            "type": "integer",
+            "title": "Layout Version"
+          },
+          "units": {
+            "type": "string",
+            "const": "m",
+            "title": "Units",
+            "default": "m"
+          },
+          "extent": {
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array",
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Extent",
+            "description": "[x_min, y_min, x_max, y_max]"
+          },
+          "georef": {
+            "$ref": "#/components/schemas/Georef"
+          },
+          "site": {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          },
+          "buildings": {
+            "items": {
+              "$ref": "#/components/schemas/Building"
+            },
+            "type": "array",
+            "title": "Buildings"
+          },
+          "rooms": {
+            "items": {
+              "$ref": "#/components/schemas/Room"
+            },
+            "type": "array",
+            "title": "Rooms"
+          },
+          "roads": {
+            "items": {
+              "$ref": "#/components/schemas/Road"
+            },
+            "type": "array",
+            "title": "Roads"
+          },
+          "geozones": {
+            "items": {
+              "$ref": "#/components/schemas/Geozone"
+            },
+            "type": "array",
+            "title": "Geozones"
+          },
+          "checkpoints": {
+            "items": {
+              "$ref": "#/components/schemas/Checkpoint"
+            },
+            "type": "array",
+            "title": "Checkpoints"
+          },
+          "sensor_types": {
+            "items": {
+              "$ref": "#/components/schemas/SensorTypeInfo"
+            },
+            "type": "array",
+            "title": "Sensor Types"
+          },
+          "sensors": {
+            "items": {
+              "$ref": "#/components/schemas/Sensor"
+            },
+            "type": "array",
+            "title": "Sensors"
+          },
+          "vehicles": {
+            "items": {
+              "$ref": "#/components/schemas/Vehicle"
+            },
+            "type": "array",
+            "title": "Vehicles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "layout_version",
+          "extent",
+          "georef",
+          "site",
+          "buildings",
+          "rooms",
+          "roads",
+          "geozones",
+          "checkpoints",
+          "sensor_types",
+          "sensors",
+          "vehicles"
+        ],
+        "title": "ObjectsResponse",
+        "description": "Вся статика одним ответом: план, реестр датчиков и машин. Фронт кэширует по layout_version."
+      },
+      "PolygonGeometry": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "Polygon",
+            "title": "Type",
+            "default": "Polygon"
+          },
+          "coordinates": {
+            "items": {
+              "items": {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              "type": "array"
+            },
+            "type": "array",
+            "title": "Coordinates",
+            "description": "Кольца полигона в метрах плана; первое — внешнее"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coordinates"
+        ],
+        "title": "PolygonGeometry"
+      },
+      "RefreshRequest": {
+        "properties": {
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refresh_token"
+        ],
+        "title": "RefreshRequest"
+      },
+      "Road": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "road-main"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "width_m": {
+            "type": "number",
+            "title": "Width M"
+          },
+          "speed_limit_kmh": {
+            "type": "number",
+            "title": "Speed Limit Kmh"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/LineGeometry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "width_m",
+          "speed_limit_kmh",
+          "geometry"
+        ],
+        "title": "Road"
+      },
+      "Role": {
+        "type": "string",
+        "enum": [
+          "dispatcher",
+          "security",
+          "admin"
+        ],
+        "title": "Role"
+      },
+      "Room": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "r-wh2-storage"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "building_id": {
+            "type": "string",
+            "title": "Building Id"
+          },
+          "floor": {
+            "type": "integer",
+            "title": "Floor"
+          },
+          "room_type": {
+            "type": "string",
+            "title": "Room Type",
+            "examples": [
+              "storage"
+            ]
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "building_id",
+          "floor",
+          "room_type",
+          "geometry"
+        ],
+        "title": "Room"
+      },
+      "RoutePoint": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "x": {
+            "type": "number",
+            "title": "X"
+          },
+          "y": {
+            "type": "number",
+            "title": "Y"
+          },
+          "speed_kmh": {
+            "type": "number",
+            "title": "Speed Kmh"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "x",
+          "y",
+          "speed_kmh"
+        ],
+        "title": "RoutePoint"
+      },
+      "Sensor": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$",
+            "title": "Id",
+            "examples": [
+              "clim-wh2-storage"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/SensorType"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "Климат, склад №2: хранение"
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "building_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Id",
+            "examples": [
+              "b-wh2"
+            ]
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id",
+            "examples": [
+              "r-wh2-storage"
+            ]
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor"
+          },
+          "geo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Geo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Точка установки; null для подвижных датчиков"
+          },
+          "vehicle_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Id",
+            "description": "Для GNSS-трекера: машина, на которой он стоит"
+          },
+          "thresholds": {
+            "items": {
+              "$ref": "#/components/schemas/Threshold"
+            },
+            "type": "array",
+            "title": "Thresholds",
+            "default": []
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          },
+          "is_mobile": {
+            "type": "boolean",
+            "title": "Is Mobile"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "name",
+          "is_mobile",
+          "created_at"
+        ],
+        "title": "Sensor"
+      },
+      "SensorCreate": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9_-]*$",
+            "title": "Id",
+            "examples": [
+              "clim-wh2-storage"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/SensorType"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "Климат, склад №2: хранение"
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "building_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Id",
+            "examples": [
+              "b-wh2"
+            ]
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id",
+            "examples": [
+              "r-wh2-storage"
+            ]
+          },
+          "floor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Floor"
+          },
+          "geo": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Geo"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Точка установки; null для подвижных датчиков"
+          },
+          "vehicle_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vehicle Id",
+            "description": "Для GNSS-трекера: машина, на которой он стоит"
+          },
+          "thresholds": {
+            "items": {
+              "$ref": "#/components/schemas/Threshold"
+            },
+            "type": "array",
+            "title": "Thresholds",
+            "default": []
+          },
+          "enabled": {
+            "type": "boolean",
+            "title": "Enabled",
+            "default": true
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "type",
+          "name"
+        ],
+        "title": "SensorCreate"
+      },
+      "SensorHistory": {
+        "properties": {
+          "sensor_id": {
+            "type": "string",
+            "title": "Sensor Id"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "step": {
+            "type": "string",
+            "enum": [
+              "raw",
+              "1m",
+              "1h"
+            ],
+            "title": "Step",
+            "description": "raw — сырые точки; 1m/1h — агрегаты"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/HistoryPoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sensor_id",
+          "metric",
+          "step",
+          "points"
+        ],
+        "title": "SensorHistory"
+      },
+      "SensorLive": {
+        "properties": {
+          "sensor_id": {
+            "type": "string",
+            "title": "Sensor Id",
+            "examples": [
+              "clim-wh2-storage"
+            ]
+          },
+          "type": {
+            "$ref": "#/components/schemas/SensorType"
+          },
+          "building_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Building Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SensorStatus"
+          },
+          "last_seen": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Seen"
+          },
+          "values": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "number"
+                },
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Values",
+            "description": "Последний payload датчика",
+            "examples": [
+              {
+                "humidity_pct": 61.0,
+                "temperature_c": 4.2
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "sensor_id",
+          "type",
+          "status",
+          "last_seen",
+          "values"
+        ],
+        "title": "SensorLive"
+      },
+      "SensorStatus": {
+        "type": "string",
+        "enum": [
+          "ok",
+          "warning",
+          "critical",
+          "offline"
+        ],
+        "title": "SensorStatus"
+      },
+      "SensorType": {
+        "type": "string",
+        "enum": [
+          "anpr_camera",
+          "access_control",
+          "gnss",
+          "motion",
+          "climate"
+        ],
+        "title": "SensorType"
+      },
+      "SensorTypeInfo": {
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/SensorType"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "examples": [
+              "Климат (температура и влажность)"
+            ]
+          },
+          "is_mobile": {
+            "type": "boolean",
+            "title": "Is Mobile",
+            "description": "Подвижный датчик: позиция приходит в событиях, а не задана на плане"
+          },
+          "metrics": {
+            "items": {
+              "$ref": "#/components/schemas/MetricSpec"
+            },
+            "type": "array",
+            "title": "Metrics"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "is_mobile",
+          "metrics"
+        ],
+        "title": "SensorTypeInfo"
+      },
+      "Severity": {
+        "type": "string",
+        "enum": [
+          "info",
+          "warning",
+          "critical"
+        ],
+        "title": "Severity"
+      },
+      "Threshold": {
+        "properties": {
+          "metric": {
+            "type": "string",
+            "title": "Metric",
+            "examples": [
+              "temperature_c"
+            ]
+          },
+          "nominal": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Nominal",
+            "description": "Номинальное значение",
+            "examples": [
+              4.0
+            ]
+          },
+          "min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Min",
+            "examples": [
+              2.0
+            ]
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max",
+            "examples": [
+              6.0
+            ]
+          },
+          "critical_min": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Critical Min",
+            "examples": [
+              0.0
+            ]
+          },
+          "critical_max": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Critical Max",
+            "examples": [
+              8.0
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Version",
+            "description": "Версия порога; алерт хранит версию, по которой сработал",
+            "default": 1
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "metric"
+        ],
+        "title": "Threshold",
+        "description": "Пороги одной метрики. Норма — [min, max]; вне нормы — warning; вне [critical_min, critical_max] — critical."
+      },
+      "TokenPair": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "expires_in": {
+            "type": "integer",
+            "title": "Expires In",
+            "description": "Время жизни access-токена, секунд"
+          },
+          "user": {
+            "$ref": "#/components/schemas/User"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "expires_in",
+          "user"
+        ],
+        "title": "TokenPair"
+      },
+      "User": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "username": {
+            "type": "string",
+            "title": "Username",
+            "examples": [
+              "dispatcher"
+            ]
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name",
+            "examples": [
+              "Иванов И. И."
+            ]
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "username",
+          "full_name",
+          "role"
+        ],
+        "title": "User"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "Vehicle": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "v-truck-1"
+            ]
+          },
+          "plate": {
+            "type": "string",
+            "title": "Plate",
+            "examples": [
+              "А123ВС77"
+            ]
+          },
+          "kind": {
+            "$ref": "#/components/schemas/VehicleKind"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model",
+            "examples": [
+              "КАМАЗ 65115"
+            ]
+          },
+          "sensor_id": {
+            "type": "string",
+            "title": "Sensor Id",
+            "description": "GNSS-трекер машины",
+            "examples": [
+              "gnss-truck-1"
+            ]
+          },
+          "carrier": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Carrier",
+            "examples": [
+              "ООО «ТрансЛогистик»"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "plate",
+          "kind",
+          "model",
+          "sensor_id"
+        ],
+        "title": "Vehicle"
+      },
+      "VehicleKind": {
+        "type": "string",
+        "enum": [
+          "truck",
+          "loader",
+          "car"
+        ],
+        "title": "VehicleKind"
+      },
+      "VehicleLive": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id",
+            "examples": [
+              "v-truck-1"
+            ]
+          },
+          "sensor_id": {
+            "type": "string",
+            "title": "Sensor Id"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VehicleStatus"
+          },
+          "geo": {
+            "$ref": "#/components/schemas/Geo"
+          },
+          "speed_kmh": {
+            "type": "number",
+            "title": "Speed Kmh"
+          },
+          "heading_deg": {
+            "type": "number",
+            "title": "Heading Deg"
+          },
+          "fuel_pct": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fuel Pct"
+          },
+          "engine_on": {
+            "type": "boolean",
+            "title": "Engine On"
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zone Id",
+            "description": "Геозона, в которой сейчас машина"
+          },
+          "last_seen": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Last Seen"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "sensor_id",
+          "status",
+          "geo",
+          "speed_kmh",
+          "heading_deg",
+          "engine_on",
+          "last_seen"
+        ],
+        "title": "VehicleLive"
+      },
+      "VehicleRoute": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "points": {
+            "items": {
+              "$ref": "#/components/schemas/RoutePoint"
+            },
+            "type": "array",
+            "title": "Points"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "points"
+        ],
+        "title": "VehicleRoute"
+      },
+      "VehicleStatus": {
+        "type": "string",
+        "enum": [
+          "moving",
+          "idle",
+          "stopped",
+          "offline"
+        ],
+        "title": "VehicleStatus"
+      },
+      "ZoneOccupancy": {
+        "properties": {
+          "zone_id": {
+            "type": "string",
+            "title": "Zone Id",
+            "description": "Здание или помещение",
+            "examples": [
+              "b-wh1"
+            ]
+          },
+          "people": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "People",
+            "description": "Людей внутри по событиям СКУД вход/выход"
+          }
+        },
+        "type": "object",
+        "required": [
+          "zone_id",
+          "people"
+        ],
+        "title": "ZoneOccupancy"
+      }
+    }
+  }
+}
