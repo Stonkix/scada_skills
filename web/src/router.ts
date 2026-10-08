@@ -18,6 +18,7 @@ export const router = createRouter({
     { path: '/kpi', name: 'kpi', component: () => import('@/views/KpiView.vue'), meta: { permission: 'kpi:view', title: 'KPI' } },
     { path: '/analytics', name: 'analytics', component: () => import('@/views/AnalyticsView.vue'), meta: { permission: 'kpi:view', title: 'Replay и тепловая карта' } },
     { path: '/registry', name: 'registry', component: () => import('@/views/RegistryView.vue'), meta: { permission: 'sensors:view', title: 'Реестр датчиков' } },
+    { path: '/editor', name: 'editor', component: () => import('@/views/EditorView.vue'), meta: { permission: 'layout:edit', title: 'Редактор плана' } },
     { path: '/connectors', name: 'connectors', component: () => import('@/views/ConnectorsView.vue'), meta: { permission: 'sensors:view', title: 'Коннекторы' } },
     { path: '/:pathMatch(.*)*', redirect: '/' },
   ],

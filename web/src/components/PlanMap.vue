@@ -12,8 +12,9 @@ const props = withDefaults(
     showZones?: boolean
     showRoads?: boolean
     fitTop?: number // px kept free at the top when fitting the plan (floating toolbars)
+    clickableBuildings?: boolean // false in the editor: clicks must reach the map to place sensors
   }>(),
-  { showZones: true, showRoads: true, fitTop: 20 },
+  { showZones: true, showRoads: true, fitTop: 20, clickableBuildings: true },
 )
 const emit = defineEmits<{ building: [id: string]; background: [] }>()
 
@@ -55,7 +56,7 @@ function drawStatic() {
   }
   for (const b of o.buildings) {
     const poly = L.polygon(ring(b.geometry.coordinates[0] as [number, number][]), {
-      pane: 'buildings', color: '#64748b', weight: 1.5, fillColor: '#1e293b', fillOpacity: 1, className: 'building',
+      pane: 'buildings', color: '#64748b', weight: 1.5, fillColor: '#1e293b', fillOpacity: 1, className: 'building', interactive: props.clickableBuildings,
     })
     poly.on('click', (e) => {
       L.DomEvent.stopPropagation(e)
