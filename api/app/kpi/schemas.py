@@ -26,7 +26,8 @@ class GateKpi(BaseModel):
     entries: int = Field(..., description="Въезды в зону КПП-1 по ГЛОНАСС")
     exits: int
     plates_recognized: int = Field(..., description="Распознаваний номеров камерами КПП")
-    by_hour: list[HourCount]
+    bucket_minutes: int = Field(60, description="Шаг by_hour: 5 мин (период до 3 ч), 60 (до 2 суток), 1440")
+    by_hour: list[HourCount] = Field(..., description="`hour` — начало интервала длиной bucket_minutes")
 
 
 class BuildingTraffic(BaseModel):

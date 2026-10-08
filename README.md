@@ -7,7 +7,7 @@
 Нужны Docker и Python 3.12.
 
 ```bash
-python dev.py up      # хранилища, db-init (миграции + сиды), connectors, worker, simulator, API
+python dev.py up      # хранилища, db-init (миграции + сиды), connectors, worker, simulator, API, web
 python dev.py seed    # вернуть все хранилища к демо-состоянию (без пересоздания контейнеров)
 python dev.py reset   # стереть все данные и поднять заново
 python dev.py down
@@ -38,12 +38,13 @@ venv/Scripts/python dev.py api
 | `simulator/` | Машины по дорогам, турникеты, климат, движение, сценарии для демо | 2 ✅ |
 | `worker/` | Стрим → ClickHouse, live-состояние в Redis, геозоны, правила и тревоги | 3 ✅ |
 | `mock-1c/` | Мок 1С-ЭПД | 6 |
-| `web/` | Фронтенд (Vue 3) | 5 |
+| `web/` | Фронтенд: карта, тревоги, KPI, replay, реестр (Vue 3 + Leaflet), [web/README.md](web/README.md) | 5 ✅ |
 
 ## Сервисы
 
 | Сервис | Адрес | Что это |
 |---|---|---|
+| **Интерфейс** | **http://localhost:8080** | вход: `dispatcher` / `security` / `admin`, пароль `demo` |
 | API | http://localhost:8000/docs | для фронта (JWT; в Swagger — кнопка Authorize) |
 | Connectors | http://localhost:8001/docs | приём данных с датчиков, каталог форматов `GET /adapters` |
 | Simulator | http://localhost:8010/docs | живое предприятие и «чит-меню» сценариев |

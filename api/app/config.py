@@ -9,6 +9,7 @@ class ApiSettings:
     access_ttl_s: int = field(default_factory=lambda: int(os.environ.get("JWT_ACCESS_TTL_S", "900")))
     refresh_ttl_s: int = field(default_factory=lambda: int(os.environ.get("JWT_REFRESH_TTL_S", str(7 * 24 * 3600))))
     cors_origins: list[str] = field(default_factory=lambda: os.environ.get("CORS_ORIGINS", "*").split(","))
+    site_tz: str = field(default_factory=lambda: os.environ.get("SITE_TZ", "Europe/Moscow"))  # for human-facing stamps
 
 
 api_settings = ApiSettings()

@@ -1,0 +1,129 @@
+<script setup lang="ts">
+import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { errorText, sim } from '@/api/client'
+import { useToasts } from '@/stores/toasts'
+
+interface Scenario {
+  name: string
+  title: string
+  description: string
+  steps: unknown[]
+}
+interface SimStatus {
+  effects: { kind: string; target: string; left_s: number }[]
+  runs: { id: string; scenario: string; step: number; done: boolean; error: string | null }[]
+}
+
+const emit = defineEmits<{ close: [] }>()
+const toasts = useToasts()
+const scenarios = ref<Scenario[]>([])
+const status = ref<SimStatus | null>(null)
+const error = ref('')
+const busy = ref('')
+
+const EFFECT_LABEL: Record<string, string> = {
+  breakdown: 'поломка',
+  speed: 'превышение',
+  climate_drift: 'нагрев',
+  motion_alarm: 'движение',
+  silence: 'нет связи',
+  closed: 'здание закрыто',
+}
+
+async function refresh() {
+  try {
+    status.value = await sim<SimStatus>('/status')
+    error.value = ''
+  } catch (e) {
+    error.value = `Симулятор недоступен: ${errorText(e)}`
+  }
+}
+
+async function run(name: string) {
+  busy.value = name
+  try {
+    await sim(`/scenario/${name}`, { method: 'POST' })
+    toasts.push({ kind: 'success', title: 'Сценарий запущен', text: scenarios.value.find((s) => s.name === name)?.title })
+    await refresh()
+  } catch (e) {
+    toasts.push({ kind: 'error', title: 'Сценарий не запущен', text: errorText(e) })
+  } finally {
+    busy.value = ''
+  }
+}
+
+async function stopAll() {
+  await sim('/scenarios/stop', { method: 'POST' })
+  toasts.push({ kind: 'info', title: 'Все сценарии остановлены' })
+  await refresh()
+}
+
+let timer: ReturnType<typeof setInterval>
+onMounted(async () => {
+  try {
+    scenarios.value = await sim<Scenario[]>('/scenarios')
+  } catch (e) {
+    error.value = `Симулятор недоступен: ${errorText(e)}`
+  }
+  await refresh()
+  timer = setInterval(refresh, 3000)
+})
+onBeforeUnmount(() => clearInterval(timer))
+</script>
+
+<template>
+  <section class="cheat panel">
+    <header class="row">
+      <h2 class="grow">Сценарии демо</h2>
+      <button class="small danger" @click="stopAll">Стоп всё</button>
+      <button class="small ghost" aria-label="Закрыть" @click="emit('close')">✕</button>
+    </header>
+    <div v-if="error" class="muted">{{ error }}</div>
+    <div class="list">
+      <button v-for="s in scenarios" :key="s.name" class="scenario" :disabled="!!busy" :title="s.description" @click="run(s.name)">
+        <b>{{ s.title }}</b>
+        <small class="muted">{{ s.description }}</small>
+      </button>
+    </div>
+    <div v-if="status?.effects.length" class="effects">
+      <h3>Активно</h3>
+      <div v-for="e in status.effects" :key="e.kind + e.target" class="row">
+        <span class="badge sev-warning">{{ EFFECT_LABEL[e.kind] ?? e.kind }}</span>
+        <span class="mono grow">{{ e.target }}</span>
+        <small class="muted">{{ Math.ceil(e.left_s / 60) }} мин</small>
+      </div>
+    </div>
+    <div v-for="r in status?.runs.filter((r) => r.error) ?? []" :key="r.id" class="muted">⚠ {{ r.scenario }}: {{ r.error }}</div>
+  </section>
+</template>
+
+<style scoped>
+.cheat {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  max-height: 100%;
+  overflow: auto;
+}
+.list {
+  display: grid;
+  gap: 6px;
+}
+.scenario {
+  display: grid;
+  justify-items: start;
+  text-align: left;
+  white-space: normal;
+  gap: 2px;
+  padding: 8px 10px;
+}
+.scenario small {
+  font-size: 11px;
+}
+.effects {
+  display: grid;
+  gap: 6px;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+}
+</style>

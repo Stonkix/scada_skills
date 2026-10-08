@@ -1,0 +1,102 @@
+/* Map markers shared by the live map and replay (Leaflet divIcons live outside Vue scoping). */
+.sensor-icon,
+.vehicle-icon,
+.people-icon {
+  background: none;
+  border: none;
+}
+.sensor {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font: 700 10px/1 var(--mono);
+  color: #0b1220;
+  background: var(--st-unknown);
+  border: 1.5px solid #0b1220;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+.sensor.s-ok { background: var(--st-ok); }
+.sensor.s-warning { background: var(--st-warning); }
+.sensor.s-critical { background: var(--st-critical); color: #fff; }
+.sensor.s-offline { background: var(--st-offline); color: #cbd5e1; }
+.sensor.selected,
+.vehicle.selected svg {
+  outline: 2px solid #fff;
+  outline-offset: 2px;
+}
+
+/* smooth movement between GNSS fixes (~2 s); off during zoom so markers don't drift */
+.leaflet-marker-icon.vehicle-icon {
+  transition: transform 1.9s linear;
+}
+.leaflet-zoom-anim .leaflet-marker-icon.vehicle-icon,
+.leaflet-zoom-anim .leaflet-marker-icon {
+  transition: none;
+}
+.vehicle {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+}
+.vehicle svg {
+  fill: var(--veh-moving);
+  stroke: #0b1220;
+  stroke-width: 1.2;
+  border-radius: 50%;
+  transition: transform 0.6s;
+}
+.vehicle.k-loader svg { fill: #c084fc; }
+.vehicle.k-car svg { fill: #67e8f9; }
+.vehicle.v-stopped svg,
+.vehicle.v-idle svg { opacity: 0.75; }
+.vehicle.v-offline svg { fill: var(--st-offline); }
+.vehicle span {
+  position: absolute;
+  left: 24px;
+  top: 3px;
+  font: 600 10px/1 var(--mono);
+  color: var(--text);
+  white-space: nowrap;
+  text-shadow: 0 1px 2px #000, 0 0 3px #000;
+  pointer-events: none;
+}
+.people {
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: #0b1220d0;
+  border: 1px solid var(--border);
+  font: 600 11px/1.2 var(--mono);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.people svg { fill: currentColor; }
+.people.empty { color: var(--text-muted); }
+
+.alert-critical,
+.alert-warning,
+.alert-info {
+  animation: pulse 1.4s ease-out infinite;
+}
+.vehicle.alert-critical,
+.vehicle.alert-warning,
+.vehicle.alert-info {
+  border-radius: 50%;
+}
+.people.alert-critical { border-color: var(--st-critical); color: #fecaca; }
+.people.alert-warning { border-color: var(--st-warning); }
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 var(--pulse, #ef444499); }
+  100% { box-shadow: 0 0 0 12px #0000; }
+}
+.alert-critical { --pulse: #ef4444aa; }
+.alert-warning { --pulse: #f59e0baa; }
+.alert-info { --pulse: #38bdf8aa; }

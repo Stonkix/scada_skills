@@ -2243,12 +2243,19 @@
             "title": "Plates Recognized",
             "description": "Распознаваний номеров камерами КПП"
           },
+          "bucket_minutes": {
+            "type": "integer",
+            "title": "Bucket Minutes",
+            "description": "Шаг by_hour: 5 мин (период до 3 ч), 60 (до 2 суток), 1440",
+            "default": 60
+          },
           "by_hour": {
             "items": {
               "$ref": "#/components/schemas/HourCount"
             },
             "type": "array",
-            "title": "By Hour"
+            "title": "By Hour",
+            "description": "`hour` — начало интервала длиной bucket_minutes"
           }
         },
         "type": "object",

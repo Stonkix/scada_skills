@@ -1,5 +1,6 @@
 from datetime import UTC, datetime
 from typing import Annotated
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from scada_common import keys
@@ -10,6 +11,7 @@ from sqlalchemy import func, select
 
 from app.alerts.schemas import Alert, AlertAction, AlertPage, AlertStatus, Severity
 from app.auth.security import Principal
+from app.config import api_settings
 from app.deps import CH, DB, redis_sync, require
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
@@ -89,7 +91,7 @@ def get_alert(alert_id: int, db: DB, _: CanView) -> Alert:
 
 def _comment(row: m.Alert, user: Principal, text: str | None) -> None:
     if text:
-        stamp = f"[{datetime.now(UTC):%Y-%m-%d %H:%M} {user.username}] {text}"
+        stamp = f"[{datetime.now(ZoneInfo(api_settings.site_tz)):%d.%m %H:%M} {user.username}] {text}"
         row.comment = f"{row.comment}\n{stamp}" if row.comment else stamp
 
 

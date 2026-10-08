@@ -67,14 +67,18 @@ def kpi(db: DB, ch: CH, _: CanView, start: FromQ = None, end: ToQ = None) -> Kpi
             utilization_pct=round(100 * moving / on_site, 1) if on_site else 0.0))
     vehicles.sort(key=lambda v: v.vehicle_id)
 
+    span_h = (end - start).total_seconds() / 3600
+    bucket_min = 5 if span_h <= 3 else 60 if span_h <= 48 else 1440  # ~10-50 bars whatever the period
     by_hour = ch.query("""
-        SELECT toStartOfHour(ts) h, countIf(transition = 'enter'), countIf(transition = 'exit') FROM zone_events
+        SELECT toStartOfInterval(ts, toIntervalMinute({b:UInt32})) h, countIf(transition = 'enter'),
+               countIf(transition = 'exit') FROM zone_events
         WHERE zone_id = {zone:String} AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}
-        GROUP BY h ORDER BY h""", parameters=p | {"zone": GATE_ZONE}).result_rows
+        GROUP BY h ORDER BY h""", parameters=p | {"zone": GATE_ZONE, "b": bucket_min}).result_rows
     plates = ch.query("""
         SELECT count() FROM telemetry WHERE type = 'anpr_camera' AND zone_id = {zone:String}
           AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}""", parameters=p | {"zone": GATE_ZONE}).result_rows
     gate = GateKpi(entries=sum(r[1] for r in by_hour), exits=sum(r[2] for r in by_hour), plates_recognized=plates[0][0],
+                   bucket_minutes=bucket_min,
                    by_hour=[HourCount(hour=_utc(h), entries=e, exits=x) for h, e, x in by_hour])
 
     names = dict(db.execute(select(m.Building.id, m.Building.name)).all())
