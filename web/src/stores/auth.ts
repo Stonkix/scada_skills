@@ -12,6 +12,7 @@ export type Permission =
   | 'kpi:view'
   | 'people:view_pii'
   | 'whitelist:edit'
+  | 'connectors:manage'
 
 /** Permissions are in the access token (`perm` claim); decoding is only for showing/hiding UI. */
 function permissionsOf(pair: TokenPair | null): string[] {

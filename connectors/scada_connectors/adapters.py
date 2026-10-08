@@ -33,6 +33,11 @@ class Adapter:
     title: ClassVar[str]
     raw_model: ClassVar[type[Raw]]
     example: ClassVar[dict[str, Any]]
+    # where the device id and the timestamp sit in the vendor payload: lets UIs fill in a real
+    # sensor and the current time when building a test message from `example`
+    device_field: ClassVar[str]
+    ts_field: ClassVar[str]
+    ts_format: ClassVar[Literal["iso", "unix_s", "unix_ms"]] = "iso"
 
     def device_id(self, raw: Raw) -> str:
         raise NotImplementedError
@@ -68,6 +73,8 @@ class NativeAdapter(Adapter):
     """Devices and gateways that already speak our contract (common/scada_common/events.py)."""
 
     name = "native"
+    device_field = "sensor_id"
+    ts_field = "ts"
     sensor_type = None
     title = "Единый формат события (контракт v1)"
 
@@ -92,6 +99,8 @@ class NativeAdapter(Adapter):
 @adapter
 class AnprAdapter(Adapter):
     name = "anpr"
+    device_field = "camera_id"
+    ts_field = "captured_at"
     sensor_type = SensorType.ANPR_CAMERA
     title = "Камера распознавания номеров (webhook JSON)"
 
@@ -124,6 +133,8 @@ class AnprAdapter(Adapter):
 @adapter
 class SkudAdapter(Adapter):
     name = "skud"
+    device_field = "reader_id"
+    ts_field = "time"
     sensor_type = SensorType.ACCESS_CONTROL
     title = "Контроллер СКУД (пропуска, Wiegand)"
 
@@ -155,6 +166,9 @@ class SkudAdapter(Adapter):
 @adapter
 class GnssAdapter(Adapter):
     name = "gnss"
+    device_field = "device_id"
+    ts_field = "fix_time"
+    ts_format = "unix_s"
     sensor_type = SensorType.GNSS
     title = "ГЛОНАСС/GPS-трекер (координаты WGS84)"
 
@@ -192,6 +206,8 @@ class GnssAdapter(Adapter):
 @adapter
 class MotionAdapter(Adapter):
     name = "motion"
+    device_field = "device"
+    ts_field = "ts"
     sensor_type = SensorType.MOTION
     title = "Датчик движения охранной системы"
 
@@ -217,6 +233,9 @@ class MotionAdapter(Adapter):
 @adapter
 class ClimateAdapter(Adapter):
     name = "climate"
+    device_field = "device"
+    ts_field = "ts_ms"
+    ts_format = "unix_ms"
     sensor_type = SensorType.CLIMATE
     title = "Датчик температуры и влажности"
 

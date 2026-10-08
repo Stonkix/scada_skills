@@ -20,6 +20,7 @@ PERMISSIONS = {
     "kpi:view": "KPI, replay, heatmap",
     "people:view_pii": "ФИО владельцев пропусков без маскировки",
     "whitelist:edit": "правка списков допуска",
+    "connectors:manage": "выпуск и отзыв API-ключей для датчиков и шлюзов",
 }
 
 

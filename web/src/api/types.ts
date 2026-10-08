@@ -29,6 +29,34 @@ export type Replay = S['Replay']
 export type TokenPair = S['TokenPair']
 export type User = S['User']
 export type WhitelistPage = S['WhitelistPage']
+export type ApiKey = S['ApiKey']
+export type ApiKeyIssued = S['ApiKeyIssued']
+export type Endpoints = S['Endpoints']
+export type Rejection = S['Rejection']
+
+/** GET /adapters of the connectors service (not part of the API contract). */
+export interface AdapterInfo {
+  name: string
+  sensor_type: SensorType | null
+  title: string
+  http: string
+  mqtt_topic: string
+  example: Record<string, unknown>
+  device_field: string
+  ts_field: string
+  ts_format: 'iso' | 'unix_s' | 'unix_ms'
+  schema: { properties?: Record<string, JsonSchemaProp>; required?: string[]; description?: string }
+}
+export interface JsonSchemaProp {
+  type?: string
+  anyOf?: { type?: string; enum?: unknown[]; const?: unknown }[]
+  enum?: unknown[]
+  const?: unknown
+  description?: string
+  format?: string
+  minimum?: number
+  maximum?: number
+}
 export type Severity = Alert['severity']
 export type SensorType = Sensor['type']
 

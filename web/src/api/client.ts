@@ -105,6 +105,29 @@ export function errorText(e: unknown): string {
   return e instanceof Error ? e.message : String(e)
 }
 
+export interface IngestReply {
+  accepted: number
+  event_ids: string[]
+  rejected: { index: number; reason: string; detail: unknown }[]
+}
+
+/** Send to the connectors service exactly as a device would (proxied as /conn). */
+export async function ingest(adapter: string, apiKey: string, body: unknown): Promise<{ status: number; body: Partial<IngestReply> & { detail?: unknown } }> {
+  const res = await fetch(`/conn/ingest/${adapter}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-API-Key': apiKey },
+    body: JSON.stringify(body),
+  })
+  return { status: res.status, body: await res.json().catch(() => ({ detail: res.statusText })) }
+}
+
+/** Adapter catalogue of the connectors service. */
+export async function adapters<T>(): Promise<T> {
+  const res = await fetch('/conn/adapters')
+  if (!res.ok) throw new ApiError(res.status, 'Сервис коннекторов недоступен')
+  return (await res.json()) as T
+}
+
 /** Simulator control (demo "cheat menu"); proxied as /sim. */
 export async function sim<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`/sim${path}`, init)

@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 from app.alerts.router import router as alerts_router
 from app.auth.router import router as auth_router
 from app.config import api_settings
+from app.connectors.router import router as connectors_router
 from app.deps import clickhouse
 from app.kpi.router import router as kpi_router
 from app.layout.router import router as layout_router
@@ -71,7 +72,7 @@ app = FastAPI(
 )
 app.add_middleware(CORSMiddleware, allow_origins=api_settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
 
-for r in (auth_router, layout_router, registry_router, live_router, alerts_router, kpi_router):
+for r in (auth_router, layout_router, registry_router, live_router, alerts_router, kpi_router, connectors_router):
     app.include_router(r)
 
 

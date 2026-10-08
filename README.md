@@ -51,6 +51,10 @@ venv/Scripts/python dev.py api
 
 ## Коннекторы: как подключить датчик
 
+Проще всего — страница **«Коннекторы»** в интерфейсе (http://localhost:8080/connectors): выбор формата, привязка к датчику из реестра, выпуск API-ключа (админ), отправка тестового показания с подтверждением, что оно дошло до карты, готовые команды `curl` / `mosquitto_pub` / Python и последние отклонённые сообщения с причинами. Ключи: `GET/POST /connectors/keys`, `DELETE /connectors/keys/{id}` в API (право `connectors:manage`); ключ показывается один раз, хранится SHA-256.
+
+Вручную:
+
 HTTP: `POST /ingest/{adapter}`, заголовок `X-API-Key`, тело — объект или массив. MQTT: топик `sensors/{adapter}/{device_id}`, ключ — в MQTT 5 user property `x-api-key`.
 
 ```bash

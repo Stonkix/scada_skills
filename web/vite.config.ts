@@ -2,10 +2,11 @@ import { fileURLToPath, URL } from 'node:url'
 import vue from '@vitejs/plugin-vue'
 import { defineConfig } from 'vitest/config'
 
-// Same-origin in dev and in Docker: /api -> API (8000), /sim -> simulator (8010).
+// Same-origin in dev and in Docker: /api -> API (8000), /sim -> simulator (8010), /conn -> connectors (8001).
 // nginx does the same in the container (web/nginx.conf), so the app never deals with CORS.
 const api = process.env.API_URL ?? 'http://127.0.0.1:8000'
 const sim = process.env.SIM_URL ?? 'http://127.0.0.1:8010'
+const conn = process.env.CONNECTORS_URL ?? 'http://127.0.0.1:8001'
 
 export default defineConfig({
   plugins: [vue()],
@@ -16,6 +17,7 @@ export default defineConfig({
     proxy: {
       '/api': { target: api, changeOrigin: true, ws: true, rewrite: (p) => p.replace(/^\/api/, '') },
       '/sim': { target: sim, changeOrigin: true, rewrite: (p) => p.replace(/^\/sim/, '') },
+      '/conn': { target: conn, changeOrigin: true, rewrite: (p) => p.replace(/^\/conn/, '') },
     },
   },
   // ECharts is one ~580 kB chunk, loaded only by views with charts (lazy routes): expected, not a regression

@@ -472,6 +472,84 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/connectors/endpoints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Endpoints */
+        get: operations["endpoints_connectors_endpoints_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Keys */
+        get: operations["list_keys_connectors_keys_get"];
+        put?: never;
+        /**
+         * Issue Key
+         * @description Выпустить ключ. Сам ключ возвращается **только в этом ответе**; коннекторы примут его в течение ~5 с.
+         */
+        post: operations["issue_key_connectors_keys_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/keys/{key_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Revoke Key
+         * @description Отозвать ключ. Коннекторы перестают его принимать в течение 30 с (интервал обновления их кэша).
+         */
+        delete: operations["revoke_key_connectors_keys__key_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/rejections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rejections
+         * @description Последние отклонённые сообщения (stream:dlq), новые сверху: что пришло и почему не принято.
+         */
+        get: operations["rejections_connectors_rejections_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -608,6 +686,78 @@ export interface components {
             /** Open Now */
             open_now: number;
         };
+        /** ApiKey */
+        ApiKey: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Key Prefix
+             * @description Первые символы ключа: по ним ключ узнают в логах и DLQ
+             */
+            key_prefix: string;
+            /**
+             * Sensor Types
+             * @description null — любой тип датчиков
+             */
+            sensor_types?: components["schemas"]["SensorType"][] | null;
+            /** Rate Limit Per Min */
+            rate_limit_per_min: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Revoked At */
+            revoked_at: string | null;
+        };
+        /** ApiKeyCreate */
+        ApiKeyCreate: {
+            /**
+             * Name
+             * @example Шлюз климата, склад №2
+             */
+            name: string;
+            /** Sensor Types */
+            sensor_types?: components["schemas"]["SensorType"][] | null;
+            /**
+             * Rate Limit Per Min
+             * @default 6000
+             */
+            rate_limit_per_min: number;
+        };
+        /** ApiKeyIssued */
+        ApiKeyIssued: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Key Prefix
+             * @description Первые символы ключа: по ним ключ узнают в логах и DLQ
+             */
+            key_prefix: string;
+            /**
+             * Sensor Types
+             * @description null — любой тип датчиков
+             */
+            sensor_types?: components["schemas"]["SensorType"][] | null;
+            /** Rate Limit Per Min */
+            rate_limit_per_min: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Revoked At */
+            revoked_at: string | null;
+            /**
+             * Key
+             * @description Показывается один раз; в базе хранится только SHA-256
+             */
+            key: string;
+        };
         /** Body_bulk_create_sensors_sensors_bulk_post */
         Body_bulk_create_sensors_sensors_bulk_post: {
             /** File */
@@ -702,6 +852,38 @@ export interface components {
             x: number;
             /** Y */
             y: number;
+        };
+        /**
+         * Endpoints
+         * @description Где устройства и шлюзы подключаются к уровню коннекторов (адреса снаружи, для инструкций).
+         */
+        Endpoints: {
+            /**
+             * Http Base
+             * @example http://localhost:8001
+             */
+            http_base: string;
+            /**
+             * Mqtt Host
+             * @example localhost
+             */
+            mqtt_host: string;
+            /**
+             * Mqtt Port
+             * @example 1883
+             */
+            mqtt_port: number;
+            /**
+             * Api Key Header
+             * @default X-API-Key
+             */
+            api_key_header: string;
+            /**
+             * Mqtt Key Property
+             * @description MQTT 5 user property с ключом
+             * @default x-api-key
+             */
+            mqtt_key_property: string;
         };
         /** GateKpi */
         GateKpi: {
@@ -999,6 +1181,40 @@ export interface components {
         RefreshRequest: {
             /** Refresh Token */
             refresh_token: string;
+        };
+        /** Rejection */
+        Rejection: {
+            /**
+             * Id
+             * @description id записи в stream:dlq (время приёма)
+             */
+            id: string;
+            /** Received At */
+            received_at: string | null;
+            /**
+             * Reason
+             * @example unknown_sensor
+             */
+            reason: string;
+            /** Adapter */
+            adapter: string | null;
+            /**
+             * Source
+             * @description http | mqtt | worker
+             */
+            source?: string | null;
+            /**
+             * Api Key
+             * @description Имя ключа, с которым пришло сообщение
+             */
+            api_key?: string | null;
+            /** Detail */
+            detail?: unknown;
+            /**
+             * Raw
+             * @description Исходное сообщение (обрезано до 4 КБ)
+             */
+            raw?: string | null;
         };
         /** Replay */
         Replay: {
@@ -2417,6 +2633,142 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Replay"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    endpoints_connectors_endpoints_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Endpoints"];
+                };
+            };
+        };
+    };
+    list_keys_connectors_keys_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKey"][];
+                };
+            };
+        };
+    };
+    issue_key_connectors_keys_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApiKeyCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyIssued"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    revoke_key_connectors_keys__key_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKey"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    rejections_connectors_rejections_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                adapter?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Rejection"][];
                 };
             };
             /** @description Validation Error */

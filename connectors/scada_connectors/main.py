@@ -78,6 +78,9 @@ class AdapterOut(BaseModel):
     http: str
     mqtt_topic: str
     example: dict[str, Any]
+    device_field: str = Field(..., description="Поле payload с id устройства (= id датчика в реестре)")
+    ts_field: str = Field(..., description="Поле payload со временем измерения")
+    ts_format: str = Field(..., description="iso | unix_s | unix_ms")
     schema_: dict[str, Any] = Field(..., serialization_alias="schema")
 
 
@@ -86,6 +89,7 @@ def list_adapters() -> list[AdapterOut]:
     """Каталог поддерживаемых форматов: для страницы «подключить датчик за 5 минут»."""
     return [AdapterOut(name=a.name, sensor_type=a.sensor_type, title=a.title, http=f"POST /ingest/{a.name}",
                        mqtt_topic=f"sensors/{a.name}/{{device_id}}", example=a.example,
+                       device_field=a.device_field, ts_field=a.ts_field, ts_format=a.ts_format,
                        schema_=a.raw_model.model_json_schema())
             for a in ADAPTERS.values()]
 

@@ -60,5 +60,12 @@ def test_georef_roundtrip_with_rotation() -> None:
     assert g.to_local(*g.to_wgs84(123.4, -56.7)) == pytest.approx((123.4, -56.7), abs=1e-6)
 
 
+@pytest.mark.parametrize("name", list(ADAPTERS))
+def test_catalog_metadata_points_at_real_example_fields(name: str) -> None:
+    a = ADAPTERS[name]
+    assert a.device_field in a.example and a.ts_field in a.example
+    assert a.device_id(a.raw_model.model_validate(a.example)) == a.example[a.device_field]
+
+
 def test_adapter_registry_covers_every_sensor_type() -> None:
     assert {a.sensor_type for a in ADAPTERS.values() if a.sensor_type} == set(SensorType)

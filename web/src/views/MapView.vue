@@ -88,6 +88,17 @@ function locate(a: Alert) {
   if (sel) focus(sel)
 }
 
+// deep link from the connectors page: /?sensor=clim-wh1-dock
+watch(
+  () => [route.query.sensor, planMap.value?.map] as const,
+  ([id, map]) => {
+    if (typeof id !== 'string' || !map || !objects.sensors.has(id)) return
+    focus({ kind: 'sensor', id })
+    router.replace({ query: {} })
+  },
+  { immediate: true },
+)
+
 // deep link from a toast or the journal: /?alert=123 (resolved alerts are fetched by id)
 watch(
   () => [route.query.alert, planMap.value?.map] as const,

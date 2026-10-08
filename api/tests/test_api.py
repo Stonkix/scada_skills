@@ -236,3 +236,48 @@ def test_kpi_heatmap_replay(client: TestClient, tokens: dict) -> None:
 
 def test_health(client: TestClient) -> None:
     assert client.get("/health").json() == {"status": "ok", "postgres": "ok", "clickhouse": "ok", "redis": "ok"}
+
+
+# --- connectors ------------------------------------------------------------------------------------
+
+
+def test_api_key_issue_use_restrict_revoke(client: TestClient, tokens: dict) -> None:
+    import httpx
+
+    admin = auth(tokens, "admin")
+    assert client.get("/connectors/keys", headers=auth(tokens, "dispatcher")).status_code == 403
+    r = client.post("/connectors/keys", headers=admin,
+                    json={"name": "test: climate gateway", "sensor_types": ["climate"], "rate_limit_per_min": 100})
+    assert r.status_code == 201, r.text
+    issued = r.json()
+    try:
+        assert issued["key"].startswith("sk_") and issued["key"][:12] == issued["key_prefix"]
+        listed = client.get("/connectors/keys", headers=admin).json()
+        assert issued["id"] in [k["id"] for k in listed] and all("key" not in k for k in listed), "secret never listed"
+
+        ts_ms = int(time.time() * 1000)
+        body = {"device": "clim-wh1-dock", "temperature": 18.2, "humidity": 50, "ts_ms": ts_ms}
+        try:
+            resp = httpx.post("http://127.0.0.1:8001/ingest/climate", json=body, headers={"X-API-Key": issued["key"]},
+                              timeout=10)
+        except httpx.HTTPError:
+            pytest.skip("connectors service is not reachable on :8001")
+        assert resp.status_code == 202, resp.text  # a brand-new key works without restarting connectors
+        gnss = {"device_id": "gnss-truck-1", "lat": 55.7, "lon": 37.4, "speed": 0, "course": 0, "ignition": 0,
+                "fix_time": time.time()}
+        resp = httpx.post("http://127.0.0.1:8001/ingest/gnss", json=gnss, headers={"X-API-Key": issued["key"]}, timeout=10)
+        assert resp.json()["rejected"][0]["reason"] == "forbidden_type"
+        rej = client.get("/connectors/rejections", params={"adapter": "gnss", "limit": 5}, headers=admin).json()
+        assert rej and rej[0]["reason"] == "forbidden_type" and rej[0]["api_key"] == "test: climate gateway"
+
+        revoked = client.delete(f"/connectors/keys/{issued['id']}", headers=admin).json()
+        assert revoked["revoked_at"] is not None
+    finally:
+        with Session(engine()) as s:
+            s.execute(delete(m.ApiKey).where(m.ApiKey.id == issued["id"]))
+            s.commit()
+
+
+def test_connector_endpoints(client: TestClient, tokens: dict) -> None:
+    e = client.get("/connectors/endpoints", headers=auth(tokens, "dispatcher")).json()
+    assert e["http_base"].startswith("http") and e["mqtt_port"] > 0 and e["api_key_header"] == "X-API-Key"

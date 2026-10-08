@@ -143,6 +143,10 @@ services:
     environment:
       <<: *storage-env
       JWT_SECRET: ${JWT_SECRET}
+      # addresses shown on the connectors page: how devices outside docker reach level 3
+      PUBLIC_CONNECTORS_URL: http://localhost:${CONNECTORS_PORT}
+      PUBLIC_MQTT_HOST: localhost
+      PUBLIC_MQTT_PORT: ${MQTT_PORT}
     depends_on:
       db-init: {condition: service_completed_successfully}
     healthcheck:

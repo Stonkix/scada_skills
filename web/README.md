@@ -4,7 +4,7 @@ Vue 3 + TypeScript + Vite, Pinia, Vue Router, Leaflet (`CRS.Simple`: план в
 
 ```bash
 npm install
-npm run dev        # http://127.0.0.1:5173, проксирует /api -> :8000 и /sim -> :8010 (бэкенд: python dev.py up)
+npm run dev        # http://127.0.0.1:5173, проксирует /api -> :8000, /sim -> :8010, /conn -> :8001 (бэкенд: python dev.py up)
 npm run build      # проверка типов + сборка в dist/
 npm test           # vitest
 npm run api-types  # перегенерировать src/api/schema.d.ts из ../contracts/openapi.json
@@ -21,6 +21,7 @@ npm run api-types  # перегенерировать src/api/schema.d.ts из .
 | `/kpi` | Пробег и загрузка техники, КПП, проходы по СКУД, тревоги и время реакции | `kpi:view` |
 | `/analytics` | Replay треков с таймлайном и тревогами; тепловая карта | `kpi:view` |
 | `/registry` | Датчики (пороги с версиями, добавление, загрузка CSV с проверкой) и пропуска/номера | `sensors:view` (+ `sensors:edit`) |
+| `/connectors` | «Подключить датчик за 5 минут»: каталог форматов, поля по JSON Schema, выпуск/отзыв ключей, тестовая отправка через сервис коннекторов с подтверждением из live-состояния, команды curl / MQTT / Python, последние отказы (DLQ) | `sensors:view` (+ `connectors:manage`) |
 
 ## Устройство
 

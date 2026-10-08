@@ -1703,6 +1703,226 @@
         }
       }
     },
+    "/connectors/endpoints": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Endpoints",
+        "operationId": "endpoints_connectors_endpoints_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Endpoints"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/connectors/keys": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "List Keys",
+        "operationId": "list_keys_connectors_keys_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ApiKey"
+                  },
+                  "type": "array",
+                  "title": "Response List Keys Connectors Keys Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Issue Key",
+        "description": "Выпустить ключ. Сам ключ возвращается **только в этом ответе**; коннекторы примут его в течение ~5 с.",
+        "operationId": "issue_key_connectors_keys_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKeyIssued"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/connectors/keys/{key_id}": {
+      "delete": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Revoke Key",
+        "description": "Отозвать ключ. Коннекторы перестают его принимать в течение 30 с (интервал обновления их кэша).",
+        "operationId": "revoke_key_connectors_keys__key_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "key_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Key Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiKey"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/connectors/rejections": {
+      "get": {
+        "tags": [
+          "connectors"
+        ],
+        "summary": "Rejections",
+        "description": "Последние отклонённые сообщения (stream:dlq), новые сверху: что пришло и почему не принято.",
+        "operationId": "rejections_connectors_rejections_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 30,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "adapter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Adapter"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Rejection"
+                  },
+                  "title": "Response Rejections Connectors Rejections Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -2021,6 +2241,177 @@
         ],
         "title": "AlertsKpi"
       },
+      "ApiKey": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "key_prefix": {
+            "type": "string",
+            "title": "Key Prefix",
+            "description": "Первые символы ключа: по ним ключ узнают в логах и DLQ"
+          },
+          "sensor_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SensorType"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Types",
+            "description": "null — любой тип датчиков"
+          },
+          "rate_limit_per_min": {
+            "type": "integer",
+            "title": "Rate Limit Per Min"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "key_prefix",
+          "rate_limit_per_min",
+          "created_at",
+          "revoked_at"
+        ],
+        "title": "ApiKey"
+      },
+      "ApiKeyCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "examples": [
+              "Шлюз климата, склад №2"
+            ]
+          },
+          "sensor_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SensorType"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Types"
+          },
+          "rate_limit_per_min": {
+            "type": "integer",
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Rate Limit Per Min",
+            "default": 6000
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "ApiKeyCreate"
+      },
+      "ApiKeyIssued": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "key_prefix": {
+            "type": "string",
+            "title": "Key Prefix",
+            "description": "Первые символы ключа: по ним ключ узнают в логах и DLQ"
+          },
+          "sensor_types": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/SensorType"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sensor Types",
+            "description": "null — любой тип датчиков"
+          },
+          "rate_limit_per_min": {
+            "type": "integer",
+            "title": "Rate Limit Per Min"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "revoked_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Revoked At"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key",
+            "description": "Показывается один раз; в базе хранится только SHA-256"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "key_prefix",
+          "rate_limit_per_min",
+          "created_at",
+          "revoked_at",
+          "key"
+        ],
+        "title": "ApiKeyIssued"
+      },
       "Body_bulk_create_sensors_sensors_bulk_post": {
         "properties": {
           "file": {
@@ -2226,6 +2617,50 @@
           "y"
         ],
         "title": "Checkpoint"
+      },
+      "Endpoints": {
+        "properties": {
+          "http_base": {
+            "type": "string",
+            "title": "Http Base",
+            "examples": [
+              "http://localhost:8001"
+            ]
+          },
+          "mqtt_host": {
+            "type": "string",
+            "title": "Mqtt Host",
+            "examples": [
+              "localhost"
+            ]
+          },
+          "mqtt_port": {
+            "type": "integer",
+            "title": "Mqtt Port",
+            "examples": [
+              1883
+            ]
+          },
+          "api_key_header": {
+            "type": "string",
+            "title": "Api Key Header",
+            "default": "X-API-Key"
+          },
+          "mqtt_key_property": {
+            "type": "string",
+            "title": "Mqtt Key Property",
+            "description": "MQTT 5 user property с ключом",
+            "default": "x-api-key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "http_base",
+          "mqtt_host",
+          "mqtt_port"
+        ],
+        "title": "Endpoints",
+        "description": "Где устройства и шлюзы подключаются к уровню коннекторов (адреса снаружи, для инструкций)."
       },
       "GateKpi": {
         "properties": {
@@ -2880,6 +3315,91 @@
           "refresh_token"
         ],
         "title": "RefreshRequest"
+      },
+      "Rejection": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "id записи в stream:dlq (время приёма)"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "examples": [
+              "unknown_sensor"
+            ]
+          },
+          "adapter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adapter"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source",
+            "description": "http | mqtt | worker"
+          },
+          "api_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Key",
+            "description": "Имя ключа, с которым пришло сообщение"
+          },
+          "detail": {
+            "title": "Detail"
+          },
+          "raw": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Raw",
+            "description": "Исходное сообщение (обрезано до 4 КБ)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "received_at",
+          "reason",
+          "adapter"
+        ],
+        "title": "Rejection"
       },
       "Replay": {
         "properties": {

@@ -19,6 +19,7 @@ const nav = computed(() =>
     { to: '/kpi', label: 'KPI', show: auth.can('kpi:view') },
     { to: '/analytics', label: 'Replay', show: auth.can('kpi:view') },
     { to: '/registry', label: 'Реестр', show: auth.can('sensors:view') },
+    { to: '/connectors', label: 'Коннекторы', show: auth.can('sensors:view') },
   ].filter((n) => n.show),
 )
 const openCount = computed(() => live.openAlerts.filter((a) => a.status === 'open').length)
