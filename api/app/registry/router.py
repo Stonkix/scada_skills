@@ -6,8 +6,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, HTTPException, Query, UploadFile, status
 from pydantic import ValidationError
+from scada_common.catalog import numeric_metrics
 
-from app.mock import numeric_metrics, world
+from app.mock import world
 from app.registry.schemas import (
     BulkResult,
     BulkRowError,

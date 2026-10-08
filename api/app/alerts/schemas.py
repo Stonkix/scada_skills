@@ -1,29 +1,7 @@
 from datetime import datetime
-from enum import StrEnum
 
 from pydantic import BaseModel, Field
-
-
-class AlertKind(StrEnum):
-    THRESHOLD = "threshold"  # выход метрики за пороги
-    GEOZONE = "geozone"  # въезд/выезд/нахождение в геозоне
-    SCHEDULE = "schedule"  # активность в нерабочее время
-    WHITELIST = "whitelist"  # пропуск или номер вне базы
-    SPEED = "speed"  # превышение скорости
-    OFFLINE = "offline"  # датчик перестал слать данные
-    BREAKDOWN = "breakdown"  # остановка техники вне стоянки с заглушенным двигателем
-
-
-class Severity(StrEnum):
-    INFO = "info"
-    WARNING = "warning"
-    CRITICAL = "critical"
-
-
-class AlertStatus(StrEnum):
-    OPEN = "open"
-    ACK = "ack"
-    RESOLVED = "resolved"
+from scada_common.enums import AlertKind, AlertStatus, Severity
 
 
 class Alert(BaseModel):

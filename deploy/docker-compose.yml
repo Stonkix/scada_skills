@@ -53,6 +53,31 @@ services:
       timeout: 5s
       retries: 20
 
+  # One-shot: migrations (PG + CH), Redis consumer groups, demo seed into an empty registry.
+  db-init:
+    build:
+      context: ..
+      dockerfile: db/Dockerfile
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      CLICKHOUSE_HOST: clickhouse
+      CLICKHOUSE_HTTP_PORT: 8123
+      CLICKHOUSE_DB: ${CLICKHOUSE_DB}
+      CLICKHOUSE_USER: ${CLICKHOUSE_USER}
+      CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
+      REDIS_URL: redis://redis:6379/0
+      SIMULATOR_API_KEY: ${SIMULATOR_API_KEY}
+      DEMO_VENDOR_API_KEY: ${DEMO_VENDOR_API_KEY}
+    depends_on:
+      postgres: {condition: service_healthy}
+      clickhouse: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: "no"
+
   api:
     build:
       context: ..
@@ -60,6 +85,8 @@ services:
     ports: ["${API_PORT}:8000"]
     environment:
       SCADA_LAYOUT_PATH: /app/deploy/seed/layout.geojson
+    depends_on:
+      db-init: {condition: service_completed_successfully}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
       interval: 3s

@@ -1,12 +1,5 @@
-from enum import StrEnum
-
 from pydantic import BaseModel, Field
-
-
-class Role(StrEnum):
-    DISPATCHER = "dispatcher"
-    SECURITY = "security"
-    ADMIN = "admin"
+from scada_common.enums import Role
 
 
 class User(BaseModel):

@@ -7,7 +7,7 @@ COPY api/pyproject.toml api/
 COPY api/app/ api/app/
 RUN pip install --no-cache-dir ./common ./api
 
-COPY deploy/seed/layout.geojson deploy/seed/layout.geojson
+COPY deploy/seed/layout.geojson deploy/seed/fleet.json deploy/seed/
 
 WORKDIR /app/api
 EXPOSE 8000

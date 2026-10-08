@@ -150,6 +150,22 @@ for i, (x0, x1) in enumerate([(220, 400), (460, 640)], start=1):
     sensor(f"mot-prod{i}", "motion", f"Движение, цех №{i}", (x0 + xm) / 2, 140, f"r-prod{i}-line", f"b-prod{i}", 1)
 sensor("mot-garage", "motion", "Движение, ремзона", 725, 110, "r-garage-bay", "b-garage", 1)
 
+for i, x in enumerate((290, 470, 650), start=1):
+    sensor(f"cam-dock-wh{i}", "anpr_camera", f"Камера рампы склада №{i}", x + 12, 285, f"z-docks-wh{i}")
+sensor("cam-garage", "anpr_camera", "Камера въезда в ремзону", 735, 175, "z-garage-yard")
+
+# Every room gets climate and motion coverage; rooms already equipped above are skipped.
+_equipped = {(f["properties"]["sensor_type"], f["properties"]["zone_id"]) for f in features
+             if f["properties"]["kind"] == "sensor"}
+for f in [f for f in features if f["properties"]["kind"] == "room"]:
+    p = f["properties"]
+    (x0, y0), _, (x1, y1) = f["geometry"]["coordinates"][0][:3]
+    short = p["id"].removeprefix("r-")
+    for stype, prefix, label, fx in (("climate", "clim", "Климат", 0.75), ("motion", "mot", "Движение", 0.25)):
+        if (stype, p["id"]) not in _equipped:
+            sensor(f"{prefix}-{short}", stype, f"{label}: {p['name']}", x0 + (x1 - x0) * fx, (y0 + y1) / 2,
+                   p["id"], p["building_id"], p["floor"])
+
 layout = {
     "type": "FeatureCollection",
     "metadata": {

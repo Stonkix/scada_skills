@@ -1,0 +1,17 @@
+[
+ {"id": "v-truck-1", "plate": "А123ВС77", "kind": "truck", "model": "КАМАЗ 65115", "carrier": "ООО «ТрансЛогистик»"},
+ {"id": "v-truck-2", "plate": "В456ОР50", "kind": "truck", "model": "ГАЗон NEXT", "carrier": "ИП Сидоров"},
+ {"id": "v-truck-3", "plate": "Е789КХ199", "kind": "truck", "model": "MAN TGS", "carrier": "ООО «СеверТранс»"},
+ {"id": "v-truck-4", "plate": "К321НТ77", "kind": "truck", "model": "КАМАЗ 5490", "carrier": "ООО «ТрансЛогистик»"},
+ {"id": "v-truck-5", "plate": "О654РА750", "kind": "truck", "model": "Volvo FH", "carrier": "ООО «ГрузЭкспресс»"},
+ {"id": "v-truck-6", "plate": "Т987УХ77", "kind": "truck", "model": "Scania R450", "carrier": "ООО «ГрузЭкспресс»"},
+ {"id": "v-truck-7", "plate": "Н246СМ190", "kind": "truck", "model": "ГАЗель NEXT", "carrier": "ИП Кузнецова"},
+ {"id": "v-truck-8", "plate": "Р135ЕК99", "kind": "truck", "model": "Hyundai HD78", "carrier": "ООО «СеверТранс»"},
+ {"id": "v-loader-1", "plate": "ПГ-01", "kind": "loader", "model": "Погрузчик Toyota 8FD", "carrier": null},
+ {"id": "v-loader-2", "plate": "ПГ-02", "kind": "loader", "model": "Погрузчик Linde H25", "carrier": null},
+ {"id": "v-loader-3", "plate": "ПГ-03", "kind": "loader", "model": "Штабелёр Jungheinrich", "carrier": null},
+ {"id": "v-loader-4", "plate": "ПГ-04", "kind": "loader", "model": "Погрузчик Hyster H3.0", "carrier": null},
+ {"id": "v-car-1", "plate": "М001ММ77", "kind": "car", "model": "Lada Largus", "carrier": null},
+ {"id": "v-car-2", "plate": "С002СС77", "kind": "car", "model": "УАЗ Патриот", "carrier": null},
+ {"id": "v-car-3", "plate": "Х003ХХ77", "kind": "car", "model": "Lada Vesta", "carrier": null}
+]

@@ -13,7 +13,7 @@ import os
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
-from scada_common import Geo, SensorType
+from scada_common import Geo, SensorType, catalog
 from shapely.geometry import LineString, Point, shape
 
 from app.alerts.schemas import Alert, AlertKind, AlertStatus, Severity
@@ -31,66 +31,34 @@ from app.layout.schemas import (
 from app.live.schemas import SensorLive, SensorStatus, VehicleLive, VehicleStatus, ZoneOccupancy
 from app.registry.schemas import (
     HistoryPoint,
-    MetricSpec,
     RoutePoint,
     Sensor,
     SensorCreate,
     SensorTypeInfo,
     Threshold,
     Vehicle,
-    VehicleKind,
 )
 
 LAYOUT_PATH = Path(
     os.environ.get("SCADA_LAYOUT_PATH", Path(__file__).resolve().parents[2] / "deploy" / "seed" / "layout.geojson")
 )
+FLEET_PATH = LAYOUT_PATH.with_name("fleet.json")
 EPOCH = datetime(2026, 1, 1, tzinfo=UTC)
 
-SENSOR_TYPES = [
-    SensorTypeInfo(id=SensorType.ANPR_CAMERA, name="Камера распознавания номеров", is_mobile=False, metrics=[
-        MetricSpec(key="plate", name="Гос. номер", kind="string"),
-        MetricSpec(key="direction", name="Направление", kind="string"),
-        MetricSpec(key="confidence", name="Уверенность распознавания"),
-    ]),
-    SensorTypeInfo(id=SensorType.ACCESS_CONTROL, name="СКУД (пропуска)", is_mobile=False, metrics=[
-        MetricSpec(key="card_id", name="Пропуск", kind="string"),
-        MetricSpec(key="direction", name="Направление", kind="string"),
-        MetricSpec(key="granted", name="Доступ разрешён", kind="bool"),
-    ]),
-    SensorTypeInfo(id=SensorType.GNSS, name="ГЛОНАСС-трекер транспорта", is_mobile=True, metrics=[
-        MetricSpec(key="speed_kmh", name="Скорость", unit="км/ч"),
-        MetricSpec(key="heading_deg", name="Курс", unit="°"),
-        MetricSpec(key="fuel_pct", name="Топливо", unit="%"),
-        MetricSpec(key="odometer_km", name="Пробег", unit="км"),
-        MetricSpec(key="engine_on", name="Двигатель", kind="bool"),
-    ]),
-    SensorTypeInfo(id=SensorType.MOTION, name="Датчик движения (охрана)", is_mobile=False, metrics=[
-        MetricSpec(key="detected", name="Движение", kind="bool"),
-    ]),
-    SensorTypeInfo(id=SensorType.CLIMATE, name="Климат (температура и влажность)", is_mobile=False, metrics=[
-        MetricSpec(key="temperature_c", name="Температура", unit="°C"),
-        MetricSpec(key="humidity_pct", name="Влажность", unit="%"),
-    ]),
-]
-_NUMERIC_METRICS = {
-    t.id: [m.key for m in t.metrics if m.kind == "number"] for t in SENSOR_TYPES
+SENSOR_TYPES = [SensorTypeInfo.model_validate(t) for t in catalog.SENSOR_TYPES]
+
+# Demo loops along the roads of layout.geojson; vehicles without a loop stand in the truck parking.
+_ROUTES: dict[str, tuple[list[tuple[float, float]], float]] = {
+    "v-truck-1": ([(20, 250), (290, 250), (290, 290), (290, 250)], 18),
+    "v-truck-2": ([(20, 250), (470, 250), (470, 290), (470, 250)], 20),
+    "v-truck-3": ([(20, 250), (650, 250), (650, 290), (650, 250)], 22),
+    "v-loader-1": ([(190, 30), (790, 30), (790, 470), (190, 470)], 12),
+    "v-car-1": ([(190, 250), (310, 250), (310, 205), (310, 250), (550, 250), (550, 205), (550, 250)], 25),
 }
 
-# Vehicles drive closed loops along the roads of layout.geojson.
-_VEHICLES: list[tuple[Vehicle, list[tuple[float, float]], float]] = [
-    (Vehicle(id="v-truck-1", plate="А123ВС77", kind=VehicleKind.TRUCK, model="КАМАЗ 65115", sensor_id="gnss-truck-1",
-             carrier="ООО «ТрансЛогистик»"), [(20, 250), (290, 250), (290, 290), (290, 250)], 18),
-    (Vehicle(id="v-truck-2", plate="В456ОР50", kind=VehicleKind.TRUCK, model="ГАЗон NEXT", sensor_id="gnss-truck-2",
-             carrier="ИП Сидоров"), [(20, 250), (470, 250), (470, 290), (470, 250)], 20),
-    (Vehicle(id="v-truck-3", plate="Е789КХ199", kind=VehicleKind.TRUCK, model="MAN TGS", sensor_id="gnss-truck-3",
-             carrier="ООО «СеверТранс»"), [(20, 250), (650, 250), (650, 290), (650, 250)], 22),
-    (Vehicle(id="v-loader-1", plate="ПГ-01", kind=VehicleKind.LOADER, model="Погрузчик Toyota 8FD",
-             sensor_id="gnss-loader-1"), [(190, 30), (790, 30), (790, 470), (190, 470)], 12),
-    (Vehicle(id="v-car-1", plate="М001ММ77", kind=VehicleKind.CAR, model="Lada Largus", sensor_id="gnss-car-1"),
-     [(190, 250), (310, 250), (310, 205), (310, 250), (550, 250), (550, 205), (550, 250)], 25),
-    (Vehicle(id="v-truck-4", plate="К321НТ77", kind=VehicleKind.TRUCK, model="КАМАЗ 5490", sensor_id="gnss-truck-4",
-             carrier="ООО «ТрансЛогистик»"), [(70, 110)], 0),
-]
+
+def _parking_spot(i: int) -> tuple[float, float]:
+    return 45 + (i % 3) * 25, 55 + (i // 3) * 22
 
 
 def _phase(key: str) -> float:
@@ -107,9 +75,11 @@ class World:
         self.layout_version = 1
         self.sensors: dict[str, Sensor] = {}
         self.alerts: dict[int, Alert] = {}
-        self._routes = {v.id: (LineString(pts + [pts[0]]) if len(pts) > 1 else None, pts[0], kmh)
-                        for v, pts, kmh in _VEHICLES}
-        self.vehicles = {v.id: v for v, _, _ in _VEHICLES}
+        fleet = json.loads(FLEET_PATH.read_text(encoding="utf-8"))
+        self.vehicles = {v["id"]: Vehicle(**v, sensor_id=catalog.gnss_sensor_id(v["id"])) for v in fleet}
+        parked = [vid for vid in self.vehicles if vid not in _ROUTES]
+        self._routes = {vid: (LineString(pts + [pts[0]]), pts[0], kmh) for vid, (pts, kmh) in _ROUTES.items()}
+        self._routes |= {vid: (None, _parking_spot(i), 0.0) for i, vid in enumerate(parked)}
         self._load_sensors()
         self._seed_alerts()
 
@@ -282,20 +252,7 @@ class World:
 
 
 def default_thresholds(sensor_type: str, sensor_id: str) -> list[Threshold]:
-    match sensor_type:
-        case SensorType.CLIMATE if "wh2" in sensor_id:  # холодный склад
-            return [Threshold(metric="temperature_c", nominal=4, min=2, max=6, critical_min=0, critical_max=8),
-                    Threshold(metric="humidity_pct", nominal=60, min=40, max=75, critical_min=30, critical_max=85)]
-        case SensorType.CLIMATE if "server" in sensor_id:
-            return [Threshold(metric="temperature_c", nominal=21, min=18, max=24, critical_min=15, critical_max=28),
-                    Threshold(metric="humidity_pct", nominal=45, min=30, max=60, critical_min=20, critical_max=70)]
-        case SensorType.CLIMATE:
-            return [Threshold(metric="temperature_c", nominal=18, min=12, max=24, critical_min=5, critical_max=30),
-                    Threshold(metric="humidity_pct", nominal=55, min=30, max=70, critical_min=20, critical_max=85)]
-        case SensorType.GNSS:
-            return [Threshold(metric="speed_kmh", max=20, critical_max=30),
-                    Threshold(metric="fuel_pct", min=15, critical_min=5)]
-    return []
+    return [Threshold(**t) for t in catalog.default_thresholds(SensorType(sensor_type), sensor_id)]
 
 
 def evaluate(values: dict, thresholds: list[Threshold]) -> SensorStatus:
@@ -310,10 +267,6 @@ def evaluate(values: dict, thresholds: list[Threshold]) -> SensorStatus:
         if (th.min is not None and v < th.min) or (th.max is not None and v > th.max):
             status = SensorStatus.WARNING
     return status
-
-
-def numeric_metrics(sensor_type: SensorType) -> list[str]:
-    return _NUMERIC_METRICS[sensor_type]
 
 
 world = World()

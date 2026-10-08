@@ -1715,7 +1715,7 @@
    "properties": {
     "id": "acs-wh1",
     "kind": "sensor",
-    "name": "СКУД: вход, b-wh1",
+    "name": "СКУД: вход, Склад №1",
     "sensor_type": "access_control",
     "zone_id": "b-wh1",
     "building_id": "b-wh1",
@@ -1735,7 +1735,7 @@
    "properties": {
     "id": "acs-wh2",
     "kind": "sensor",
-    "name": "СКУД: вход, b-wh2",
+    "name": "СКУД: вход, Склад №2 (холодный)",
     "sensor_type": "access_control",
     "zone_id": "b-wh2",
     "building_id": "b-wh2",
@@ -1755,7 +1755,7 @@
    "properties": {
     "id": "acs-wh3",
     "kind": "sensor",
-    "name": "СКУД: вход, b-wh3",
+    "name": "СКУД: вход, Склад №3",
     "sensor_type": "access_control",
     "zone_id": "b-wh3",
     "building_id": "b-wh3",
@@ -1775,7 +1775,7 @@
    "properties": {
     "id": "acs-prod1",
     "kind": "sensor",
-    "name": "СКУД: вход, b-prod1",
+    "name": "СКУД: вход, Цех №1",
     "sensor_type": "access_control",
     "zone_id": "b-prod1",
     "building_id": "b-prod1",
@@ -1795,7 +1795,7 @@
    "properties": {
     "id": "acs-prod2",
     "kind": "sensor",
-    "name": "СКУД: вход, b-prod2",
+    "name": "СКУД: вход, Цех №2",
     "sensor_type": "access_control",
     "zone_id": "b-prod2",
     "building_id": "b-prod2",
@@ -1815,7 +1815,7 @@
    "properties": {
     "id": "acs-garage",
     "kind": "sensor",
-    "name": "СКУД: вход, b-garage",
+    "name": "СКУД: вход, Гараж и ремзона",
     "sensor_type": "access_control",
     "zone_id": "b-garage",
     "building_id": "b-garage",
@@ -2137,6 +2137,546 @@
     "kind": "sensor",
     "name": "Движение, ремзона",
     "sensor_type": "motion",
+    "zone_id": "r-garage-bay",
+    "building_id": "b-garage",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-dock-wh1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     302,
+     285
+    ]
+   },
+   "properties": {
+    "id": "cam-dock-wh1",
+    "kind": "sensor",
+    "name": "Камера рампы склада №1",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-docks-wh1",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-dock-wh2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     482,
+     285
+    ]
+   },
+   "properties": {
+    "id": "cam-dock-wh2",
+    "kind": "sensor",
+    "name": "Камера рампы склада №2",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-docks-wh2",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-dock-wh3",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     662,
+     285
+    ]
+   },
+   "properties": {
+    "id": "cam-dock-wh3",
+    "kind": "sensor",
+    "name": "Камера рампы склада №3",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-docks-wh3",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-garage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     735,
+     175
+    ]
+   },
+   "properties": {
+    "id": "cam-garage",
+    "kind": "sensor",
+    "name": "Камера въезда в ремзону",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-garage-yard",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-wh1-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     255.0,
+     315.0
+    ]
+   },
+   "properties": {
+    "id": "mot-wh1-dock",
+    "kind": "sensor",
+    "name": "Движение: Склад №1: зона отгрузки",
+    "sensor_type": "motion",
+    "zone_id": "r-wh1-dock",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-wh2-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     435.0,
+     315.0
+    ]
+   },
+   "properties": {
+    "id": "mot-wh2-dock",
+    "kind": "sensor",
+    "name": "Движение: Склад №2: зона отгрузки",
+    "sensor_type": "motion",
+    "zone_id": "r-wh2-dock",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-wh3-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     615.0,
+     315.0
+    ]
+   },
+   "properties": {
+    "id": "mot-wh3-dock",
+    "kind": "sensor",
+    "name": "Движение: Склад №3: зона отгрузки",
+    "sensor_type": "motion",
+    "zone_id": "r-wh3-dock",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-admin-f1-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     97.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "clim-admin-f1-west",
+    "kind": "sensor",
+    "name": "Климат: Админ. корпус, 1 эт.: западное крыло",
+    "sensor_type": "climate",
+    "zone_id": "r-admin-f1-west",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-admin-f1-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     72.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "mot-admin-f1-west",
+    "kind": "sensor",
+    "name": "Движение: Админ. корпус, 1 эт.: западное крыло",
+    "sensor_type": "motion",
+    "zone_id": "r-admin-f1-west",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-admin-f1-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     147.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "clim-admin-f1-east",
+    "kind": "sensor",
+    "name": "Климат: Админ. корпус, 1 эт.: восточное крыло",
+    "sensor_type": "climate",
+    "zone_id": "r-admin-f1-east",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-admin-f1-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     122.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "mot-admin-f1-east",
+    "kind": "sensor",
+    "name": "Движение: Админ. корпус, 1 эт.: восточное крыло",
+    "sensor_type": "motion",
+    "zone_id": "r-admin-f1-east",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-admin-f2-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     97.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "clim-admin-f2-west",
+    "kind": "sensor",
+    "name": "Климат: Админ. корпус, 2 эт.: западное крыло",
+    "sensor_type": "climate",
+    "zone_id": "r-admin-f2-west",
+    "building_id": "b-admin",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-admin-f2-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     72.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "mot-admin-f2-west",
+    "kind": "sensor",
+    "name": "Движение: Админ. корпус, 2 эт.: западное крыло",
+    "sensor_type": "motion",
+    "zone_id": "r-admin-f2-west",
+    "building_id": "b-admin",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-admin-f2-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     147.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "clim-admin-f2-east",
+    "kind": "sensor",
+    "name": "Климат: Админ. корпус, 2 эт.: восточное крыло",
+    "sensor_type": "climate",
+    "zone_id": "r-admin-f2-east",
+    "building_id": "b-admin",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-admin-f2-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     122.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "mot-admin-f2-east",
+    "kind": "sensor",
+    "name": "Движение: Админ. корпус, 2 эт.: восточное крыло",
+    "sensor_type": "motion",
+    "zone_id": "r-admin-f2-east",
+    "building_id": "b-admin",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-admin-f3-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     97.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "clim-admin-f3-west",
+    "kind": "sensor",
+    "name": "Климат: Админ. корпус, 3 эт.: западное крыло",
+    "sensor_type": "climate",
+    "zone_id": "r-admin-f3-west",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-admin-f3-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     72.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "mot-admin-f3-west",
+    "kind": "sensor",
+    "name": "Движение: Админ. корпус, 3 эт.: западное крыло",
+    "sensor_type": "motion",
+    "zone_id": "r-admin-f3-west",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-admin-f3-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     122.5,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "mot-admin-f3-east",
+    "kind": "sensor",
+    "name": "Движение: Админ. корпус, 3 эт.: восточное крыло",
+    "sensor_type": "motion",
+    "zone_id": "r-admin-f3-east",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-prod1-line",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     287.5,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "clim-prod1-line",
+    "kind": "sensor",
+    "name": "Климат: Цех №1: производственная линия",
+    "sensor_type": "climate",
+    "zone_id": "r-prod1-line",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-prod1-stock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     332.5,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "mot-prod1-stock",
+    "kind": "sensor",
+    "name": "Движение: Цех №1: склад сырья",
+    "sensor_type": "motion",
+    "zone_id": "r-prod1-stock",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-prod1-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     355.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "clim-prod1-f2",
+    "kind": "sensor",
+    "name": "Климат: Цех №1, 2 эт.: офис мастеров",
+    "sensor_type": "climate",
+    "zone_id": "r-prod1-f2",
+    "building_id": "b-prod1",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-prod1-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     265.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "mot-prod1-f2",
+    "kind": "sensor",
+    "name": "Движение: Цех №1, 2 эт.: офис мастеров",
+    "sensor_type": "motion",
+    "zone_id": "r-prod1-f2",
+    "building_id": "b-prod1",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-prod2-line",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     527.5,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "clim-prod2-line",
+    "kind": "sensor",
+    "name": "Климат: Цех №2: производственная линия",
+    "sensor_type": "climate",
+    "zone_id": "r-prod2-line",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-prod2-stock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     572.5,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "mot-prod2-stock",
+    "kind": "sensor",
+    "name": "Движение: Цех №2: склад сырья",
+    "sensor_type": "motion",
+    "zone_id": "r-prod2-stock",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-prod2-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     595.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "clim-prod2-f2",
+    "kind": "sensor",
+    "name": "Климат: Цех №2, 2 эт.: офис мастеров",
+    "sensor_type": "climate",
+    "zone_id": "r-prod2-f2",
+    "building_id": "b-prod2",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-prod2-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     505.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "mot-prod2-f2",
+    "kind": "sensor",
+    "name": "Движение: Цех №2, 2 эт.: офис мастеров",
+    "sensor_type": "motion",
+    "zone_id": "r-prod2-f2",
+    "building_id": "b-prod2",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-garage-bay",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     747.5,
+     110.0
+    ]
+   },
+   "properties": {
+    "id": "clim-garage-bay",
+    "kind": "sensor",
+    "name": "Климат: Ремзона: боксы",
+    "sensor_type": "climate",
     "zone_id": "r-garage-bay",
     "building_id": "b-garage",
     "floor": 1

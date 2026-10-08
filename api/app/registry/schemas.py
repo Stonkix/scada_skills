@@ -1,9 +1,9 @@
 from datetime import datetime
-from enum import StrEnum
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from scada_common import Geo, SensorType
+from scada_common.enums import VehicleKind
 
 
 class MetricSpec(BaseModel):
@@ -71,12 +71,6 @@ class BulkResult(BaseModel):
     valid: int
     created: int = Field(..., description="Сколько датчиков создано; 0 при dry_run или при любой ошибке")
     errors: list[BulkRowError]
-
-
-class VehicleKind(StrEnum):
-    TRUCK = "truck"
-    LOADER = "loader"
-    CAR = "car"
 
 
 class Vehicle(BaseModel):
