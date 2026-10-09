@@ -9,12 +9,6 @@
  {"id": "v-truck-8", "plate": "Р135ЕК99", "kind": "truck", "model": "Hyundai HD78", "carrier": "ООО «СеверТранс»", "home_site_id": "s-podolsk"},
  {"id": "v-truck-9", "plate": "У357ВА50", "kind": "truck", "model": "MAN TGX, рефрижератор", "carrier": "ООО «ХолодТранс»", "home_site_id": "s-chekhov"},
  {"id": "v-loader-1", "plate": "ПГ-01", "kind": "loader", "model": "Погрузчик Toyota 8FD", "carrier": null, "home_site_id": "s-podolsk"},
- {"id": "v-loader-2", "plate": "ПГ-02", "kind": "loader", "model": "Погрузчик Linde H25", "carrier": null, "home_site_id": "s-podolsk"},
- {"id": "v-loader-3", "plate": "ПГ-03", "kind": "loader", "model": "Штабелёр Jungheinrich", "carrier": null, "home_site_id": "s-podolsk"},
- {"id": "v-loader-4", "plate": "ПГ-04", "kind": "loader", "model": "Погрузчик Hyster H3.0", "carrier": null, "home_site_id": "s-podolsk"},
  {"id": "v-loader-5", "plate": "ПГ-05", "kind": "loader", "model": "Погрузчик Still RX20", "carrier": null, "home_site_id": "s-domodedovo"},
- {"id": "v-loader-6", "plate": "ПГ-06", "kind": "loader", "model": "Погрузчик Toyota Traigo", "carrier": null, "home_site_id": "s-chekhov"},
- {"id": "v-car-1", "plate": "М001ММ77", "kind": "car", "model": "Lada Largus", "carrier": null, "home_site_id": "s-podolsk"},
- {"id": "v-car-2", "plate": "С002СС77", "kind": "car", "model": "УАЗ Патриот", "carrier": null, "home_site_id": "s-podolsk"},
- {"id": "v-car-3", "plate": "Х003ХХ77", "kind": "car", "model": "Lada Vesta", "carrier": null, "home_site_id": "s-podolsk"}
+ {"id": "v-car-1", "plate": "М001ММ77", "kind": "car", "model": "Lada Largus", "carrier": null, "home_site_id": "s-podolsk"}
 ]

@@ -10,6 +10,7 @@ interface Scenario {
   steps: unknown[]
 }
 interface SimStatus {
+  time_scale: number
   effects: { kind: string; target: string; left_s: number }[]
   runs: { id: string; scenario: string; step: number; done: boolean; error: string | null }[]
 }
@@ -23,6 +24,7 @@ const busy = ref('')
 
 const EFFECT_LABEL: Record<string, string> = {
   breakdown: 'поломка',
+  breakdown_next: 'поломка при выезде на проезд',
   speed: 'превышение',
   climate_drift: 'нагрев',
   motion_alarm: 'движение',
@@ -49,6 +51,19 @@ async function run(name: string) {
     toasts.push({ kind: 'error', title: 'Сценарий не запущен', text: errorText(e) })
   } finally {
     busy.value = ''
+  }
+}
+
+const SPEEDS = [1, 5, 10, 30] as const
+
+/** Fast-forward for the show: vehicles drive and load N times faster; 1 is normal time. */
+async function setSpeed(scale: number) {
+  try {
+    await sim('/time', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ scale }) })
+    toasts.push({ kind: 'info', title: scale === 1 ? 'Время идёт как обычно' : `Время ускорено в ${scale} раз` })
+    await refresh()
+  } catch (e) {
+    toasts.push({ kind: 'error', title: 'Не удалось изменить скорость', text: errorText(e) })
   }
 }
 
@@ -79,6 +94,12 @@ onBeforeUnmount(() => clearInterval(timer))
       <button class="small ghost" aria-label="Закрыть" @click="emit('close')">✕</button>
     </header>
     <div v-if="error" class="muted">{{ error }}</div>
+    <div class="speed">
+      <span class="grow">Скорость времени</span>
+      <button v-for="s in SPEEDS" :key="s" class="small" :class="{ on: (status?.time_scale ?? 1) === s }" @click="setSpeed(s)">
+        {{ s === 1 ? '▶ норма' : `⏩ ×${s}` }}
+      </button>
+    </div>
     <div class="list">
       <button v-for="s in scenarios" :key="s.name" class="scenario" :disabled="!!busy" :title="s.description" @click="run(s.name)">
         <b>{{ s.title }}</b>
@@ -104,6 +125,23 @@ onBeforeUnmount(() => clearInterval(timer))
   padding: 12px;
   max-height: 100%;
   overflow: auto;
+}
+.speed {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+.speed .grow {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.speed button.on {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 .list {
   display: grid;

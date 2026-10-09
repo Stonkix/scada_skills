@@ -146,8 +146,13 @@ def test_half_of_the_trucks_start_on_the_road(sim: Simulation) -> None:
 
 def test_breakdown_stops_the_vehicle_with_engine_off(sim: Simulation) -> None:
     run(sim, 200)
-    sc.vehicle_breakdown(sim, duration_s=60)
+    sc.vehicle_breakdown(sim, duration_s=600)
     truck = sim.vehicle(sim.effects[-1].target)
+    for _ in range(300):  # armed (nobody was driving on a site): wait until it is out on a roadway
+        if sim.effect("breakdown", truck.id):
+            break
+        run(sim, 1)
+    run(sim, 1)
     x, y = truck.x, truck.y
     run(sim, 20)
     assert (truck.x, truck.y, truck.speed_kmh, truck.engine_on) == (x, y, 0, False)
@@ -163,11 +168,18 @@ def test_breakdown_picks_a_truck_on_the_roadway(sim: Simulation) -> None:
         except sc.ScenarioError as e:  # sometimes no truck is driving on a roadway: a valid answer
             assert "no moving" in str(e)
             continue
+        if sim.effects[-1].kind == "breakdown_next":  # nobody was driving: armed, fires once on a roadway
+            target = sim.effects[-1].target
+            for _ in range(180):
+                run(sim, 1)
+                if sim.effect("breakdown", target):
+                    break
+            assert sim.effect("breakdown", target), "the armed breakdown happens within a few minutes"
         broken = sim.vehicle(sim.effects[-1].target)
         assert not sc._in_stop_zone(sim, broken.x, broken.y)
         sim.effects.clear()
         picked += 1
-    assert picked >= 10
+    assert picked == 20
 
 
 def test_breakdown_refuses_a_vehicle_beyond_the_gate(sim: Simulation) -> None:
@@ -248,8 +260,7 @@ def test_devices_report_by_exception_within_their_limits(sim: Simulation) -> Non
         assert min(g for g, _ in gaps) >= gnss.min_interval_s and max(g for g, _ in gaps) <= gnss.heartbeat_s + 1, device
         # a moving vehicle is seen every moving_period_s: the map can follow the road
         assert all(g <= gnss.moving_period_s + 0.5 for g, speed in gaps if speed > 1), device
-    # standing vehicles report once a minute instead of every 2 s
-    assert sum(map(len, fixes.values())) < 450 * len(fixes)
+    assert sum(map(len, fixes.values())) < 900 * len(fixes)  # standing vehicles report once a minute
     climate = [o for o in out if o.adapter == "climate"]
     per_sensor = len(climate) / len(sim.world.sensors_of("climate"))
     assert 900 / catalog.REPORTING["climate"].heartbeat_s <= per_sensor < 900 / 15 / 2  # was every 15 s
@@ -275,3 +286,21 @@ def test_access_roads_dock_onto_real_roads_and_highways_avoid_sites() -> None:
         assert math.dist(pts[-1], sites[b].approach) <= 25, f"{b}: the access road does not reach the real road"
         crossing = [s.id for p in pts for s in sites.values() if s.contains(*p, margin=-5)]
         assert not crossing, f"{key} crosses {set(crossing)}"
+
+
+def test_fast_forward_moves_trucks_faster_and_shortens_eta(sim: Simulation) -> None:
+    truck = next(v for v in sim.vehicles if v.trip and v.trip["status"] == "en_route")
+    run(sim, 5)
+    x, y = truck.x, truck.y
+    run(sim, 10)
+    normal = math.dist((x, y), (truck.x, truck.y))
+    assert sim.set_time_scale(100) == 30  # clamped
+    sim.set_time_scale(10)
+    x, y = truck.x, truck.y
+    run(sim, 10)
+    fast = math.dist((x, y), (truck.x, truck.y))
+    assert fast > 5 * normal, (normal, fast)
+    out = run(sim, 1)
+    assert all(o.adapter != "gnss" or o.payload["speed"] < 100 for o in out), "trackers still report road speed"
+    sim.set_time_scale(1)
+    assert sim.status()["time_scale"] == 1

@@ -44,14 +44,8 @@ def action(fn: Action) -> Action:
     return fn
 
 
-# Stopping in these geozones is normal (rule-breakdown allows parking/docks/restricted; the gate is a queue).
-STOP_ZONE_TYPES = {"parking", "docks", "restricted", "gate"}
-
-
 def _in_stop_zone(sim: Simulation, x: float, y: float) -> bool:
-    return any(a.kind == "geozone" and a.type in STOP_ZONE_TYPES
-               and a.bounds[0] <= x <= a.bounds[2] and a.bounds[1] <= y <= a.bounds[3]
-               for a in sim.world.areas.values())
+    return sim.in_stop_zone(x, y)
 
 
 def _vehicle(sim: Simulation, vehicle_id: str | None, kind: str | tuple[str, ...] = "truck",
@@ -80,7 +74,20 @@ def _sensor(sim: Simulation, sensor_id: str, sensor_type: str) -> None:
 @action
 def vehicle_breakdown(sim: Simulation, duration_s: float, vehicle: str | None = None) -> list[Outgoing]:
     # trucks spend most of their time on highways: a loader or a service car will do on site
-    v = _vehicle(sim, vehicle, kind=("truck", "loader", "car"), on_roadway=True)
+    try:
+        v = _vehicle(sim, vehicle, kind=("truck", "loader", "car"), on_roadway=True)
+    except ScenarioError:
+        if vehicle:
+            raise
+        # nobody is driving on a site right now: arm the service car (or a loader); it breaks down as soon as it
+        # is out on a roadway, within a minute — the demo never gets "no vehicle" for an answer
+        spare = sorted((x for x in sim.vehicles if x.kind in ("car", "loader") and sim.site_at(x.x, x.y)),
+                       key=lambda x: (x.kind != "car", x.id))
+        if not spare:
+            raise
+        if duration_s:  # duration 0 is the runner's dry run
+            sim.add_effect("breakdown_next", spare[0].id, duration_s + 300, break_s=duration_s)
+        return []
     if sim.site_at(v.x, v.y) is None:  # a breakdown on a public road is not our alarm
         raise ScenarioError(f"{v.id} is not on site right now; omit 'vehicle' to pick a moving truck")
     if _in_stop_zone(sim, v.x, v.y):

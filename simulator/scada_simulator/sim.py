@@ -39,6 +39,9 @@ SITE_ROAD_MAX_KMH = 40  # roads with a lower limit are site roads: drive at the 
 ETA_FACTOR = 0.85  # ETA assumes a bit below cruise: junctions, traffic
 FUEL_PCT_PER_M = 0.00012  # ~30 l/100 km from a 250 l tank
 MAIN_SITE = "s-podolsk"
+# stopping in these geozones is normal (rule-breakdown allows parking/docks/restricted; the gate is a queue)
+STOP_ZONE_TYPES = {"parking", "docks", "restricted", "gate"}
+MAX_TIME_SCALE = 30  # demo fast-forward: vehicles drive and dwell this many times faster
 SITE_TZ = ZoneInfo(os.environ.get("SITE_TZ", "Europe/Moscow"))  # shifts follow the plant clock, not the container
 
 # cargo by the type of the site it leaves: (cargo, weight range t, temperature mode)
@@ -138,6 +141,7 @@ class Simulation:
     def __init__(self, world: World, seed: int = 1) -> None:
         self.world = world
         self.clock = time.time  # device clocks; tests replace it to run faster than real time
+        self.time_scale = 1.0  # simulated seconds per tick of the world (the cheat menu fast-forwards)
         self.graph = RoadGraph(world.roads)
         self.rnd = random.Random(seed)
         self.effects: list[Effect] = []
@@ -175,6 +179,11 @@ class Simulation:
                 dock_cams[n] = cam
         return SiteNet(s, self.graph.nearest(*s.gate), self.graph.nearest(*s.approach), docks, in_zone("parking"),
                        yard, cam_in, cam_out, dock_cams)
+
+    def in_stop_zone(self, x: float, y: float) -> bool:
+        return any(a.kind == "geozone" and a.type in STOP_ZONE_TYPES
+                   and a.bounds[0] <= x <= a.bounds[2] and a.bounds[1] <= y <= a.bounds[3]
+                   for a in self.world.areas.values())
 
     def site_at(self, x: float, y: float) -> SiteNet | None:
         return next((s for s in self.sites.values() if s.spec.contains(x, y)), None)
@@ -284,7 +293,7 @@ class Simulation:
         v.engine_on, v.speed_kmh = True, 0.0
         total = self.route_m(origin, dest)
         done_m = sum(math.dist(p, q) for (p, _), (q, _) in zip(path[:k + 1], path[1:k + 1]))
-        eta_h = (total - done_m) / 1000 / (v.highway_kmh * ETA_FACTOR)
+        eta_h = (total - done_m) / 1000 / (v.highway_kmh * ETA_FACTOR) / self.time_scale
         now = now_utc()
         v.trip |= {"status": "en_route", "departed_at": now - timedelta(hours=done_m / 1000 / (v.highway_kmh * ETA_FACTOR)),
                    "eta": now + timedelta(hours=eta_h)}
@@ -301,11 +310,12 @@ class Simulation:
         now = now_utc()
         v.trip["status"] = status
         if status == "loading":
-            v.trip["planned_departure"] = now + timedelta(minutes=3)
+            v.trip["planned_departure"] = now + timedelta(minutes=3 / self.time_scale)
         elif status == "en_route":
             origin, dest = self.sites[v.trip["origin_site_id"]], self.sites[v.trip["destination_site_id"]]
             v.trip["departed_at"] = now
-            v.trip["eta"] = now + timedelta(hours=self.route_m(origin, dest) / 1000 / (v.highway_kmh * ETA_FACTOR))
+            hours = self.route_m(origin, dest) / 1000 / (v.highway_kmh * ETA_FACTOR) / self.time_scale
+            v.trip["eta"] = now + timedelta(hours=hours)
             v.site_id = None
         elif status == "unloading":
             v.trip["arrived_at"] = now
@@ -334,6 +344,10 @@ class Simulation:
         return min(v.cruise_kmh, limit) if limit <= SITE_ROAD_MAX_KMH else min(v.highway_kmh, limit)
 
     def _step_vehicle(self, v: VehicleAgent, dt: float, out: list[Outgoing]) -> None:
+        pending = self.effect("breakdown_next", v.id)  # armed by the scenario: break down once out on a roadway
+        if pending and v.speed_kmh > 0.5 and self.site_at(v.x, v.y) and not self.in_stop_zone(v.x, v.y):
+            self.effects.remove(pending)
+            self.add_effect("breakdown", v.id, pending.params["break_s"])
         if self.effect("breakdown", v.id):
             v.speed_kmh, v.engine_on, v.path = 0.0, False, []
             return
@@ -482,7 +496,13 @@ class Simulation:
 
     # --- tick -------------------------------------------------------------------------------------
 
-    def tick(self, dt: float = 1.0) -> list[Outgoing]:
+    def set_time_scale(self, scale: float) -> float:
+        self.time_scale = min(MAX_TIME_SCALE, max(1.0, float(scale)))
+        return self.time_scale
+
+    def tick(self, dt: float | None = None) -> list[Outgoing]:
+        """One real second of the world: vehicles advance `time_scale` simulated seconds."""
+        dt = self.time_scale if dt is None else dt
         t = self.clock()
         out, self.outbox = self.outbox, []
         for v in self.vehicles:
@@ -513,6 +533,7 @@ class Simulation:
         t = time.monotonic()
         return {
             "tick": self.tick_no,
+            "time_scale": self.time_scale,
             "vehicles": [{"id": v.id, "x": round(v.x, 1), "y": round(v.y, 1), "speed_kmh": round(v.speed_kmh, 1),
                           "engine_on": v.engine_on, "fuel_pct": round(v.fuel_pct, 1), "site_id": v.site_id,
                           "trip": v.trip and {"waybill_no": v.trip["waybill_no"], "status": v.trip["status"],

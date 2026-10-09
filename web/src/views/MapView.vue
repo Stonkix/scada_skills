@@ -327,7 +327,7 @@ function drawPlan() {
   const at = progress(pts, [v.geo.x, v.geo.y], reversed)
   src.setData(fc([line(t.status === 'en_route' ? slice(directed, at.done) : directed)]))
 }
-watch(() => [trip.value, live.vehicles] as const, drawPlan)
+watch(() => [trip.value, live.revision] as const, drawPlan)
 
 // --- map lifecycle -------------------------------------------------------------------------------
 function fitRegion(animate = false) {
@@ -367,6 +367,7 @@ function init(o: ObjectsResponse) {
   m.once('style.load', () => {
     addLayers(m, o)
     layer = new SiteLayer(o.georef)
+    if (import.meta.env.DEV) (window as unknown as { __layer: SiteLayer }).__layer = layer
     m.addLayer(layer, 'trails') // under the tracks and arrows
     layer.setPlan(o)
     layer.updateVehicles(live.vehicles.values(), objects.vehicles)
@@ -443,23 +444,29 @@ watch(
   },
 )
 
+// the live maps keep their identity (mutated in place): a getter returning them never looks "changed"
+// to watch(), so react to the store's revision counter instead
 watch(
-  () => live.vehicles,
-  (v) => {
-    layer?.updateVehicles(v.values(), objects.vehicles)
+  () => live.revision,
+  () => {
+    layer?.updateVehicles(live.vehicles.values(), objects.vehicles)
     recordTrails()
   },
 )
+let markersAt = 0
 watch(
-  () => [live.alertedObjects, live.people, trips.active] as const,
-  () => {
+  () => [live.alertedObjects, live.revision, trips.active] as const,
+  ([alerted], [before]) => {
     layer?.setAlerted(live.alertedObjects)
+    // counts on the labels change slowly: once a second is plenty, but alerts show at once
+    if (alerted === before && performance.now() - markersAt < 1000) return
+    markersAt = performance.now()
     refreshMarkers()
   },
 )
 let recolor = 0
 watch(
-  () => live.sensors,
+  () => live.revision,
   () => {
     if (recolor) return
     recolor = window.setTimeout(() => {

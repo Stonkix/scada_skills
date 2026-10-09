@@ -21,6 +21,8 @@ export const useLive = defineStore('live', () => {
   const status = ref<WsStatus>('closed')
   const lastMessage = ref<number>(0)
   const soundOn = ref(true)
+  /** Bumped once per flushed frame: watch it to react to live updates (the maps keep their identity). */
+  const revision = ref(0)
   let socket: LiveSocket | null = null
   let pending = false
   const sensorListeners = new Set<(s: SensorLive) => void>()
@@ -41,6 +43,7 @@ export const useLive = defineStore('live', () => {
       triggerRef(vehicles)
       triggerRef(people)
       triggerRef(alerts)
+      revision.value++
     })
   }
 
@@ -121,7 +124,7 @@ export const useLive = defineStore('live', () => {
   })
 
   return {
-    sensors, vehicles, people, alerts, status, lastMessage, soundOn,
+    sensors, vehicles, people, alerts, status, lastMessage, soundOn, revision,
     start, stop, replaceAlert, openAlerts, criticalCount, alertedObjects, onSensorEvent,
   }
 })

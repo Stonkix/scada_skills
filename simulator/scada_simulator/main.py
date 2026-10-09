@@ -9,10 +9,11 @@ from pathlib import Path
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel, Field
 
 from scada_simulator import world as world_mod
 from scada_simulator.scenarios import Runner, ScenarioError, load
-from scada_simulator.sim import Simulation
+from scada_simulator.sim import MAX_TIME_SCALE, Simulation
 from scada_simulator.transport import Transport
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -96,6 +97,16 @@ async def stop_scenarios(request: Request) -> dict[str, str]:
     """Отменить все запущенные сценарии и эффекты: предприятие возвращается к обычной жизни."""
     request.app.state.runner.stop_all()
     return {"status": "stopped"}
+
+
+class TimeScale(BaseModel):
+    scale: float = Field(..., ge=1, le=MAX_TIME_SCALE, description="Во сколько раз быстрее ездит и работает техника")
+
+
+@app.post("/time", tags=["scenarios"])
+def set_time(body: TimeScale, request: Request) -> dict[str, float]:
+    """Ускорение времени для показа: машины едут и грузятся в `scale` раз быстрее; 1 — обычный ход."""
+    return {"time_scale": request.app.state.sim.set_time_scale(body.scale)}
 
 
 @app.get("/status", tags=["system"])
