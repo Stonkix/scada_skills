@@ -4685,7 +4685,8 @@
           "access_control",
           "gnss",
           "motion",
-          "climate"
+          "climate",
+          "smoke"
         ],
         "title": "SensorType"
       },

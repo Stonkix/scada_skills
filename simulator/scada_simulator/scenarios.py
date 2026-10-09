@@ -175,6 +175,15 @@ def card_swipe(sim: Simulation, reader: str, card: str, granted: bool, event: st
 
 
 @action
+def smoke_alarm(sim: Simulation, sensor: str | None = None, duration_s: float = 300, level_pct: float = 12) -> list[Outgoing]:
+    """Smoke in a room: the detector jumps past the alarm level (6 %/m) and reports at once."""
+    sensor = sensor or sim.rnd.choice(sim.world.sensors_of("smoke")).id
+    _sensor(sim, sensor, "smoke")
+    sim.add_effect("smoke", sensor, duration_s, level_pct=level_pct)
+    return [sim.report_now(sensor)]
+
+
+@action
 def plate_at_gate(sim: Simulation, camera: str | None = None) -> list[Outgoing]:
     """A car with a plate nobody knows drives up to a gate camera (any site's КПП when camera is omitted)."""
     cams = [s.cam_in for s in sim.sites.values() if s.cam_in]
@@ -192,7 +201,7 @@ def plate_at_gate(sim: Simulation, camera: str | None = None) -> list[Outgoing]:
 def random_incident(sim: Simulation) -> tuple[str, list[Outgoing]]:
     """Pick an incident whose alarm shows at once, on a random site; returns (what happened, messages)."""
     r = sim.rnd
-    kinds = ["overheat", "breakdown", "plate", "card", "intrusion", "speeding"]
+    kinds = ["overheat", "breakdown", "plate", "card", "intrusion", "speeding", "smoke"]
     r.shuffle(kinds)
     for kind in kinds:
         try:
@@ -214,6 +223,9 @@ def random_incident(sim: Simulation) -> tuple[str, list[Outgoing]]:
                 s = r.choice(motion)
                 out = evacuate(sim, s.building_id, duration_s=300) + motion_alarm(sim, s.id, duration_s=150)
                 return f"Движение в пустом здании: {s.building_id}", out
+            if kind == "smoke":
+                out = smoke_alarm(sim, duration_s=r.uniform(150, 300), level_pct=r.uniform(8, 18))
+                return f"Задымление: {out[0].device_id}", out
             if kind == "speeding":
                 return "Превышение скорости", vehicle_speeding(sim, kmh=r.uniform(36, 48), duration_s=45)
         except (ScenarioError, IndexError, StopIteration):

@@ -4087,6 +4087,46 @@
   },
   {
    "type": "Feature",
+   "id": "smk-wh1-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     290.0,
+     315.0
+    ]
+   },
+   "properties": {
+    "id": "smk-wh1-dock",
+    "kind": "sensor",
+    "name": "Дым: Склад №1: зона отгрузки",
+    "sensor_type": "smoke",
+    "zone_id": "r-wh1-dock",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-wh1-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     290.0,
+     365.0
+    ]
+   },
+   "properties": {
+    "id": "smk-wh1-storage",
+    "kind": "sensor",
+    "name": "Дым: Склад №1: зона хранения",
+    "sensor_type": "smoke",
+    "zone_id": "r-wh1-storage",
+    "building_id": "b-wh1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-wh2-dock",
    "geometry": {
     "type": "Point",
@@ -4107,6 +4147,46 @@
   },
   {
    "type": "Feature",
+   "id": "smk-wh2-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     470.0,
+     315.0
+    ]
+   },
+   "properties": {
+    "id": "smk-wh2-dock",
+    "kind": "sensor",
+    "name": "Дым: Склад №2: зона отгрузки",
+    "sensor_type": "smoke",
+    "zone_id": "r-wh2-dock",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-wh2-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     470.0,
+     365.0
+    ]
+   },
+   "properties": {
+    "id": "smk-wh2-storage",
+    "kind": "sensor",
+    "name": "Дым: Склад №2: зона хранения",
+    "sensor_type": "smoke",
+    "zone_id": "r-wh2-storage",
+    "building_id": "b-wh2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-wh3-dock",
    "geometry": {
     "type": "Point",
@@ -4121,6 +4201,46 @@
     "name": "Движение: Склад №3: зона отгрузки",
     "sensor_type": "motion",
     "zone_id": "r-wh3-dock",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-wh3-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     650.0,
+     315.0
+    ]
+   },
+   "properties": {
+    "id": "smk-wh3-dock",
+    "kind": "sensor",
+    "name": "Дым: Склад №3: зона отгрузки",
+    "sensor_type": "smoke",
+    "zone_id": "r-wh3-dock",
+    "building_id": "b-wh3",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-wh3-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     650.0,
+     365.0
+    ]
+   },
+   "properties": {
+    "id": "smk-wh3-storage",
+    "kind": "sensor",
+    "name": "Дым: Склад №3: зона хранения",
+    "sensor_type": "smoke",
+    "zone_id": "r-wh3-storage",
     "building_id": "b-wh3",
     "floor": 1
    }
@@ -4160,6 +4280,26 @@
     "kind": "sensor",
     "name": "Движение: Админ. корпус, 1 эт.: западное крыло",
     "sensor_type": "motion",
+    "zone_id": "r-admin-f1-west",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-admin-f1-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     85.0,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "smk-admin-f1-west",
+    "kind": "sensor",
+    "name": "Дым: Админ. корпус, 1 эт.: западное крыло",
+    "sensor_type": "smoke",
     "zone_id": "r-admin-f1-west",
     "building_id": "b-admin",
     "floor": 1
@@ -4207,6 +4347,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-admin-f1-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     135.0,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "smk-admin-f1-east",
+    "kind": "sensor",
+    "name": "Дым: Админ. корпус, 1 эт.: восточное крыло",
+    "sensor_type": "smoke",
+    "zone_id": "r-admin-f1-east",
+    "building_id": "b-admin",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-admin-f2-west",
    "geometry": {
     "type": "Point",
@@ -4240,6 +4400,26 @@
     "kind": "sensor",
     "name": "Движение: Админ. корпус, 2 эт.: западное крыло",
     "sensor_type": "motion",
+    "zone_id": "r-admin-f2-west",
+    "building_id": "b-admin",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-admin-f2-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     85.0,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "smk-admin-f2-west",
+    "kind": "sensor",
+    "name": "Дым: Админ. корпус, 2 эт.: западное крыло",
+    "sensor_type": "smoke",
     "zone_id": "r-admin-f2-west",
     "building_id": "b-admin",
     "floor": 2
@@ -4287,6 +4467,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-admin-f2-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     135.0,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "smk-admin-f2-east",
+    "kind": "sensor",
+    "name": "Дым: Админ. корпус, 2 эт.: восточное крыло",
+    "sensor_type": "smoke",
+    "zone_id": "r-admin-f2-east",
+    "building_id": "b-admin",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-admin-f3-west",
    "geometry": {
     "type": "Point",
@@ -4327,6 +4527,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-admin-f3-west",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     85.0,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "smk-admin-f3-west",
+    "kind": "sensor",
+    "name": "Дым: Админ. корпус, 3 эт.: западное крыло",
+    "sensor_type": "smoke",
+    "zone_id": "r-admin-f3-west",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-admin-f3-east",
    "geometry": {
     "type": "Point",
@@ -4340,6 +4560,26 @@
     "kind": "sensor",
     "name": "Движение: Админ. корпус, 3 эт.: восточное крыло",
     "sensor_type": "motion",
+    "zone_id": "r-admin-f3-east",
+    "building_id": "b-admin",
+    "floor": 3
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-admin-f3-east",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     135.0,
+     415.0
+    ]
+   },
+   "properties": {
+    "id": "smk-admin-f3-east",
+    "kind": "sensor",
+    "name": "Дым: Админ. корпус, 3 эт.: восточное крыло",
+    "sensor_type": "smoke",
     "zone_id": "r-admin-f3-east",
     "building_id": "b-admin",
     "floor": 3
@@ -4367,6 +4607,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-prod1-line",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     265.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "smk-prod1-line",
+    "kind": "sensor",
+    "name": "Дым: Цех №1: производственная линия",
+    "sensor_type": "smoke",
+    "zone_id": "r-prod1-line",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-prod1-stock",
    "geometry": {
     "type": "Point",
@@ -4380,6 +4640,26 @@
     "kind": "sensor",
     "name": "Движение: Цех №1: склад сырья",
     "sensor_type": "motion",
+    "zone_id": "r-prod1-stock",
+    "building_id": "b-prod1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-prod1-stock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     355.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "smk-prod1-stock",
+    "kind": "sensor",
+    "name": "Дым: Цех №1: склад сырья",
+    "sensor_type": "smoke",
     "zone_id": "r-prod1-stock",
     "building_id": "b-prod1",
     "floor": 1
@@ -4427,6 +4707,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-prod1-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     310.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "smk-prod1-f2",
+    "kind": "sensor",
+    "name": "Дым: Цех №1, 2 эт.: офис мастеров",
+    "sensor_type": "smoke",
+    "zone_id": "r-prod1-f2",
+    "building_id": "b-prod1",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-prod2-line",
    "geometry": {
     "type": "Point",
@@ -4447,6 +4747,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-prod2-line",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     505.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "smk-prod2-line",
+    "kind": "sensor",
+    "name": "Дым: Цех №2: производственная линия",
+    "sensor_type": "smoke",
+    "zone_id": "r-prod2-line",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-prod2-stock",
    "geometry": {
     "type": "Point",
@@ -4460,6 +4780,26 @@
     "kind": "sensor",
     "name": "Движение: Цех №2: склад сырья",
     "sensor_type": "motion",
+    "zone_id": "r-prod2-stock",
+    "building_id": "b-prod2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-prod2-stock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     595.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "smk-prod2-stock",
+    "kind": "sensor",
+    "name": "Дым: Цех №2: склад сырья",
+    "sensor_type": "smoke",
     "zone_id": "r-prod2-stock",
     "building_id": "b-prod2",
     "floor": 1
@@ -4507,6 +4847,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-prod2-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     550.0,
+     140.0
+    ]
+   },
+   "properties": {
+    "id": "smk-prod2-f2",
+    "kind": "sensor",
+    "name": "Дым: Цех №2, 2 эт.: офис мастеров",
+    "sensor_type": "smoke",
+    "zone_id": "r-prod2-f2",
+    "building_id": "b-prod2",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-garage-bay",
    "geometry": {
     "type": "Point",
@@ -4520,6 +4880,26 @@
     "kind": "sensor",
     "name": "Климат: Ремзона: боксы",
     "sensor_type": "climate",
+    "zone_id": "r-garage-bay",
+    "building_id": "b-garage",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-garage-bay",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     725.0,
+     110.0
+    ]
+   },
+   "properties": {
+    "id": "smk-garage-bay",
+    "kind": "sensor",
+    "name": "Дым: Ремзона: боксы",
+    "sensor_type": "smoke",
     "zone_id": "r-garage-bay",
     "building_id": "b-garage",
     "floor": 1
@@ -4567,6 +4947,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-dmd-xd-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14370.0,
+     3794.5
+    ]
+   },
+   "properties": {
+    "id": "smk-dmd-xd-dock",
+    "kind": "sensor",
+    "name": "Дым: Склад кросс-докинга: приёмка и отгрузка",
+    "sensor_type": "smoke",
+    "zone_id": "r-dmd-xd-dock",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-dmd-xd-storage",
    "geometry": {
     "type": "Point",
@@ -4580,6 +4980,26 @@
     "kind": "sensor",
     "name": "Климат: Склад кросс-докинга: хранение",
     "sensor_type": "climate",
+    "zone_id": "r-dmd-xd-storage",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-dmd-xd-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14370.0,
+     3839.5
+    ]
+   },
+   "properties": {
+    "id": "smk-dmd-xd-storage",
+    "kind": "sensor",
+    "name": "Дым: Склад кросс-докинга: хранение",
+    "sensor_type": "smoke",
     "zone_id": "r-dmd-xd-storage",
     "building_id": "b-dmd-xd",
     "floor": 1
@@ -4627,6 +5047,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-dmd-office-f1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14212.5,
+     3872.0
+    ]
+   },
+   "properties": {
+    "id": "smk-dmd-office-f1",
+    "kind": "sensor",
+    "name": "Дым: Офис РЦ «Домодедово», 1 эт.",
+    "sensor_type": "smoke",
+    "zone_id": "r-dmd-office-f1",
+    "building_id": "b-dmd-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-dmd-office-f2",
    "geometry": {
     "type": "Point",
@@ -4640,6 +5080,26 @@
     "kind": "sensor",
     "name": "Движение: Офис РЦ «Домодедово», 2 эт.",
     "sensor_type": "motion",
+    "zone_id": "r-dmd-office-f2",
+    "building_id": "b-dmd-office",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-dmd-office-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     14212.5,
+     3872.0
+    ]
+   },
+   "properties": {
+    "id": "smk-dmd-office-f2",
+    "kind": "sensor",
+    "name": "Дым: Офис РЦ «Домодедово», 2 эт.",
+    "sensor_type": "smoke",
     "zone_id": "r-dmd-office-f2",
     "building_id": "b-dmd-office",
     "floor": 2
@@ -4687,6 +5147,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-chk-cold1-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5630.0,
+     -29096.5
+    ]
+   },
+   "properties": {
+    "id": "smk-chk-cold1-dock",
+    "kind": "sensor",
+    "name": "Дым: Холодильная камера №1: приёмка и отгрузка",
+    "sensor_type": "smoke",
+    "zone_id": "r-chk-cold1-dock",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-chk-cold1-storage",
    "geometry": {
     "type": "Point",
@@ -4700,6 +5180,26 @@
     "kind": "sensor",
     "name": "Климат: Холодильная камера №1: хранение",
     "sensor_type": "climate",
+    "zone_id": "r-chk-cold1-storage",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-chk-cold1-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5630.0,
+     -29051.5
+    ]
+   },
+   "properties": {
+    "id": "smk-chk-cold1-storage",
+    "kind": "sensor",
+    "name": "Дым: Холодильная камера №1: хранение",
+    "sensor_type": "smoke",
     "zone_id": "r-chk-cold1-storage",
     "building_id": "b-chk-cold1",
     "floor": 1
@@ -4747,6 +5247,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-chk-cold2-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5450.0,
+     -29096.5
+    ]
+   },
+   "properties": {
+    "id": "smk-chk-cold2-dock",
+    "kind": "sensor",
+    "name": "Дым: Холодильная камера №2: приёмка и отгрузка",
+    "sensor_type": "smoke",
+    "zone_id": "r-chk-cold2-dock",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "clim-chk-cold2-storage",
    "geometry": {
     "type": "Point",
@@ -4760,6 +5280,26 @@
     "kind": "sensor",
     "name": "Климат: Холодильная камера №2: хранение",
     "sensor_type": "climate",
+    "zone_id": "r-chk-cold2-storage",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-chk-cold2-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5450.0,
+     -29051.5
+    ]
+   },
+   "properties": {
+    "id": "smk-chk-cold2-storage",
+    "kind": "sensor",
+    "name": "Дым: Холодильная камера №2: хранение",
+    "sensor_type": "smoke",
     "zone_id": "r-chk-cold2-storage",
     "building_id": "b-chk-cold2",
     "floor": 1
@@ -4807,6 +5347,26 @@
   },
   {
    "type": "Feature",
+   "id": "smk-chk-office-f1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5750.0,
+     -29039.0
+    ]
+   },
+   "properties": {
+    "id": "smk-chk-office-f1",
+    "kind": "sensor",
+    "name": "Дым: Офис Холодильный склад «Чехов», 1 эт.",
+    "sensor_type": "smoke",
+    "zone_id": "r-chk-office-f1",
+    "building_id": "b-chk-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-chk-office-f2",
    "geometry": {
     "type": "Point",
@@ -4820,6 +5380,26 @@
     "kind": "sensor",
     "name": "Движение: Офис Холодильный склад «Чехов», 2 эт.",
     "sensor_type": "motion",
+    "zone_id": "r-chk-office-f2",
+    "building_id": "b-chk-office",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "smk-chk-office-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -5750.0,
+     -29039.0
+    ]
+   },
+   "properties": {
+    "id": "smk-chk-office-f2",
+    "kind": "sensor",
+    "name": "Дым: Офис Холодильный склад «Чехов», 2 эт.",
+    "sensor_type": "smoke",
     "zone_id": "r-chk-office-f2",
     "building_id": "b-chk-office",
     "floor": 2

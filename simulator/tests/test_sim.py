@@ -325,3 +325,12 @@ def test_random_incidents_happen_anywhere(sim: Simulation) -> None:
         assert what != "нет подходящей аварии"
         run(sim, 3)
     assert {"Перегрев", "Номер вне базы", "Чужой пропуск", "Движение в пустом здании"} <= seen
+
+
+def test_smoke_detectors_read_clean_air_until_a_fire(sim: Simulation) -> None:
+    out = run(sim, 600)
+    readings = [o.payload["obscuration"] for o in out if o.adapter == "smoke"]
+    assert readings and all(0 <= v <= 2 for v in readings), "clean air reads 0…2 %/m"
+    assert len({o.device_id for o in out if o.adapter == "smoke"}) >= 25, "every room has a detector"
+    [alarm] = sc.smoke_alarm(sim, sensor="smk-wh1-storage", level_pct=12)
+    assert alarm.payload["obscuration"] > 6, "past the alarm level in the very first report"

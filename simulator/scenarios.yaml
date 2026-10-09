@@ -2,7 +2,7 @@
 #
 # A scenario is a list of steps run in order. A step is either {wait_s: N} or an action
 # with parameters; actions start a time-limited effect and return immediately.
-# Actions: vehicle_breakdown, vehicle_speeding, vehicle_arrival, plate_at_gate, climate_drift,
+# Actions: vehicle_breakdown, vehicle_speeding, vehicle_arrival, plate_at_gate, smoke_alarm, climate_drift,
 #          sensor_offline, motion_alarm, card_swipe, evacuate.
 # What becomes an alert is decided by the worker's rules (alert_rules), not here.
 
@@ -38,6 +38,12 @@ scenarios:
       - {action: card_swipe, reader: acs-wh2, card: unknown, granted: false}
       - {wait_s: 5}
       - {action: card_swipe, reader: acs-prod1, card: expired, granted: true}
+
+  fire:
+    title: Задымление на складе
+    description: Дымовой извещатель в зоне хранения склада №1 показывает 12 %/м при аварийном пороге 6 — тревога сразу.
+    steps:
+      - {action: smoke_alarm, sensor: smk-wh1-storage, level_pct: 12, duration_s: 300}
 
   overheat:
     title: Перегрев холодного склада

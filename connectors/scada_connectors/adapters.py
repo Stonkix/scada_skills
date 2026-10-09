@@ -227,6 +227,36 @@ class MotionAdapter(Adapter):
                 "payload": {"detected": raw.state == "alarm"}}
 
 
+# --- smoke ----------------------------------------------------------------------------------------
+
+
+@adapter
+class SmokeAdapter(Adapter):
+    name = "smoke"
+    device_field = "device"
+    ts_field = "ts_ms"
+    ts_format = "unix_ms"
+    sensor_type = SensorType.SMOKE
+    title = "Дымовой пожарный извещатель"
+
+    class RawSmoke(Raw):
+        device: str
+        obscuration: float = Field(..., ge=0, le=100, description="Оптическая плотность дыма, %/м")
+        fault: bool = False
+        ts_ms: int = Field(..., description="Unix milliseconds (UTC)")
+
+    raw_model = RawSmoke
+    example = {"device": "smk-wh1-storage", "obscuration": 0.7, "fault": False, "ts_ms": 1791450000000}
+
+    def device_id(self, raw: RawSmoke) -> str:
+        return raw.device
+
+    def convert(self, raw: RawSmoke, georef: Georef) -> dict[str, Any]:
+        ts = _from_unix(raw.ts_ms / 1000)
+        return {"sensor_id": raw.device, "ts": ts, "event_id": derived_event_id(self.name, raw.device, ts),
+                "payload": {"smoke_pct": raw.obscuration}}
+
+
 # --- climate --------------------------------------------------------------------------------------
 
 

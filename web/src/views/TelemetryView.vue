@@ -18,6 +18,7 @@ const now = useNow()
 const TYPES = [
   ['all', 'Все датчики'],
   ['climate', 'Климат'],
+  ['smoke', 'Задымление'],
   ['motion', 'Движение'],
   ['access_control', 'СКУД'],
   ['anpr_camera', 'Камеры номеров'],
@@ -39,20 +40,25 @@ const sensors = computed(() =>
 const RANK: Record<string, number> = { critical: 3, warning: 2, offline: 1, ok: 0 }
 const rank = (s: string) => RANK[s] ?? 0
 
-// --- trends: the last 3 h of temperature from history, then the live values appended ---------------
+// --- trends: the last 3 h from history, then the live values appended ----------------------------------
+/** The one metric each trended type plots. */
+const TREND: Record<string, { metric: string; unit: string }> = {
+  climate: { metric: 'temperature_c', unit: '°C' },
+  smoke: { metric: 'smoke_pct', unit: '%/м' },
+}
 const series = ref(new Map<string, number[]>())
 const loaded = new Set<string>()
 const MAX_POINTS = 240
 
 async function loadHistory(list: Sensor[]) {
-  const todo = list.filter((s) => s.type === 'climate' && !loaded.has(s.id))
+  const todo = list.filter((s) => TREND[s.type] && !loaded.has(s.id))
   todo.forEach((s) => loaded.add(s.id))
   const to = new Date()
   const from = new Date(to.getTime() - 3 * 3600e3)
   for (let i = 0; i < todo.length; i += 6) {  // a few at a time: dozens of cards open at once
     await Promise.all(todo.slice(i, i + 6).map(async (s) => {
       const r = await api.GET('/sensors/{sensor_id}/history', {
-        params: { path: { sensor_id: s.id }, query: { metric: 'temperature_c', from: from.toISOString(), to: to.toISOString() } },
+        params: { path: { sensor_id: s.id }, query: { metric: TREND[s.type].metric, from: from.toISOString(), to: to.toISOString() } },
       })
       const pts = (r.data?.points ?? []).map((p) => p.avg)
       series.value.set(s.id, [...pts, ...(series.value.get(s.id) ?? [])].slice(-MAX_POINTS))
@@ -68,7 +74,8 @@ watch(
   () => {
     let changed = false
     for (const [id, s] of live.sensors) {
-      const t = s.values.temperature_c
+      const trend = TREND[objects.sensors.get(id)?.type ?? '']
+      const t = trend && s.values[trend.metric]
       if (typeof t !== "number" || lastSeen.get(id) === (s.last_seen ?? "")) continue
       lastSeen.set(id, s.last_seen ?? "")
       series.value.set(id, [...(series.value.get(id) ?? []), t].slice(-MAX_POINTS))
@@ -79,7 +86,7 @@ watch(
 )
 onBeforeUnmount(() => lastSeen.clear())
 
-const threshold = (s: Sensor) => s.thresholds.find((t) => t.metric === 'temperature_c')
+const threshold = (s: Sensor) => s.thresholds.find((t) => t.metric === TREND[s.type]?.metric)
 const COLOR: Record<string, string> = { ok: 'var(--st-ok)', warning: 'var(--st-warning)', critical: 'var(--st-critical)', offline: 'var(--st-offline)' }
 const zoneName = (s: Sensor) => (s.zone_id ? objects.zoneNames.get(s.zone_id) ?? s.zone_id : '')
 const siteName = (s: Sensor) => objects.sites.get(objects.siteOfSensor(s.id) ?? '')?.name ?? ''
@@ -123,10 +130,10 @@ const counts = computed(() => {
           <template v-else>{{ headline(s.type, live.sensors.get(s.id)?.values) }}</template>
         </div>
         <div class="muted small">{{ zoneName(s) }} · {{ siteName(s) }}</div>
-        <Sparkline v-if="s.type === 'climate'" :values="series.get(s.id) ?? []" :color="COLOR[statusOf(s.id)]"
+        <Sparkline v-if="TREND[s.type]" :values="series.get(s.id) ?? []" :color="COLOR[statusOf(s.id)]"
                    :min="threshold(s)?.min" :max="threshold(s)?.max" />
         <div class="muted small foot">
-          <span v-if="threshold(s)">норма {{ threshold(s)!.min ?? '−∞' }}…{{ threshold(s)!.max ?? '+∞' }} °C,
+          <span v-if="threshold(s)">норма {{ threshold(s)!.min ?? '−∞' }}…{{ threshold(s)!.max ?? '+∞' }} {{ TREND[s.type]?.unit }},
             авария вне {{ threshold(s)!.critical_min ?? '−∞' }}…{{ threshold(s)!.critical_max ?? '+∞' }}</span>
           <span class="grow" />
           <span>{{ fmtAgo(live.sensors.get(s.id)?.last_seen, now) }}</span>

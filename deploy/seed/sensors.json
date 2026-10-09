@@ -1,5 +1,6 @@
 [
  {"id": "acs-dmd-hangar", "type": "access_control", "name": "СКУД: вход, ангар сезонного хранения", "building_id": "b-dmd-hangar", "zone_id": "b-dmd-hangar"},
  {"id": "clim-dmd-hangar", "type": "climate", "name": "Климат: ангар сезонного хранения", "building_id": "b-dmd-hangar", "zone_id": "b-dmd-hangar"},
- {"id": "mot-dmd-hangar", "type": "motion", "name": "Движение: ангар сезонного хранения", "building_id": "b-dmd-hangar", "zone_id": "b-dmd-hangar"}
+ {"id": "mot-dmd-hangar", "type": "motion", "name": "Движение: ангар сезонного хранения", "building_id": "b-dmd-hangar", "zone_id": "b-dmd-hangar"},
+ {"id": "smk-dmd-hangar", "type": "smoke", "name": "Дым: ангар сезонного хранения", "building_id": "b-dmd-hangar", "zone_id": "b-dmd-hangar"}
 ]

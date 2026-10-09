@@ -14,6 +14,8 @@ from scada_common.events import (
     MotionEvent,
     MotionPayload,
     SensorType,
+    SmokeEvent,
+    SmokePayload,
     parse_event,
 )
 
@@ -33,5 +35,7 @@ __all__ = [
     "MotionEvent",
     "MotionPayload",
     "SensorType",
+    "SmokeEvent",
+    "SmokePayload",
     "parse_event",
 ]

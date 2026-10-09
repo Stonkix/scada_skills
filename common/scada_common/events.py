@@ -24,6 +24,7 @@ class SensorType(StrEnum):
     GNSS = "gnss"  # ГЛОНАСС/GPS-трекер транспорта
     MOTION = "motion"  # датчик движения охранной системы
     CLIMATE = "climate"  # температура и влажность
+    SMOKE = "smoke"  # дымовой пожарный извещатель
 
 
 class Direction(StrEnum):
@@ -74,6 +75,10 @@ class ClimatePayload(_Payload):
     humidity_pct: float = Field(..., ge=0, le=100)
 
 
+class SmokePayload(_Payload):
+    smoke_pct: float = Field(..., ge=0, le=100, description="Задымлённость (оптическая плотность), %/м; чистый воздух — 0…2")
+
+
 class _EventBase(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -111,8 +116,13 @@ class ClimateEvent(_EventBase):
     payload: ClimatePayload
 
 
+class SmokeEvent(_EventBase):
+    type: Literal[SensorType.SMOKE]
+    payload: SmokePayload
+
+
 Event = Annotated[
-    Union[AnprCameraEvent, AccessControlEvent, GnssEvent, MotionEvent, ClimateEvent],
+    Union[AnprCameraEvent, AccessControlEvent, GnssEvent, MotionEvent, ClimateEvent, SmokeEvent],
     Field(discriminator="type"),
 ]
 

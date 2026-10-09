@@ -268,7 +268,8 @@ for f in [f for f in features if f["properties"]["kind"] == "room"]:
     p = f["properties"]
     (x0, y0), _, (x1, y1) = f["geometry"]["coordinates"][0][:3]
     short = p["id"].removeprefix("r-")
-    for stype, prefix, label, fx in (("climate", "clim", "Климат", 0.75), ("motion", "mot", "Движение", 0.25)):
+    for stype, prefix, label, fx in (("climate", "clim", "Климат", 0.75), ("motion", "mot", "Движение", 0.25),
+                                     ("smoke", "smk", "Дым", 0.5)):
         if (stype, p["id"]) not in _equipped:
             sensor(f"{prefix}-{short}", stype, f"{label}: {p['name']}", x0 + (x1 - x0) * fx, (y0 + y1) / 2,
                    p["id"], p["building_id"], p["floor"])

@@ -18,7 +18,7 @@ from scada_connectors.mqtt import api_key_properties
 
 log = logging.getLogger(__name__)
 
-MQTT_ADAPTERS = {"gnss", "climate", "motion"}
+MQTT_ADAPTERS = {"gnss", "climate", "motion", "smoke"}
 DOCUMENTS = {"waybill": "/documents/waybill"}
 
 

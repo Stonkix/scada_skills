@@ -13,6 +13,7 @@ from scada_common.events import (
     GnssPayload,
     MotionPayload,
     SensorType,
+    SmokePayload,
 )
 
 PAYLOAD_MODELS: dict[SensorType, type[BaseModel]] = {
@@ -21,6 +22,7 @@ PAYLOAD_MODELS: dict[SensorType, type[BaseModel]] = {
     SensorType.GNSS: GnssPayload,
     SensorType.MOTION: MotionPayload,
     SensorType.CLIMATE: ClimatePayload,
+    SensorType.SMOKE: SmokePayload,
 }
 
 SENSOR_TYPES: list[dict] = [
@@ -47,6 +49,9 @@ SENSOR_TYPES: list[dict] = [
     {"id": SensorType.CLIMATE, "name": "Климат (температура и влажность)", "is_mobile": False, "metrics": [
         {"key": "temperature_c", "name": "Температура", "unit": "°C", "kind": "number"},
         {"key": "humidity_pct", "name": "Влажность", "unit": "%", "kind": "number"},
+    ]},
+    {"id": SensorType.SMOKE, "name": "Датчик задымления (пожарный)", "is_mobile": False, "metrics": [
+        {"key": "smoke_pct", "name": "Задымлённость", "unit": "%/м", "kind": "number"},
     ]},
 ]
 
@@ -78,6 +83,7 @@ REPORTING: dict[SensorType, Reporting] = {
     SensorType.CLIMATE: Reporting(heartbeat_s=120, on_change={"temperature_c": 0.5, "humidity_pct": 3},
                                   min_interval_s=10, offline_after_s=360),
     SensorType.MOTION: Reporting(heartbeat_s=120, on_change={"detected": 1}, min_interval_s=1, offline_after_s=360),
+    SensorType.SMOKE: Reporting(heartbeat_s=120, on_change={"smoke_pct": 0.5}, min_interval_s=10, offline_after_s=360),
     SensorType.ANPR_CAMERA: Reporting(),  # one event per passing vehicle
     SensorType.ACCESS_CONTROL: Reporting(),  # one event per card swipe
 }
@@ -116,6 +122,8 @@ def default_thresholds(sensor_type: SensorType, sensor_id: str) -> list[dict]:
         case SensorType.CLIMATE:
             return [th("temperature_c", nominal=18, min=12, max=24, critical_min=5, critical_max=30),
                     th("humidity_pct", nominal=55, min=30, max=70, critical_min=20, critical_max=85)]
+        case SensorType.SMOKE:  # clean air reads 0…2 %/m; optical smoke detectors alarm around 3…6 %/m
+            return [th("smoke_pct", nominal=1, max=3, critical_max=6)]
         case SensorType.GNSS:
             return [th("speed_kmh", max=20, critical_max=30),
                     th("fuel_pct", min=15, critical_min=5)]

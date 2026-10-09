@@ -62,7 +62,7 @@ ALERT_RULES = [
     ("rule-offline", "Датчик не на связи", AlertKind.OFFLINE, Severity.WARNING,
      # cameras and turnstiles report only when someone passes: silence is normal for them
      # 3 missed heartbeats (scada_common.catalog.REPORTING): climate/motion 120 s, parked tracker 60 s → 5 min
-     {"timeout_s": 360, "mobile_timeout_s": 300, "sensor_types": ["climate", "motion", "gnss"]}, None, 900),
+     {"timeout_s": 360, "mobile_timeout_s": 300, "sensor_types": ["climate", "motion", "smoke", "gnss"]}, None, 900),
     ("rule-geozone-garage", "Грузовик во дворе ремзоны", AlertKind.GEOZONE, Severity.INFO,
      {"zone_id": "z-garage-yard", "event": "enter", "vehicle_kinds": ["truck"]}, None, None),
 ]

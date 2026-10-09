@@ -34,6 +34,7 @@ export const GEOZONE_STYLE: Record<string, L.PathOptions> = {
 export const SENSOR_GLYPH: Record<string, string> = {
   climate: 'T',
   motion: 'M',
+  smoke: 'D',
   access_control: 'S',
   anpr_camera: 'C',
   gnss: 'G',

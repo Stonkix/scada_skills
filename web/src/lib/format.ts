@@ -74,6 +74,8 @@ export function headline(type: string, values: Record<string, unknown> | undefin
   switch (type) {
     case 'climate':
       return [fmtValue(values.temperature_c, '°C'), fmtValue(values.humidity_pct, '%')].join(' · ')
+    case 'smoke':
+      return fmtValue(values.smoke_pct, '%/м')
     case 'motion':
       return values.detected ? 'движение' : 'тихо'
     case 'access_control':

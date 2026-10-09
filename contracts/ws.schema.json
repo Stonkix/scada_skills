@@ -20,7 +20,8 @@
             "access_control",
             "gnss",
             "motion",
-            "climate"
+            "climate",
+            "smoke"
           ],
           "title": "SensorType",
           "type": "string"
@@ -433,7 +434,8 @@
             "access_control",
             "gnss",
             "motion",
-            "climate"
+            "climate",
+            "smoke"
           ],
           "title": "SensorType",
           "type": "string"

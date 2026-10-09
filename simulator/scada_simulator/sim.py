@@ -33,6 +33,7 @@ from scada_simulator.world import SensorSpec, SiteSpec, World
 GNSS = catalog.REPORTING[SensorType.GNSS]
 CLIMATE = catalog.REPORTING[SensorType.CLIMATE]
 MOTION = catalog.REPORTING[SensorType.MOTION]
+SMOKE = catalog.REPORTING[SensorType.SMOKE]
 CLIMATE_SAMPLE_S = int(CLIMATE.min_interval_s)  # the logger measures this often and decides whether to send
 MOTION_SAMPLE_S = 15
 SITE_ROAD_MAX_KMH = 40  # roads with a lower limit are site roads: drive at the vehicle's site cruise speed
@@ -469,7 +470,8 @@ class Simulation:
     def _due(self, sensor_id: str, t: float, reading: tuple, changed) -> bool:
         """Fixed sensors: report on heartbeat or when `changed(previous, reading)`."""
         last = self.last_sent.get(sensor_id)
-        policy = CLIMATE if sensor_id in self.world.sensors and self.world.sensors[sensor_id].type == "climate" else MOTION
+        spec = self.world.sensors.get(sensor_id)
+        policy = catalog.REPORTING.get(SensorType(spec.type), MOTION) if spec else MOTION
         if last is None or t - last[0] >= (policy.heartbeat_s or 0) or changed(last[1], reading):
             self.last_sent[sensor_id] = (t, reading)
             return True
@@ -483,10 +485,23 @@ class Simulation:
             p = msg.payload
             temp_c = (p["temperature"] - 32) * 5 / 9 if p["unit"] == "F" else p["temperature"]
             self.last_sent[s.id] = (t, (temp_c, p["humidity"]))
+        elif s.type == "smoke":
+            msg = self._smoke(s, t)
+            self.last_sent[s.id] = (t, (msg.payload["obscuration"],))
         else:
             msg = self._motion(s, t)
             self.last_sent[s.id] = (t, (msg.payload["state"],))
         return msg
+
+    def _smoke(self, s: SensorSpec, t: float) -> Outgoing:
+        """Clean air: a slow wander within 0…2 %/m; a fire (the `smoke` effect) jumps far past the alarm level."""
+        phase = (hash(s.id) % 1000) / 1000 * 2 * math.pi
+        value = 1.0 + 0.7 * math.sin(t / 1100 + phase) + self.rnd.gauss(0, 0.08)
+        if fire := self.effect("smoke", s.id):
+            value = fire.params.get("level_pct", 12.0) + self.rnd.gauss(0, 0.5)
+        value = max(0.0, min(2.0, value)) if not fire else max(0.0, value)
+        return Outgoing("smoke", s.id, {"device": s.id, "obscuration": round(value, 2), "fault": False,
+                                        "ts_ms": int(t * 1000)})
 
     def _climate(self, s: SensorSpec, t: float) -> Outgoing:
         phase = (hash(s.id) % 1000) / 1000 * 2 * math.pi
@@ -533,6 +548,12 @@ class Simulation:
                 temp_c = (p["temperature"] - 32) * 5 / 9 if p["unit"] == "F" else p["temperature"]
                 if self._due(s.id, t, (temp_c, p["humidity"]), lambda a, b: abs(a[0] - b[0]) >= deadband["temperature_c"]
                              or abs(a[1] - b[1]) >= deadband["humidity_pct"]):
+                    out.append(msg)
+        for s in self.world.sensors_of("smoke"):
+            if (self.tick_no + hash(s.id)) % CLIMATE_SAMPLE_S == 0:
+                msg = self._smoke(s, t)
+                if self._due(s.id, t, (msg.payload["obscuration"],),
+                             lambda a, b: abs(a[0] - b[0]) >= SMOKE.on_change["smoke_pct"]):
                     out.append(msg)
         for s in self.world.sensors_of("motion"):
             if (self.tick_no + hash(s.id)) % MOTION_SAMPLE_S == 0:

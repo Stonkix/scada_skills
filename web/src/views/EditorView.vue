@@ -167,7 +167,7 @@ async function save() {
 }
 
 // --- the scene: layout -> renderer ---------------------------------------------------------------
-const SENSOR_COLOR: Record<string, string> = { climate: '#22d3ee', motion: '#a78bfa', access_control: '#4ade80', anpr_camera: '#fbbf24' }
+const SENSOR_COLOR: Record<string, string> = { climate: '#22d3ee', motion: '#a78bfa', access_control: '#4ade80', anpr_camera: '#fbbf24', smoke: '#f97316' }
 const ROOM_COLOR: Record<string, string> = { storage: '#64748b', dock: '#0ea5e9', production: '#f97316', office: '#a3e635', lobby: '#facc15', server: '#e879f9', repair: '#f87171' }
 
 function asObjects(l: Layout): ObjectsResponse {
@@ -627,7 +627,7 @@ const pick = (t: Tool) => {
 const ICON: Record<string, string> = {
   warehouse: '🏬', production: '🏭', office: '🏢', garage: '🔧',
   storage: '📦', dock: '🚚', lobby: '🛋️', server: '🖥️', repair: '🔩',
-  climate: '🌡️', motion: '👁️', access_control: '🪪', anpr_camera: '📷',
+  climate: '🌡️', motion: '👁️', access_control: '🪪', anpr_camera: '📷', smoke: '🔥',
   gate: '🚧', docks: '📥', parking: '🅿️', restricted: '⛔',
 }
 const ROOM_ICON = (t: string) => (t === 'production' ? '⚙️' : t === 'office' ? '💼' : ICON[t] ?? '▫️')

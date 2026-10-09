@@ -22,6 +22,7 @@ export interface Layout {
 export const PLACEABLE = [
   { type: 'climate', prefix: 'clim', label: 'Климат', coverage: 15 },
   { type: 'motion', prefix: 'mot', label: 'Движение', coverage: 12 },
+  { type: 'smoke', prefix: 'smk', label: 'Дым', coverage: 8 },
   { type: 'access_control', prefix: 'acs', label: 'СКУД', coverage: 3 },
   { type: 'anpr_camera', prefix: 'cam', label: 'Камера номеров', coverage: 25 },
 ] as const

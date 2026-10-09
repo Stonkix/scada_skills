@@ -1722,7 +1722,7 @@ export interface components {
          * SensorType
          * @enum {string}
          */
-        SensorType: "anpr_camera" | "access_control" | "gnss" | "motion" | "climate";
+        SensorType: "anpr_camera" | "access_control" | "gnss" | "motion" | "climate" | "smoke";
         /** SensorTypeInfo */
         SensorTypeInfo: {
             id: components["schemas"]["SensorType"];

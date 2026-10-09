@@ -601,6 +601,106 @@
       ],
       "title": "MotionPayload",
       "type": "object"
+    },
+    "SmokeEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "event_id": {
+          "description": "Ключ идемпотентности",
+          "format": "uuid",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "schema_v": {
+          "const": 1,
+          "default": 1,
+          "title": "Schema V",
+          "type": "integer"
+        },
+        "sensor_id": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Sensor Id",
+          "type": "string"
+        },
+        "ts": {
+          "description": "Время измерения на датчике; агрегаты считаются по нему",
+          "format": "date-time",
+          "title": "Ts",
+          "type": "string"
+        },
+        "received_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Время приёма коннектором; ставит коннектор",
+          "title": "Received At"
+        },
+        "geo": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Geo"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "zone_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Зона плана; ставит датчик (СКУД) или worker (point-in-polygon)",
+          "title": "Zone Id"
+        },
+        "type": {
+          "const": "smoke",
+          "title": "Type",
+          "type": "string"
+        },
+        "payload": {
+          "$ref": "#/$defs/SmokePayload"
+        }
+      },
+      "required": [
+        "sensor_id",
+        "ts",
+        "type",
+        "payload"
+      ],
+      "title": "SmokeEvent",
+      "type": "object"
+    },
+    "SmokePayload": {
+      "additionalProperties": false,
+      "properties": {
+        "smoke_pct": {
+          "description": "Задымлённость (оптическая плотность), %/м; чистый воздух — 0…2",
+          "maximum": 100,
+          "minimum": 0,
+          "title": "Smoke Pct",
+          "type": "number"
+        }
+      },
+      "required": [
+        "smoke_pct"
+      ],
+      "title": "SmokePayload",
+      "type": "object"
     }
   },
   "discriminator": {
@@ -609,7 +709,8 @@
       "anpr_camera": "#/$defs/AnprCameraEvent",
       "climate": "#/$defs/ClimateEvent",
       "gnss": "#/$defs/GnssEvent",
-      "motion": "#/$defs/MotionEvent"
+      "motion": "#/$defs/MotionEvent",
+      "smoke": "#/$defs/SmokeEvent"
     },
     "propertyName": "type"
   },
@@ -628,6 +729,9 @@
     },
     {
       "$ref": "#/$defs/ClimateEvent"
+    },
+    {
+      "$ref": "#/$defs/SmokeEvent"
     }
   ]
 }
