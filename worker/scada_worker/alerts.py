@@ -13,7 +13,8 @@ from datetime import UTC, datetime
 from typing import Any
 
 import redis.asyncio as aioredis
-from scada_common import keys
+from prometheus_client import Counter
+from scada_common import keys, metrics
 from scada_common.alerts import Alert
 from scada_common.live import Layer, WsAlert
 from scada_db import models as m
@@ -30,6 +31,7 @@ TOUCH_EVERY_S = 30  # how often last_seen_at of a live alert is written back
 MAX_ESCALATION = 3
 SEVERITY_RANK = {"info": 0, "warning": 1, "critical": 2}
 A = m.Alert.__table__
+TRANSITIONS = Counter(metrics.WORKER_ALERT_TRANSITIONS.removesuffix("_total"), "Alert lifecycle transitions", ["transition"])
 
 
 class AlertEngine:
@@ -195,6 +197,7 @@ class AlertEngine:
         pipe.publish(keys.live_channel(building, Layer.ALERTS),
                      WsAlert(ts=datetime.now(UTC), building_id=building, data=alert).model_dump_json())
         await pipe.execute()
+        TRANSITIONS.labels(transition).inc()
         log.info("alert %s %s: %s", transition, alert.id, alert.title)
 
 

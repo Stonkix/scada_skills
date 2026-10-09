@@ -1,0 +1,12 @@
+# build context is the repo root for the Python services: keep it to sources
+venv/
+.git/
+web/
+docs/
+contracts/
+**/__pycache__/
+**/*.egg-info/
+**/.pytest_cache/
+**/tests/
+.claude/
+.env

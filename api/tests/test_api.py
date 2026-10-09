@@ -281,3 +281,21 @@ def test_api_key_issue_use_restrict_revoke(client: TestClient, tokens: dict) -> 
 def test_connector_endpoints(client: TestClient, tokens: dict) -> None:
     e = client.get("/connectors/endpoints", headers=auth(tokens, "dispatcher")).json()
     assert e["http_base"].startswith("http") and e["mqtt_port"] > 0 and e["api_key_header"] == "X-API-Key"
+
+
+# --- predictive ------------------------------------------------------------------------------------
+
+
+def test_predict_endpoints(client: TestClient, tokens: dict) -> None:
+    h = auth(tokens, "dispatcher")
+    clim = client.get("/predict/clim-wh2-storage", headers=h).json()
+    assert clim["prediction"]["metric"] == "temperature_c" and clim["prediction"]["samples"] > 0
+    assert clim["prediction"]["risk"] in ("ok", "watch", "warning", "critical") and clim["maintenance"] is None
+    truck = client.get("/predict/gnss-truck-1", headers=h).json()
+    assert truck["prediction"]["metric"] == "fuel_pct"
+    assert truck["maintenance"]["remaining_km"] > 0 and truck["maintenance"]["next_service_km"] % 10000 == 0
+    assert client.get("/predict/mot-wh1", headers=h).json() == {"prediction": None, "maintenance": None}
+    assert client.get("/predict/clim-wh2-storage", params={"metric": "plate"}, headers=h).status_code == 422
+    risks = client.get("/predict", params={"risk_at_least": "ok"}, headers=h).json()
+    order = {"critical": 0, "warning": 1, "watch": 2, "ok": 3}
+    assert risks and [order[r["risk"]] for r in risks] == sorted(order[r["risk"]] for r in risks)

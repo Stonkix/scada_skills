@@ -35,7 +35,8 @@ def test_models_match_migrations() -> None:
 
 
 def test_seed_is_consistent(session: Session) -> None:
-    sensors = session.scalars(select(m.Sensor)).all()
+    # tools/loadtest.py leaves its synthetic load-* sensors disabled in the registry; they are not part of the seed
+    sensors = session.scalars(select(m.Sensor).where(m.Sensor.id.not_like("load-%"))).all()
     assert 50 <= len(sensors) <= 200
     areas = set(session.scalars(select(m.Building.id))) | set(session.scalars(select(m.Zone.id)))
     assert {s.zone_id for s in sensors if s.zone_id} <= areas

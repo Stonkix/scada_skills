@@ -7,6 +7,7 @@ import redis.asyncio as aioredis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from scada_db import models as m
 from scada_db.config import settings
 from scada_db.postgres import engine
@@ -22,6 +23,7 @@ from app.kpi.router import router as kpi_router
 from app.layout.router import router as layout_router
 from app.live.broadcast import Broadcaster
 from app.live.router import router as live_router
+from app.predict.router import router as predict_router
 from app.registry.router import router as registry_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
@@ -72,7 +74,9 @@ app = FastAPI(
 )
 app.add_middleware(CORSMiddleware, allow_origins=api_settings.cors_origins, allow_methods=["*"], allow_headers=["*"])
 
-for r in (auth_router, layout_router, registry_router, live_router, alerts_router, kpi_router, connectors_router):
+Instrumentator(excluded_handlers=["/metrics", "/health"]).instrument(app).expose(app, include_in_schema=False)
+
+for r in (auth_router, layout_router, registry_router, live_router, alerts_router, kpi_router, connectors_router, predict_router):
     app.include_router(r)
 
 

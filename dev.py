@@ -9,6 +9,8 @@
     python dev.py contracts  regenerate contracts/*.json from the code
     python dev.py test       run all tests (db tests need the stack running)
     python dev.py api        run the API locally with reload (port 8000)
+    python dev.py obs        also start Prometheus (:9090) and Grafana (:3000, dashboard «SCADA»)
+    python dev.py load [args]  load test through connectors; see tools/loadtest.py --help
     python dev.py ps|logs    docker compose ps / logs -f
 """
 
@@ -86,6 +88,14 @@ def api() -> None:
     run(PY, "-m", "uvicorn", "app.main:app", "--reload", "--port", "8000", cwd=ROOT / "api")
 
 
+def obs() -> None:
+    run(*COMPOSE, "--profile", "observability", "up", "-d", "--build", "--wait")
+
+
+def load() -> None:
+    run(PY, "tools/loadtest.py", *ARGS)
+
+
 def ps() -> None:
     run(*COMPOSE, "ps")
 
@@ -94,11 +104,11 @@ def logs() -> None:
     run(*COMPOSE, "logs", "-f", "--tail", "100")
 
 
-COMMANDS = {f.__name__: f for f in (up, down, reset, migrate, seed, revision, contracts, test, api, ps, logs)}
+COMMANDS = {f.__name__: f for f in (up, down, reset, migrate, seed, revision, contracts, test, api, obs, load, ps, logs)}
 
 if __name__ == "__main__":
     name = sys.argv[1] if len(sys.argv) > 1 else None
-    if name not in COMMANDS or (name == "revision") != (len(ARGS) == 1) or (name != "revision" and ARGS):
+    if name not in COMMANDS or (name == "revision") != (len(ARGS) == 1) or (name not in ("revision", "load") and ARGS):
         print(__doc__)
         sys.exit(2)
     COMMANDS[name]()

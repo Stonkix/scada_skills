@@ -16,6 +16,7 @@ dependencies = [
     "redis>=5.0",
     "clickhouse-connect>=0.8",
     "tzdata",
+    "prometheus-fastapi-instrumentator>=7.0",
 ]
 
 [project.optional-dependencies]

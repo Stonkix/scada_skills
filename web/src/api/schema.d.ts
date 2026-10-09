@@ -550,6 +550,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/predict/{sensor_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Predict Sensor
+         * @description Прогноз по метрике датчика (тренд, аномалия, время до выхода за пороги); для машин — ещё и до ТО.
+         */
+        get: operations["predict_sensor_predict__sensor_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/predict": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Predict All
+         * @description Риски по всем датчикам типа: сначала самые срочные. По умолчанию — только требующие внимания.
+         */
+        get: operations["predict_all_predict_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -885,6 +925,16 @@ export interface components {
              */
             mqtt_key_property: string;
         };
+        /** ForecastPoint */
+        ForecastPoint: {
+            /**
+             * Ts
+             * Format: date-time
+             */
+            ts: string;
+            /** Value */
+            value: number;
+        };
         /** GateKpi */
         GateKpi: {
             /**
@@ -1093,6 +1143,30 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** Maintenance */
+        Maintenance: {
+            /** Vehicle Id */
+            vehicle_id: string;
+            /** Plate */
+            plate: string;
+            /** Odometer Km */
+            odometer_km: number;
+            /** Service Interval Km */
+            service_interval_km: number;
+            /** Next Service Km */
+            next_service_km: number;
+            /** Remaining Km */
+            remaining_km: number;
+            /**
+             * Km Per Day
+             * @description Средний пробег в сутки по последним 24 ч
+             */
+            km_per_day?: number | null;
+            /** Eta Days */
+            eta_days: number | null;
+            /** Summary */
+            summary: string;
+        };
         /** MetricSpec */
         MetricSpec: {
             /**
@@ -1176,6 +1250,95 @@ export interface components {
                 number,
                 number
             ][][];
+        };
+        /** PredictResponse */
+        PredictResponse: {
+            /** @description null — мало данных для прогноза */
+            prediction?: components["schemas"]["Prediction"] | null;
+            /** @description Только для ГЛОНАСС-трекеров */
+            maintenance?: components["schemas"]["Maintenance"] | null;
+        };
+        /** Prediction */
+        Prediction: {
+            /** Sensor Id */
+            sensor_id: string;
+            /** Name */
+            name: string;
+            /** Metric */
+            metric: string;
+            /** Unit */
+            unit: string | null;
+            /**
+             * Generated At
+             * Format: date-time
+             */
+            generated_at: string;
+            /**
+             * Samples
+             * @description Минутных точек за последние 24 ч
+             */
+            samples: number;
+            /**
+             * Current
+             * @description Сглаженное (EWMA) значение за последние 15 мин
+             */
+            current: number;
+            /**
+             * Baseline Mean
+             * @description Среднее за сутки без последних 15 мин
+             */
+            baseline_mean?: number | null;
+            /** Baseline Std */
+            baseline_std: number | null;
+            /**
+             * Zscore
+             * @description Отклонение текущего значения от суточной нормы, в σ
+             */
+            zscore?: number | null;
+            /**
+             * Anomaly
+             * @description |z| ≥ 3
+             */
+            anomaly: boolean;
+            /**
+             * Trend Per Hour
+             * @description Наклон линейной регрессии (окно 30 мин, если тренд выражен, иначе 2 ч)
+             */
+            trend_per_hour?: number | null;
+            /** Trend R2 */
+            trend_r2: number | null;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "rising" | "falling" | "stable" | "unknown";
+            /**
+             * Eta Warning H
+             * @description Часов до выхода за норму при текущем тренде (0 — уже вне нормы)
+             */
+            eta_warning_h?: number | null;
+            /**
+             * Eta Critical H
+             * @description Часов до критической границы
+             */
+            eta_critical_h?: number | null;
+            /** Bound Warning */
+            bound_warning: number | null;
+            /** Bound Critical */
+            bound_critical: number | null;
+            /**
+             * Risk
+             * @description critical: до крит. границы ≤ 2 ч; warning: до выхода из нормы ≤ 2 ч или аномалия; watch: ≤ 12 ч или |z| ≥ 2
+             * @enum {string}
+             */
+            risk: "ok" | "watch" | "warning" | "critical";
+            /** Summary */
+            summary: string;
+            /**
+             * Forecast
+             * @description Проекция тренда на 3 ч вперёд (шаг 15 мин)
+             */
+            forecast: components["schemas"]["ForecastPoint"][];
         };
         /** RefreshRequest */
         RefreshRequest: {
@@ -2769,6 +2932,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Rejection"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    predict_sensor_predict__sensor_id__get: {
+        parameters: {
+            query?: {
+                /** @description По умолчанию: температура для климата, топливо для трекеров */
+                metric?: string | null;
+            };
+            header?: never;
+            path: {
+                sensor_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PredictResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    predict_all_predict_get: {
+        parameters: {
+            query?: {
+                sensor_type?: components["schemas"]["SensorType"];
+                risk_at_least?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Prediction"][];
                 };
             };
             /** @description Validation Error */

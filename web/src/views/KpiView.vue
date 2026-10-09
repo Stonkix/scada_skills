@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { api, errorText, unwrap } from '@/api/client'
-import type { KpiResponse } from '@/api/types'
+import type { KpiResponse, Prediction } from '@/api/types'
 import { AXIS, PALETTE, STATUS, SURFACE, TOOLTIP, VChart } from '@/lib/echarts'
 import { SEVERITY_LABEL, fmtDuration } from '@/lib/format'
 import { useObjects } from '@/stores/objects'
 
 const objects = useObjects()
+const router = useRouter()
 const PERIODS = [
   { label: '1 час', h: 1 },
   { label: '8 часов', h: 8 },
@@ -18,6 +20,8 @@ const data = ref<KpiResponse | null>(null)
 const error = ref('')
 const loading = ref(false)
 const showTable = ref(false)
+const risks = ref<Prediction[]>([])
+const RISK = { ok: ['Норма', 'st-ok'], watch: ['Наблюдать', 'sev-info'], warning: ['Внимание', 'sev-warning'], critical: ['Срочно', 'sev-critical'] } as const
 
 async function load() {
   loading.value = true
@@ -25,7 +29,12 @@ async function load() {
   try {
     const to = new Date()
     const from = new Date(to.getTime() - hours.value * 3600e3)
-    data.value = unwrap(await api.GET('/kpi', { params: { query: { from: from.toISOString(), to: to.toISOString() } } }))
+    const [kpi, r] = await Promise.all([
+      api.GET('/kpi', { params: { query: { from: from.toISOString(), to: to.toISOString() } } }).then(unwrap),
+      api.GET('/predict', { params: { query: { sensor_type: 'climate', risk_at_least: 'watch' } } }).then(unwrap).catch(() => []),
+    ])
+    data.value = kpi
+    risks.value = r
   } catch (e) {
     error.value = errorText(e)
   } finally {
@@ -189,6 +198,21 @@ const ruleNames = computed(() => new Map<string, string>([
         </section>
 
         <section class="panel box">
+          <h2>Прогноз рисков: климат</h2>
+          <div v-if="!risks.length" class="empty-state">Все датчики климата стабильны: выхода за пороги в ближайшие 12 ч не ожидается</div>
+          <table v-else class="grid">
+            <thead><tr><th>Риск</th><th>Датчик</th><th>Прогноз</th></tr></thead>
+            <tbody>
+              <tr v-for="p in risks" :key="p.sensor_id" class="clickable" @click="router.push({ name: 'map', query: { sensor: p.sensor_id } })">
+                <td><span class="badge" :class="RISK[p.risk][1]">{{ RISK[p.risk][0] }}</span></td>
+                <td>{{ p.name }}</td>
+                <td class="muted">{{ p.summary }}</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section class="panel box">
           <h2>Тревоги за период</h2>
           <div v-if="!data.alerts.opened" class="empty-state">Тревог не было</div>
           <template v-else>
@@ -229,4 +253,5 @@ const ruleNames = computed(() => new Map<string, string>([
 .chart.short { height: 130px; }
 .table-wrap { max-height: 380px; overflow: auto; }
 .people-now { margin-left: 10px; white-space: nowrap; }
+tr.clickable { cursor: pointer; }
 </style>

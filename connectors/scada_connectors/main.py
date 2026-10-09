@@ -10,6 +10,7 @@ from typing import Annotated, Any
 import redis.asyncio as aioredis
 from fastapi import Body, FastAPI, Header, Request
 from fastapi.responses import JSONResponse
+from prometheus_fastapi_instrumentator import Instrumentator
 from pydantic import BaseModel, Field
 from scada_common import keys
 from scada_db.config import settings
@@ -52,6 +53,9 @@ app = FastAPI(
     ),
     lifespan=lifespan,
 )
+
+
+Instrumentator().instrument(app).expose(app, include_in_schema=False)  # GET /metrics
 
 
 @app.exception_handler(IngestError)

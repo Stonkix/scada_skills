@@ -33,6 +33,8 @@ export type ApiKey = S['ApiKey']
 export type ApiKeyIssued = S['ApiKeyIssued']
 export type Endpoints = S['Endpoints']
 export type Rejection = S['Rejection']
+export type Prediction = S['Prediction']
+export type PredictResponse = S['PredictResponse']
 
 /** GET /adapters of the connectors service (not part of the API contract). */
 export interface AdapterInfo {

@@ -4,7 +4,13 @@ import { api, errorText, unwrap } from '@/api/client'
 import type { SensorHistory, Threshold } from '@/api/types'
 import { AXIS, TOOLTIP, VChart } from '@/lib/echarts'
 
-const props = defineProps<{ sensorId: string; metric: string; unit?: string | null; threshold?: Threshold }>()
+const props = defineProps<{
+  sensorId: string
+  metric: string
+  unit?: string | null
+  threshold?: Threshold
+  forecast?: { ts: string; value: number }[] // trend projection, drawn dashed after "now"
+}>()
 
 const RANGES = [
   { label: '15 мин', ms: 15 * 60e3 },
@@ -68,6 +74,10 @@ const option = computed(() => {
         showSymbol: false, lineStyle: { width: 1.6, color: '#38bdf8' }, itemStyle: { color: '#38bdf8' },
         markLine: { symbol: 'none', silent: true, label: { color: '#8a9ab5', fontSize: 10, formatter: '{b}' }, data: lines },
       },
+      ...(props.forecast?.length
+        ? [{ type: 'line', name: 'прогноз', data: props.forecast.map((p) => [p.ts, p.value]), showSymbol: false,
+             lineStyle: { width: 1.6, type: 'dashed', color: '#d95926' }, itemStyle: { color: '#d95926' } }]
+        : []),
     ],
   }
 })

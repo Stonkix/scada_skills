@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { api, errorText, unwrap } from '@/api/client'
 import type { RoutePoint } from '@/api/types'
+import ForecastBlock from '@/components/ForecastBlock.vue'
 import HistoryChart from '@/components/HistoryChart.vue'
 import AlertItem from '@/components/AlertItem.vue'
 import {
@@ -31,6 +32,8 @@ const metric = ref('')
 watch(chartMetrics, (ms) => (metric.value = ms[0]?.key ?? ''), { immediate: true })
 const metricInfo = computed(() => chartMetrics.value.find((m) => m.key === metric.value))
 const threshold = computed(() => sensor.value?.thresholds.find((t) => t.metric === metric.value))
+const forecastPoints = ref<{ ts: string; value: number }[]>([])
+const forecastable = computed(() => sensor.value?.type === 'climate')
 
 // --- vehicle ---------------------------------------------------------------------------------------
 const vehicle = computed(() => (props.selection.kind === 'vehicle' ? objects.vehicles.get(props.selection.id) : undefined))
@@ -109,7 +112,9 @@ const now = useNow()
             <option v-for="m in chartMetrics" :key="m.key" :value="m.key">{{ m.name }}</option>
           </select>
         </div>
-        <HistoryChart :sensor-id="sensor.id" :metric="metric" :unit="metricInfo?.unit" :threshold="threshold" />
+        <HistoryChart :sensor-id="sensor.id" :metric="metric" :unit="metricInfo?.unit" :threshold="threshold"
+                      :forecast="forecastable ? forecastPoints : undefined" />
+        <ForecastBlock v-if="forecastable" :sensor-id="sensor.id" :metric="metric" @forecast="(p) => (forecastPoints = p)" />
         <div v-if="threshold" class="muted small-text">
           Норма {{ threshold.min ?? '−∞' }} … {{ threshold.max ?? '+∞' }}{{ metricInfo?.unit ? ' ' + metricInfo.unit : '' }},
           критично вне {{ threshold.critical_min ?? '−∞' }} … {{ threshold.critical_max ?? '+∞' }} · порог v{{ threshold.version }}
@@ -144,6 +149,7 @@ const now = useNow()
         <button v-if="routeMinutes" class="small ghost" @click="showRoute(null)">скрыть</button>
       </div>
       <div v-if="routeError" class="muted">{{ routeError }}</div>
+      <ForecastBlock :sensor-id="vehicle.sensor_id" />
       <HistoryChart :sensor-id="vehicle.sensor_id" metric="speed_kmh" unit="км/ч"
                     :threshold="objects.sensors.get(vehicle.sensor_id)?.thresholds.find((t) => t.metric === 'speed_kmh')" />
     </template>

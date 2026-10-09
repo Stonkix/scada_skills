@@ -11,13 +11,16 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import redis.asyncio as aioredis
+from prometheus_client import Counter
 from pydantic import ValidationError
-from scada_common import keys, parse_event
+from scada_common import keys, metrics, parse_event
 
 from scada_connectors.adapters import ADAPTERS, Adapter
 from scada_connectors.registry import ApiKeyInfo, Registry
 
 MAX_FUTURE_SKEW = timedelta(minutes=5)
+INGESTED = Counter(metrics.INGEST_EVENTS.removesuffix("_total"), "Sensor messages by outcome",
+                   ["adapter", "source", "result", "reason"])
 DLQ_RAW_LIMIT = 4096
 
 
@@ -136,7 +139,10 @@ class Pipeline:
                 "received_at": now.isoformat(),
             }, maxlen=keys.STREAM_DLQ_MAXLEN, approximate=True)
             self.stats.by_reason[reason] = self.stats.by_reason.get(reason, 0) + 1
+            INGESTED.labels(adapter_name, source, "rejected", reason).inc()
         await pipe.execute()
         self.stats.accepted += len(result.accepted)
+        if result.accepted:
+            INGESTED.labels(adapter_name, source, "accepted", "").inc(len(result.accepted))
         self.stats.rejected += len(result.rejected)
         return result

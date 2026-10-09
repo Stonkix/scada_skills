@@ -18,6 +18,7 @@ x-storage-env: &storage-env
 
 services:
   postgres:
+    restart: unless-stopped
     image: postgis/postgis:16-3.4
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
@@ -32,6 +33,7 @@ services:
       retries: 20
 
   clickhouse:
+    restart: unless-stopped
     image: clickhouse/clickhouse-server:24.8
     environment:
       CLICKHOUSE_DB: ${CLICKHOUSE_DB}
@@ -49,6 +51,7 @@ services:
       retries: 30
 
   redis:
+    restart: unless-stopped
     image: redis:7.4-alpine
     command: ["redis-server", "--appendonly", "yes"]
     ports: ["${REDIS_PORT}:6379"]
@@ -60,6 +63,7 @@ services:
       retries: 20
 
   mosquitto:
+    restart: unless-stopped
     image: eclipse-mosquitto:2.0
     ports: ["${MQTT_PORT}:1883"]
     volumes: [./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro]
@@ -86,6 +90,7 @@ services:
 
   # Level 3: sensor ingress over HTTP + MQTT -> stream:events
   connectors:
+    restart: unless-stopped
     build:
       context: ..
       dockerfile: connectors/Dockerfile
@@ -103,6 +108,7 @@ services:
 
   # Stream processing: stream:events -> ClickHouse, live state in Redis, alert rules
   worker:
+    restart: unless-stopped
     build:
       context: ..
       dockerfile: worker/Dockerfile
@@ -119,6 +125,7 @@ services:
 
   # Demo traffic and scenarios; talks only to connectors, like real devices
   simulator:
+    restart: unless-stopped
     build:
       context: ..
       dockerfile: simulator/Dockerfile
@@ -136,6 +143,7 @@ services:
       retries: 20
 
   api:
+    restart: unless-stopped
     build:
       context: ..
       dockerfile: api/Dockerfile
@@ -157,6 +165,7 @@ services:
 
   # Frontend: static build behind nginx, which also proxies /api (with WebSocket) and /sim
   web:
+    restart: unless-stopped
     build:
       context: ../web
     ports: ["${WEB_PORT}:80"]
@@ -164,10 +173,33 @@ services:
       api: {condition: service_healthy}
       simulator: {condition: service_healthy}
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost/"]
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]  # alpine resolves localhost to ::1; nginx listens on IPv4
       interval: 5s
       timeout: 3s
       retries: 10
+
+  # --- observability (optional): python dev.py obs -----------------------------------------
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    profiles: [observability]
+    restart: unless-stopped
+    volumes: [./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro]
+    ports: ["${PROMETHEUS_PORT}:9090"]
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    profiles: [observability]
+    restart: unless-stopped
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"  # read-only dashboards without login on the demo stand
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/scada.json
+    volumes:
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports: ["${GRAFANA_PORT}:3000"]
+    depends_on: [prometheus]
 
 volumes:
   pg-data:

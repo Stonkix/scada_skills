@@ -1923,6 +1923,135 @@
         }
       }
     },
+    "/predict/{sensor_id}": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Predict Sensor",
+        "description": "Прогноз по метрике датчика (тренд, аномалия, время до выхода за пороги); для машин — ещё и до ТО.",
+        "operationId": "predict_sensor_predict__sensor_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sensor_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Sensor Id"
+            }
+          },
+          {
+            "name": "metric",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "По умолчанию: температура для климата, топливо для трекеров",
+              "title": "Metric"
+            },
+            "description": "По умолчанию: температура для климата, топливо для трекеров"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PredictResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/predict": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Predict All",
+        "description": "Риски по всем датчикам типа: сначала самые срочные. По умолчанию — только требующие внимания.",
+        "operationId": "predict_all_predict_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "sensor_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SensorType",
+              "default": "climate"
+            }
+          },
+          {
+            "name": "risk_at_least",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(ok|watch|warning|critical)$",
+              "default": "watch",
+              "title": "Risk At Least"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Prediction"
+                  },
+                  "title": "Response Predict All Predict Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -2662,6 +2791,25 @@
         "title": "Endpoints",
         "description": "Где устройства и шлюзы подключаются к уровню коннекторов (адреса снаружи, для инструкций)."
       },
+      "ForecastPoint": {
+        "properties": {
+          "ts": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Ts"
+          },
+          "value": {
+            "type": "number",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ts",
+          "value"
+        ],
+        "title": "ForecastPoint"
+      },
       "GateKpi": {
         "properties": {
           "entries": {
@@ -3104,6 +3252,73 @@
         ],
         "title": "LoginRequest"
       },
+      "Maintenance": {
+        "properties": {
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id"
+          },
+          "plate": {
+            "type": "string",
+            "title": "Plate"
+          },
+          "odometer_km": {
+            "type": "number",
+            "title": "Odometer Km"
+          },
+          "service_interval_km": {
+            "type": "number",
+            "title": "Service Interval Km"
+          },
+          "next_service_km": {
+            "type": "number",
+            "title": "Next Service Km"
+          },
+          "remaining_km": {
+            "type": "number",
+            "title": "Remaining Km"
+          },
+          "km_per_day": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Km Per Day",
+            "description": "Средний пробег в сутки по последним 24 ч"
+          },
+          "eta_days": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Days"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vehicle_id",
+          "plate",
+          "odometer_km",
+          "service_interval_km",
+          "next_service_km",
+          "remaining_km",
+          "eta_days",
+          "summary"
+        ],
+        "title": "Maintenance"
+      },
       "MetricSpec": {
         "properties": {
           "key": {
@@ -3302,6 +3517,238 @@
           "coordinates"
         ],
         "title": "PolygonGeometry"
+      },
+      "PredictResponse": {
+        "properties": {
+          "prediction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Prediction"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "null — мало данных для прогноза"
+          },
+          "maintenance": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Maintenance"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Только для ГЛОНАСС-трекеров"
+          }
+        },
+        "type": "object",
+        "title": "PredictResponse"
+      },
+      "Prediction": {
+        "properties": {
+          "sensor_id": {
+            "type": "string",
+            "title": "Sensor Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "metric": {
+            "type": "string",
+            "title": "Metric"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "generated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Generated At"
+          },
+          "samples": {
+            "type": "integer",
+            "title": "Samples",
+            "description": "Минутных точек за последние 24 ч"
+          },
+          "current": {
+            "type": "number",
+            "title": "Current",
+            "description": "Сглаженное (EWMA) значение за последние 15 мин"
+          },
+          "baseline_mean": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Mean",
+            "description": "Среднее за сутки без последних 15 мин"
+          },
+          "baseline_std": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Baseline Std"
+          },
+          "zscore": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Zscore",
+            "description": "Отклонение текущего значения от суточной нормы, в σ"
+          },
+          "anomaly": {
+            "type": "boolean",
+            "title": "Anomaly",
+            "description": "|z| ≥ 3"
+          },
+          "trend_per_hour": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend Per Hour",
+            "description": "Наклон линейной регрессии (окно 30 мин, если тренд выражен, иначе 2 ч)"
+          },
+          "trend_r2": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trend R2"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "rising",
+              "falling",
+              "stable",
+              "unknown"
+            ],
+            "title": "Direction"
+          },
+          "eta_warning_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Warning H",
+            "description": "Часов до выхода за норму при текущем тренде (0 — уже вне нормы)"
+          },
+          "eta_critical_h": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta Critical H",
+            "description": "Часов до критической границы"
+          },
+          "bound_warning": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bound Warning"
+          },
+          "bound_critical": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Bound Critical"
+          },
+          "risk": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "watch",
+              "warning",
+              "critical"
+            ],
+            "title": "Risk",
+            "description": "critical: до крит. границы ≤ 2 ч; warning: до выхода из нормы ≤ 2 ч или аномалия; watch: ≤ 12 ч или |z| ≥ 2"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "forecast": {
+            "items": {
+              "$ref": "#/components/schemas/ForecastPoint"
+            },
+            "type": "array",
+            "title": "Forecast",
+            "description": "Проекция тренда на 3 ч вперёд (шаг 15 мин)"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sensor_id",
+          "name",
+          "metric",
+          "unit",
+          "generated_at",
+          "samples",
+          "current",
+          "baseline_std",
+          "anomaly",
+          "trend_r2",
+          "direction",
+          "bound_warning",
+          "bound_critical",
+          "risk",
+          "summary",
+          "forecast"
+        ],
+        "title": "Prediction"
       },
       "RefreshRequest": {
         "properties": {
