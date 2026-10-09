@@ -5,9 +5,7 @@ import { api, errorText, unwrap } from '@/api/client'
 import type { KpiResponse, Prediction } from '@/api/types'
 import { AXIS, PALETTE, STATUS, SURFACE, TOOLTIP, VChart } from '@/lib/echarts'
 import { SEVERITY_LABEL, fmtDuration } from '@/lib/format'
-import { useObjects } from '@/stores/objects'
 
-const objects = useObjects()
 const router = useRouter()
 const PERIODS = [
   { label: '1 час', h: 1 },
@@ -106,15 +104,20 @@ const fleetOption = computed(() => {
 
 const buildingOption = computed(() => {
   const b = [...(data.value?.buildings ?? [])].sort((x, y) => x.entries - y.entries)
+  const label = { show: true, position: 'right', color: '#8a9ab5', fontSize: 11 }
   return {
-    color: [PALETTE[0]],
+    color: [PALETTE[0], PALETTE[2]],
     animation: false,
-    grid: { left: 150, right: 30, top: 10, bottom: 24 },
+    // containLabel: the axis takes as much room as the longest building name needs, nothing is clipped
+    grid: { left: 16, right: 36, top: 30, bottom: 20, containLabel: true },
+    legend: { top: 0, right: 0, textStyle: { color: '#8a9ab5' } },
     tooltip: { ...TOOLTIP, axisPointer: { type: 'shadow' } },
     xAxis: { type: 'value', minInterval: 1, ...AXIS },
-    yAxis: { type: 'category', data: b.map((x) => x.name), ...AXIS },
-    series: [{ name: 'Проходов внутрь', type: 'bar', data: b.map((x) => x.entries), ...hbar,
-               label: { show: true, position: 'right', color: '#8a9ab5', fontSize: 11 } }],
+    yAxis: { type: 'category', data: b.map((x) => x.name), ...AXIS, axisLabel: { ...AXIS.axisLabel, width: 210, overflow: 'truncate' } },
+    series: [
+      { name: 'Проходов внутрь за период', type: 'bar', data: b.map((x) => x.entries), ...hbar, label },
+      { name: 'Сейчас внутри', type: 'bar', data: b.map((x) => x.people_now), ...hbar, label },
+    ],
   }
 })
 
@@ -191,10 +194,7 @@ const ruleNames = computed(() => new Map<string, string>([
 
         <section class="panel box">
           <h2>Проходы в здания по СКУД</h2>
-          <VChart class="chart" :style="{ height: `${Math.max(240, data.buildings.length * 26 + 40)}px` }" :option="buildingOption" autoresize />
-          <small class="muted people">Сейчас внутри:
-            <span v-for="b in data.buildings" :key="b.building_id" class="mono people-now">{{ objects.buildings.get(b.building_id)?.name ?? b.building_id }} — {{ b.people_now }}</span>
-          </small>
+          <VChart class="chart" :style="{ height: `${Math.max(260, data.buildings.length * 34 + 60)}px` }" :option="buildingOption" autoresize />
         </section>
 
         <section class="panel box">
@@ -254,7 +254,5 @@ const ruleNames = computed(() => new Map<string, string>([
 .chart.tall { height: 380px; }
 .chart.short { height: 130px; }
 .table-wrap { max-height: 380px; overflow: auto; }
-.people { display: flex; flex-wrap: wrap; gap: 4px 12px; }
-.people-now { white-space: nowrap; }
 tr.clickable { cursor: pointer; }
 </style>
