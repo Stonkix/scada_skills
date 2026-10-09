@@ -71,7 +71,8 @@ class Reporting(BaseModel):
 
 
 REPORTING: dict[SensorType, Reporting] = {
-    SensorType.GNSS: Reporting(heartbeat_s=60, moving_period_s=30, idle_period_s=60,
+    # moving: a fix every 2 s so the map follows the road; standing: once a minute
+    SensorType.GNSS: Reporting(heartbeat_s=60, moving_period_s=2, idle_period_s=60,
                                on_change={"distance_m": 300, "heading_deg": 10, "speed_kmh": 10},
                                min_interval_s=1, offline_after_s=300),
     SensorType.CLIMATE: Reporting(heartbeat_s=120, on_change={"temperature_c": 0.5, "humidity_pct": 3},

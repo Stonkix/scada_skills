@@ -239,15 +239,17 @@ def test_scenarios_file_is_valid(sim: Simulation) -> None:
 def test_devices_report_by_exception_within_their_limits(sim: Simulation) -> None:
     out = run(sim, 900)
     gnss = catalog.REPORTING["gnss"]
-    fixes: dict[str, list[float]] = {}
+    fixes: dict[str, list[tuple[float, float]]] = {}
     for o in out:
         if o.adapter == "gnss":
-            fixes.setdefault(o.device_id, []).append(o.payload["fix_time"])
-    for device, ts in fixes.items():
-        gaps = [b - a for a, b in zip(ts, ts[1:])]
-        assert min(gaps) >= gnss.min_interval_s and max(gaps) <= gnss.heartbeat_s + 1, device
-    # the old fixed 2 s period would have sent 450 fixes per tracker
-    assert sum(map(len, fixes.values())) < 0.3 * 450 * len(fixes)
+            fixes.setdefault(o.device_id, []).append((o.payload["fix_time"], o.payload["speed"]))
+    for device, fx in fixes.items():
+        gaps = [(b[0] - a[0], a[1]) for a, b in zip(fx, fx[1:])]
+        assert min(g for g, _ in gaps) >= gnss.min_interval_s and max(g for g, _ in gaps) <= gnss.heartbeat_s + 1, device
+        # a moving vehicle is seen every moving_period_s: the map can follow the road
+        assert all(g <= gnss.moving_period_s + 0.5 for g, speed in gaps if speed > 1), device
+    # standing vehicles report once a minute instead of every 2 s
+    assert sum(map(len, fixes.values())) < 450 * len(fixes)
     climate = [o for o in out if o.adapter == "climate"]
     per_sensor = len(climate) / len(sim.world.sensors_of("climate"))
     assert 900 / catalog.REPORTING["climate"].heartbeat_s <= per_sensor < 900 / 15 / 2  # was every 15 s
@@ -258,3 +260,18 @@ def test_sensors_without_a_place_on_the_plan_still_report(sim: Simulation) -> No
     devices = {o.device_id for o in out}
     assert {"clim-dmd-hangar", "mot-dmd-hangar"} <= devices
     assert sim.world.entrance("b-dmd-hangar").id == "acs-dmd-hangar"
+
+
+def test_access_roads_dock_onto_real_roads_and_highways_avoid_sites() -> None:
+    """Trucks leave a site on its access road straight onto a real road; no highway runs across a site."""
+    routes = json.loads((SEED / "routes.json").read_text(encoding="utf-8"))
+    georef = Georef.from_layout(LAYOUT)
+    sites = sites_from_layout(LAYOUT)
+    assert len(routes) == 3
+    for key, entry in routes.items():
+        a, b = key.split("|")
+        pts = [georef.to_local(lat, lon) for lon, lat in entry["coords"]]
+        assert math.dist(pts[0], sites[a].approach) <= 25, f"{a}: the access road does not reach the real road"
+        assert math.dist(pts[-1], sites[b].approach) <= 25, f"{b}: the access road does not reach the real road"
+        crossing = [s.id for p in pts for s in sites.values() if s.contains(*p, margin=-5)]
+        assert not crossing, f"{key} crosses {set(crossing)}"

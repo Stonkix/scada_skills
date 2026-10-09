@@ -31,7 +31,12 @@ OUT = Path(__file__).with_name("layout.geojson")
 ROUTES = Path(__file__).with_name("routes.json")
 OSRM = "https://router.project-osrm.org/route/v1/driving/{a};{b}?overview=full&geometries=geojson"
 
-GEOREF = Georef(origin_lat=55.4265, origin_lon=37.5690, rotation_deg=0.0)  # SW corner of the Podolsk plant
+# Sites are placed so that the gate's access road docks onto a real road (≤ 25 m) and the highways
+# between them never cross a site: tools/site placement was searched with OSRM `nearest` + `route`.
+GEOREF = Georef(origin_lat=55.42879, origin_lon=37.58133, rotation_deg=0.0)  # SW corner of the Podolsk plant
+DMD_SW = (55.46147, 37.80564)
+CHK_SW = (55.16533, 37.48944)
+DOCK_MAX_M = 25
 SITE_W, SITE_H = 800, 500  # the main plant
 
 
@@ -242,17 +247,17 @@ def remote_site(sid: str, code: str, name: str, site_type: str, address: str, sw
 
 
 remote_site("domodedovo", "dmd", "РЦ «Домодедово»", "dc", "Домодедово, у трассы М-4 «Дон»",
-            sw_lat=55.4525, sw_lon=37.8080, size=(420, 300), road_y=120,
+            sw_lat=DMD_SW[0], sw_lon=DMD_SW[1], size=(420, 300), road_y=120,
             warehouses=[("xd", "Склад кросс-докинга", 120, 330)],
             office=(40, 220, 95, 260), parking=(340, 20, 410, 100))
 # A building drawn without a floor plan: its sensors are registered (deploy/seed/sensors.json) but not placed.
 # The lazy-user path: the map shows the sensors in the building card and recommends placing them.
-_dmd_x, _dmd_y = (round(v) for v in GEOREF.to_local(55.4525, 37.8080))
+_dmd_x, _dmd_y = (round(v) for v in GEOREF.to_local(*DMD_SW))
 add(feature(rect(_dmd_x + 345, _dmd_y + 165, _dmd_x + 405, _dmd_y + 235), id="b-dmd-hangar", kind="building",
             name="Ангар сезонного хранения", building_type="warehouse", floors=1))
 
 remote_site("chekhov", "chk", "Холодильный склад «Чехов»", "cold_store", "Чехов, у трассы М-2 «Крым»",
-            sw_lat=55.1700, sw_lon=37.4970, size=(460, 320), road_y=140,
+            sw_lat=CHK_SW[0], sw_lon=CHK_SW[1], size=(460, 320), road_y=140,
             warehouses=[("cold1", "Холодильная камера №1", 90, 240), ("cold2", "Холодильная камера №2", 270, 420)],
             office=(20, 220, 70, 260), parking=(300, 20, 440, 110))
 
@@ -283,13 +288,33 @@ def _osrm(a: tuple[float, float], b: tuple[float, float]) -> list[list[float]]:
 
 
 sites = {f["id"]: f["properties"] for f in features if f["properties"]["kind"] == "site"}
+features_by_id = {f["id"]: f for f in features}
 cache = json.loads(ROUTES.read_text(encoding="utf-8")) if ROUTES.exists() else {}
 refresh = "--refresh-routes" in sys.argv
+warnings: list[str] = []
+
+
+def _ends(a: str, b: str) -> list[list[float]]:
+    return [[round(v, 6) for v in GEOREF.to_wgs84(*sites[s]["approach"])] for s in (a, b)]
+
+
 for a, b in combinations(sorted(sites), 2):
     key = f"{a}|{b}"
-    if refresh or key not in cache:
-        cache[key] = _osrm(tuple(sites[a]["approach"]), tuple(sites[b]["approach"]))
-    local = [GEOREF.to_local(lat, lon) for lon, lat in cache[key]]
+    entry = cache.get(key)
+    if refresh or not isinstance(entry, dict) or entry.get("ends") != _ends(a, b):  # a site moved: route again
+        cache[key] = entry = {"ends": _ends(a, b), "coords": _osrm(tuple(sites[a]["approach"]), tuple(sites[b]["approach"]))}
+    local = [GEOREF.to_local(lat, lon) for lon, lat in entry["coords"]]
+    # the router snaps to the nearest road: the access roads must reach it, or trucks cut across fields
+    for site, end in ((a, local[0]), (b, local[-1])):
+        gap = LineString([tuple(sites[site]["approach"]), end]).length
+        if gap > DOCK_MAX_M:
+            warnings.append(f"{site}: access road ends {gap:.0f} m from the nearest real road")
+    for s, p in sites.items():
+        x0, y0 = (min(c[i] for c in features_by_id[s]["geometry"]["coordinates"][0]) for i in (0, 1))
+        x1, y1 = (max(c[i] for c in features_by_id[s]["geometry"]["coordinates"][0]) for i in (0, 1))
+        crossing = [q for q in local if x0 - 5 <= q[0] <= x1 + 5 and y0 - 5 <= q[1] <= y1 + 5]
+        if crossing:
+            warnings.append(f"route {a}–{b} crosses site {s} ({len(crossing)} points)")
     # the router snaps to the nearest road: join its ends to our access roads with straight segments
     pts = [tuple(sites[a]["approach"]), *local, tuple(sites[b]["approach"])]
     simple = LineString(pts).simplify(2.0)
@@ -328,3 +353,5 @@ if __name__ == "__main__":
     routes = {f["id"]: round(LineString(f["geometry"]["coordinates"]).length / 1000, 1)
               for f in features if f["properties"].get("road_class") == "public"}
     print(f"wrote {OUT.name}: {kinds}; extent {extent}; routes km {routes}")
+    for w in warnings:
+        print("WARNING:", w)

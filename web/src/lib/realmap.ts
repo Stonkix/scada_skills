@@ -104,7 +104,7 @@ interface Mover {
 
 const SNAP_M = 400 // farther than this from the shown position (a reconnect) -> jump, don't glide
 const EASE_PER_S = 2.5
-const MAX_PREDICT_S = 45 // trackers report at least every 30 s while moving; don't run off for longer
+const MAX_PREDICT_S = 3 // moving trackers report every 2 s: predict just past the next fix, never across a bend
 const REANCHOR_M = 250
 const VEHICLES_3D_MIN_ZOOM = 13.5
 const FLASH_MS = 900
