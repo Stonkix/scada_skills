@@ -11,14 +11,16 @@ from scada_common.geo import Georef
 from shapely.geometry import Point, shape
 
 from scada_connectors.adapters import ADAPTERS
+from scada_connectors.documents import Waybill
 from scada_simulator import scenarios as sc
 from scada_simulator.roads import Road, RoadGraph
-from scada_simulator.sim import GATE, OFF_SITE, PARKING, Simulation
-from scada_simulator.world import Area, SensorSpec, VehicleSpec, World
+from scada_simulator.sim import Simulation
+from scada_simulator.world import Area, SensorSpec, VehicleSpec, World, sites_from_layout
 
 SEED = Path(__file__).resolve().parents[2] / "deploy" / "seed"
 LAYOUT = json.loads((SEED / "layout.geojson").read_text(encoding="utf-8"))
 FLEET = json.loads((SEED / "fleet.json").read_text(encoding="utf-8"))
+UNPLACED = json.loads((SEED / "sensors.json").read_text(encoding="utf-8"))
 ZONES = {f["id"]: shape(f["geometry"]) for f in LAYOUT["features"] if f["properties"]["kind"] == "geozone"}
 
 
@@ -38,15 +40,22 @@ def make_world() -> World:
                        if t["nominal"] is not None}
             sensors[f["id"]] = SensorSpec(f["id"], p["sensor_type"], p.get("building_id"), p.get("zone_id"),
                                           *f["geometry"]["coordinates"], nominal=nominal)
-    vehicles = {v["id"]: VehicleSpec(v["id"], v["plate"], v["kind"], catalog.gnss_sensor_id(v["id"])) for v in FLEET}
-    return World(Georef.from_layout(LAYOUT), roads, areas, sensors, vehicles,
+    for s in UNPLACED:  # registered in a building without a place on the plan
+        nominal = {t["metric"]: t["nominal"] for t in catalog.default_thresholds(s["type"], s["id"]) if t["nominal"] is not None}
+        sensors[s["id"]] = SensorSpec(s["id"], s["type"], s["building_id"], s["zone_id"], None, None, nominal=nominal)
+    vehicles = {v["id"]: VehicleSpec(v["id"], v["plate"], v["kind"], catalog.gnss_sensor_id(v["id"]), v["home_site_id"])
+                for v in FLEET}
+    return World(Georef.from_layout(LAYOUT), sites_from_layout(LAYOUT), roads, areas, sensors, vehicles,
                  valid_cards=[(f"P-{n:06d}", None) for n in range(280)], expired_cards=["P-000285"],
                  unknown_cards=["P-000295"])
 
 
 @pytest.fixture
 def sim() -> Simulation:
-    return Simulation(make_world(), seed=3)
+    s = Simulation(make_world(), seed=3)
+    start = s.clock()
+    s.clock = lambda: start + s.tick_no  # one simulated second per tick
+    return s
 
 
 def run(sim: Simulation, seconds: int) -> list:
@@ -56,18 +65,28 @@ def run(sim: Simulation, seconds: int) -> list:
     return out
 
 
-def test_road_graph_reaches_every_stop(sim: Simulation) -> None:
-    for target in [*sim._docks, PARKING, (725.0, 160.0)]:
-        path = sim.graph.path(OFF_SITE, target)
-        assert path[-1][0] == sim.graph.nearest(*target)
-    assert len(sim._docks) == 3
+def test_road_graph_reaches_every_stop_of_every_site(sim: Simulation) -> None:
+    assert set(sim.sites) == {"s-podolsk", "s-domodedovo", "s-chekhov"}
+    for site in sim.sites.values():
+        for target in [*site.docks, *site.parking]:
+            path = sim.graph.path(sim.main.approach, target)
+            assert path[-1][0] == target, (site.id, target)
+        assert site.docks and site.parking and site.cam_in and site.cam_out, site.id
+    assert len(sim.main.docks) == 3
+
+
+def test_sites_are_tens_of_kilometres_apart_by_road(sim: Simulation) -> None:
+    km = {(a, b): sim.route_m(sim.sites[a], sim.sites[b]) / 1000 for a in sim.sites for b in sim.sites if a < b}
+    assert all(15 < d < 80 for d in km.values()), km
 
 
 def test_stops_are_inside_their_zones(sim: Simulation) -> None:
     # stopping on a zone boundary would let GNSS noise trigger false breakdown alerts
-    for i, dock in enumerate(sorted(sim._docks), start=1):
+    for i, dock in enumerate(sim.main.docks, start=1):
         assert ZONES[f"z-docks-wh{i}"].buffer(-2).contains(Point(dock))
-    assert ZONES["z-parking"].buffer(-2).contains(Point(PARKING))
+    for site in sim.sites.values():
+        for stop in site.docks + site.parking:
+            assert any(z.buffer(-2).contains(Point(stop)) for z in ZONES.values()), (site.id, stop)
 
 
 def test_spur_speed_limit_is_respected() -> None:
@@ -78,15 +97,18 @@ def test_spur_speed_limit_is_respected() -> None:
 
 def test_every_message_passes_its_adapter_and_the_contract(sim: Simulation) -> None:
     out = run(sim, 240)
-    assert {o.adapter for o in out} >= {"gnss", "climate", "motion", "skud", "anpr"}
+    assert {o.adapter for o in out} >= {"gnss", "climate", "motion", "skud", "anpr", "waybill"}
     for o in out:
+        if o.adapter == "waybill":
+            Waybill.model_validate(o.payload)
+            continue
         a = ADAPTERS[o.adapter]
         fields = a.convert(a.raw_model.model_validate(o.payload), sim.world.georef)
         parse_event({**fields, "type": a.sensor_type})
 
 
 def test_vehicles_stay_on_roads(sim: Simulation) -> None:
-    roads = [shape({"type": "LineString", "coordinates": r.coords}) for r in sim.world.roads + [Road("a", [OFF_SITE, GATE], 0)]]
+    roads = [shape({"type": "LineString", "coordinates": r.coords}) for r in sim.world.roads]
     for _ in range(300):
         sim.tick()
         for v in sim.vehicles:
@@ -98,6 +120,28 @@ def test_truck_entry_is_seen_by_gate_camera(sim: Simulation) -> None:
     out = run(sim, 120)
     gate = [o.payload for o in out if o.device_id == "cam-gate-in"]
     assert any(p["plate"] == "Р135ЕК99" and p["direction"] == "approach" for p in gate)
+
+
+def test_trip_runs_from_dock_to_dock_through_both_gates(sim: Simulation) -> None:
+    truck = next(v for v in sim.vehicles if v.kind == "truck" and v.trip is None and not v.parked_off_site)
+    truck.dwell_left, truck.tasks = 0, []
+    out = run(sim, 4 * 3600)  # the longest highway is ~55 km
+    docs = [o.payload for o in out if o.adapter == "waybill" and o.payload["plate"] == truck.plate]
+    first = docs[0]["waybill_no"]
+    statuses = [d["status"] for d in docs if d["waybill_no"] == first]
+    assert statuses == ["loading", "en_route", "unloading", "done"], statuses
+    trip = docs[0]
+    dest = sim.sites[trip["destination_site_id"]]
+    seen = [o.payload for o in out if o.device_id == dest.cam_in and o.payload["plate"] == truck.plate]
+    assert seen and seen[0]["direction"] == "approach"
+    en_route = next(d for d in docs if d["status"] == "en_route")
+    assert en_route["eta"] > en_route["departed_at"]
+
+
+def test_half_of_the_trucks_start_on_the_road(sim: Simulation) -> None:
+    on_road = [v for v in sim.vehicles if v.kind == "truck" and v.trip and v.trip["status"] == "en_route"]
+    assert len(on_road) >= 3 and all(sim.site_at(v.x, v.y) is None for v in on_road)
+    assert {o.payload["waybill_no"] for o in sim.tick() if o.adapter == "waybill"} == {v.trip["waybill_no"] for v in on_road}
 
 
 def test_breakdown_stops_the_vehicle_with_engine_off(sim: Simulation) -> None:
@@ -117,7 +161,7 @@ def test_breakdown_picks_a_truck_on_the_roadway(sim: Simulation) -> None:
         try:
             sc.vehicle_breakdown(sim, duration_s=60)
         except sc.ScenarioError as e:  # sometimes no truck is driving on a roadway: a valid answer
-            assert "no moving truck" in str(e)
+            assert "no moving" in str(e)
             continue
         broken = sim.vehicle(sim.effects[-1].target)
         assert not sc._in_stop_zone(sim, broken.x, broken.y)
@@ -190,3 +234,27 @@ def test_scenarios_file_is_valid(sim: Simulation) -> None:
     run(sim, 200)  # get vehicles moving first
     asyncio.run(execute_all())
     assert math.isfinite(sim.vehicle("v-car-1").x)
+
+
+def test_devices_report_by_exception_within_their_limits(sim: Simulation) -> None:
+    out = run(sim, 900)
+    gnss = catalog.REPORTING["gnss"]
+    fixes: dict[str, list[float]] = {}
+    for o in out:
+        if o.adapter == "gnss":
+            fixes.setdefault(o.device_id, []).append(o.payload["fix_time"])
+    for device, ts in fixes.items():
+        gaps = [b - a for a, b in zip(ts, ts[1:])]
+        assert min(gaps) >= gnss.min_interval_s and max(gaps) <= gnss.heartbeat_s + 1, device
+    # the old fixed 2 s period would have sent 450 fixes per tracker
+    assert sum(map(len, fixes.values())) < 0.3 * 450 * len(fixes)
+    climate = [o for o in out if o.adapter == "climate"]
+    per_sensor = len(climate) / len(sim.world.sensors_of("climate"))
+    assert 900 / catalog.REPORTING["climate"].heartbeat_s <= per_sensor < 900 / 15 / 2  # was every 15 s
+
+
+def test_sensors_without_a_place_on_the_plan_still_report(sim: Simulation) -> None:
+    out = run(sim, 900)
+    devices = {o.device_id for o in out}
+    assert {"clim-dmd-hangar", "mot-dmd-hangar"} <= devices
+    assert sim.world.entrance("b-dmd-hangar").id == "acs-dmd-hangar"

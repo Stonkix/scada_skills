@@ -14,7 +14,7 @@ from app.registry.schemas import Sensor, SensorCreate, SensorTypeInfo, Threshold
 
 
 def sensor_types() -> list[SensorTypeInfo]:
-    return [SensorTypeInfo.model_validate(t) for t in catalog.SENSOR_TYPES]
+    return [SensorTypeInfo.model_validate(t | {"reporting": catalog.REPORTING[t["id"]]}) for t in catalog.SENSOR_TYPES]
 
 
 def _current_thresholds(db: Session, sensor_ids: list[str] | None = None) -> dict[str, list[Threshold]]:
@@ -52,7 +52,7 @@ def sensors(db: Session, *, sensor_type: str | None = None, building_id: str | N
 
 def vehicles(db: Session) -> list[Vehicle]:
     trackers = dict(db.execute(select(m.Sensor.vehicle_id, m.Sensor.id).where(m.Sensor.vehicle_id.isnot(None))).all())
-    return [Vehicle(id=v.id, plate=v.plate, kind=v.kind, model=v.model, carrier=v.carrier,
+    return [Vehicle(id=v.id, plate=v.plate, kind=v.kind, model=v.model, carrier=v.carrier, home_site_id=v.home_site_id,
                     sensor_id=trackers.get(v.id, catalog.gnss_sensor_id(v.id)))
             for v in db.scalars(select(m.Vehicle).where(m.Vehicle.is_active).order_by(m.Vehicle.id))]
 

@@ -6,6 +6,7 @@ The simulator and worker must be running for the live/history assertions. Tests 
 import json
 import time
 import uuid
+from pathlib import Path
 
 import pytest
 from scada_db import models as m
@@ -26,6 +27,11 @@ from fastapi.testclient import TestClient  # noqa: E402
 
 from app.live.schemas import WS_SERVER_ADAPTER  # noqa: E402
 from app.main import app  # noqa: E402
+
+SEED = Path(__file__).resolve().parents[2] / "deploy" / "seed"
+_LAYOUT = json.loads((SEED / "layout.geojson").read_text(encoding="utf-8"))
+BUILDINGS = sum(f["properties"]["kind"] == "building" for f in _LAYOUT["features"])
+VEHICLES = len(json.loads((SEED / "fleet.json").read_text(encoding="utf-8")))
 
 
 @pytest.fixture(scope="module")
@@ -87,7 +93,10 @@ def test_endpoints_require_auth_and_permissions(client: TestClient, tokens: dict
 
 def test_objects_come_from_the_registry(client: TestClient, tokens: dict) -> None:
     body = client.get("/objects", headers=auth(tokens, "dispatcher")).json()
-    assert len(body["buildings"]) == 7 and len(body["vehicles"]) == 15
+    assert len(body["buildings"]) == BUILDINGS and len(body["vehicles"]) == VEHICLES
+    assert {s["id"] for s in body["sites"]} == {"s-podolsk", "s-domodedovo", "s-chekhov"}
+    assert all(b["site_id"] for b in body["buildings"]), "every building stands on a site"
+    assert {r["road_class"] for r in body["roads"]} == {"site", "public"}
     assert len(body["sensors"]) >= 67 and body["layout_version"] >= 1
     clim = next(s for s in body["sensors"] if s["id"] == "clim-wh2-storage")
     assert clim["geo"] and {t["metric"] for t in clim["thresholds"]} == {"temperature_c", "humidity_pct"}
@@ -95,7 +104,7 @@ def test_objects_come_from_the_registry(client: TestClient, tokens: dict) -> Non
 
 def test_live_state_from_worker(client: TestClient, tokens: dict) -> None:
     body = client.get("/state/live", headers=auth(tokens, "dispatcher")).json()
-    assert body["vehicles"] and body["sensors"] and len(body["zones"]) == 7
+    assert body["vehicles"] and body["sensors"] and len(body["zones"]) == BUILDINGS
     wh1 = client.get("/state/live", params={"building_id": "b-wh1"}, headers=auth(tokens, "dispatcher")).json()
     assert wh1["vehicles"] == [] and {s["building_id"] for s in wh1["sensors"]} == {"b-wh1"}
 
@@ -226,7 +235,7 @@ def test_kpi_heatmap_replay(client: TestClient, tokens: dict) -> None:
     kpi = client.get("/kpi", headers=h)
     assert kpi.status_code == 200, kpi.text
     body = kpi.json()
-    assert body["vehicles"] and len(body["buildings"]) == 7
+    assert body["vehicles"] and len(body["buildings"]) == BUILDINGS
     assert any(v["mileage_km"] > 0 for v in body["vehicles"])
     heat = client.get("/heatmap", params={"cell": 20}, headers=h).json()
     assert heat["cells"] and heat["max_count"] > 0
@@ -299,3 +308,22 @@ def test_predict_endpoints(client: TestClient, tokens: dict) -> None:
     risks = client.get("/predict", params={"risk_at_least": "ok"}, headers=h).json()
     order = {"critical": 0, "warning": 1, "watch": 2, "ok": 3}
     assert risks and [order[r["risk"]] for r in risks] == sorted(order[r["risk"]] for r in risks)
+
+
+def test_trips_by_waybill_with_route_and_masked_driver(client: TestClient, tokens: dict) -> None:
+    trips = client.get("/trips", params={"active": True}, headers=auth(tokens, "dispatcher")).json()
+    assert trips, "the simulator keeps trucks on trips between the sites"
+    t = trips[0]
+    assert t["origin_site_id"] != t["destination_site_id"] and t["route_id"].startswith("route-")
+    current = client.get(f"/vehicles/{t['vehicle_id']}/trip", headers=auth(tokens, "dispatcher")).json()
+    assert current["status"] != "done" and current["plate"]
+    full = client.get(f"/vehicles/{t['vehicle_id']}/trip", headers=auth(tokens, "security")).json()["driver_name"]
+    assert "*" in current["driver_name"] and "*" not in full, "driver names need people:view_pii"
+    assert client.get("/vehicles/v-loader-1/trip", headers=auth(tokens, "dispatcher")).json() is None
+
+
+def test_sensor_types_carry_their_reporting_policy(client: TestClient, tokens: dict) -> None:
+    types = {t["id"]: t for t in client.get("/objects", headers=auth(tokens, "dispatcher")).json()["sensor_types"]}
+    gnss = types["gnss"]["reporting"]
+    assert gnss["moving_period_s"] <= 30 and gnss["on_change"]["distance_m"] > 0
+    assert types["anpr_camera"]["reporting"]["heartbeat_s"] is None  # events only

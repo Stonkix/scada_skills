@@ -37,9 +37,11 @@ function drawStatic() {
   roadsLayer = L.layerGroup()
   zonesLayer = L.layerGroup()
 
-  L.polygon(ring(o.site.coordinates[0] as [number, number][]), {
-    pane: 'site', color: '#334155', weight: 1, fillColor: '#111827', fillOpacity: 1, interactive: false,
-  }).addTo(staticLayer)
+  for (const s of o.sites) {
+    L.polygon(ring(s.geometry.coordinates[0] as [number, number][]), {
+      pane: 'site', color: '#334155', weight: 1, fillColor: '#111827', fillOpacity: 1, interactive: false,
+    }).addTo(staticLayer)
+  }
 
   for (const r of o.roads) {
     // road width in metres -> pixels depends on zoom; weight is updated on zoom
@@ -116,7 +118,7 @@ function scaleRoads() {
 onMounted(() => {
   const m = L.map(el.value!, {
     crs: L.CRS.Simple,
-    minZoom: -2,
+    minZoom: -7, // the whole region fits at about -6
     maxZoom: 3,
     zoomSnap: 0.25,
     attributionControl: false,
@@ -126,9 +128,11 @@ onMounted(() => {
   for (const [name, z] of [['site', 300], ['roads', 310], ['zones', 320], ['buildings', 330], ['rooms', 340]] as const) {
     m.createPane(name).style.zIndex = String(z)
   }
-  const b = boundsOf(props.objects.extent as [number, number, number, number])
+  // the region spans tens of km: open on the main site, allow panning to the others
+  const site = props.objects.sites[0]
+  const b = site ? L.polygon(ring(site.geometry.coordinates[0] as [number, number][])).getBounds() : boundsOf(props.objects.extent as [number, number, number, number])
   m.fitBounds(b, { paddingTopLeft: [20, props.fitTop], paddingBottomRight: [20, 20] })
-  m.setMaxBounds(b.pad(0.5))
+  m.setMaxBounds(boundsOf(props.objects.extent as [number, number, number, number]).pad(0.1))
   m.on('zoomend', scaleRoads)
   m.on('click', () => emit('background'))
   map.value = m

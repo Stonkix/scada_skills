@@ -44,10 +44,11 @@ ALERT_RULES = [
     ("rule-threshold", "Выход метрики за пороги", AlertKind.THRESHOLD, Severity.WARNING,
      {"hysteresis_pct": 5, "min_duration_s": 30, "critical_severity": "critical",
       "exclude_metrics": ["speed_kmh", "heading_deg"]}, None, 300),  # speed has its own rule
+    # every site has a speed geozone; public roads between sites have none, so highway speed is not an alert
     ("rule-speed", "Превышение скорости на территории", AlertKind.SPEED, Severity.WARNING,
-     {"zone_id": "z-site-speed", "limit_kmh": 20, "critical_kmh": 30, "min_duration_s": 5}, None, None),
+     {"zone_type": "speed", "limit_kmh": 20, "critical_kmh": 30, "min_duration_s": 5}, None, None),
     ("rule-whitelist-plate", "Номер вне базы пропусков", AlertKind.WHITELIST, Severity.WARNING,
-     {"sensor_type": "anpr_camera", "list": "plate", "zones": ["z-gate"]}, None, 120),
+     {"sensor_type": "anpr_camera", "list": "plate", "zones": ["z-gate", "z-dmd-gate", "z-chk-gate"]}, None, 120),
     ("rule-whitelist-card", "Пропуск вне базы или просрочен", AlertKind.WHITELIST, Severity.WARNING,
      {"sensor_type": "access_control", "list": "card"}, None, 300),
     ("rule-after-hours", "Движение без прохода по СКУД", AlertKind.SCHEDULE, Severity.CRITICAL,
@@ -57,7 +58,8 @@ ALERT_RULES = [
      {"stopped_min": 3, "allowed_zone_types": ["parking", "docks", "restricted"]}, None, 300),
     ("rule-offline", "Датчик не на связи", AlertKind.OFFLINE, Severity.WARNING,
      # cameras and turnstiles report only when someone passes: silence is normal for them
-     {"timeout_s": 300, "mobile_timeout_s": 120, "sensor_types": ["climate", "motion", "gnss"]}, None, 900),
+     # 3 missed heartbeats (scada_common.catalog.REPORTING): climate/motion 120 s, parked tracker 60 s → 5 min
+     {"timeout_s": 360, "mobile_timeout_s": 300, "sensor_types": ["climate", "motion", "gnss"]}, None, 900),
     ("rule-geozone-garage", "Грузовик во дворе ремзоны", AlertKind.GEOZONE, Severity.INFO,
      {"zone_id": "z-garage-yard", "event": "enter", "vehicle_kinds": ["truck"]}, None, None),
 ]

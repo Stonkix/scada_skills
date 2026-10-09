@@ -4,7 +4,7 @@ Single source for the API (`/objects.sensor_types`), the registry seed
 (`sensor_types` table) and connectors. Metric keys equal payload field names.
 """
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from scada_common.events import (
     AccessControlPayload,
@@ -51,6 +51,37 @@ SENSOR_TYPES: list[dict] = [
 ]
 
 
+class Reporting(BaseModel):
+    """How often a device of the type reports: by time, plus "by exception" (on a significant change) in between.
+
+    Devices own the schedule (trackers and loggers are configured this way: Teltonika FMB defaults are
+    300 s / 100 m / 10° moving and 3600 s parked; Russian rules for monitored transport ask for at least
+    one fix every 30 s; GDP cold-chain practice logs temperature every 5 min). Connectors reject reports
+    faster than `min_interval_s`; the offline rule fires after `offline_after_s` of silence.
+    """
+
+    heartbeat_s: int | None = Field(None, description="Отчёт при отсутствии изменений; null — только по событиям")
+    moving_period_s: int | None = Field(None, description="Транспорт в движении: не реже, чем раз в N с")
+    idle_period_s: int | None = Field(None, description="Транспорт стоит с работающим двигателем")
+    on_change: dict[str, float] = Field(default_factory=dict,
+                                        description="Внеочередной отчёт при изменении метрики на величину "
+                                                    "(distance_m — пройденный путь, м)")
+    min_interval_s: float = Field(0, description="Чаще коннекторы не принимают (защита от «болтливых» устройств)")
+    offline_after_s: int | None = Field(None, description="Молчание дольше — датчик «нет связи»")
+
+
+REPORTING: dict[SensorType, Reporting] = {
+    SensorType.GNSS: Reporting(heartbeat_s=60, moving_period_s=30, idle_period_s=60,
+                               on_change={"distance_m": 300, "heading_deg": 10, "speed_kmh": 10},
+                               min_interval_s=1, offline_after_s=300),
+    SensorType.CLIMATE: Reporting(heartbeat_s=120, on_change={"temperature_c": 0.5, "humidity_pct": 3},
+                                  min_interval_s=10, offline_after_s=360),
+    SensorType.MOTION: Reporting(heartbeat_s=120, on_change={"detected": 1}, min_interval_s=1, offline_after_s=360),
+    SensorType.ANPR_CAMERA: Reporting(),  # one event per passing vehicle
+    SensorType.ACCESS_CONTROL: Reporting(),  # one event per card swipe
+}
+
+
 def numeric_metrics(sensor_type: SensorType) -> list[str]:
     """Metrics that go to ClickHouse aggregates: numbers and bools (as 0/1)."""
     t = next(t for t in SENSOR_TYPES if t["id"] == sensor_type)
@@ -72,7 +103,10 @@ def default_thresholds(sensor_type: SensorType, sensor_id: str) -> list[dict]:
                 "critical_min": None, "critical_max": None} | limits
 
     match sensor_type:
-        case SensorType.CLIMATE if "wh2" in sensor_id:  # холодный склад
+        case SensorType.CLIMATE if "cold" in sensor_id and "dock" not in sensor_id:  # морозильная камера
+            return [th("temperature_c", nominal=-18, min=-22, max=-16, critical_min=-26, critical_max=-12),
+                    th("humidity_pct", nominal=90, min=80, max=95, critical_min=70, critical_max=98)]
+        case SensorType.CLIMATE if "wh2" in sensor_id or "cold" in sensor_id:  # холодный склад, шлюз камер
             return [th("temperature_c", nominal=4, min=2, max=6, critical_min=0, critical_max=8),
                     th("humidity_pct", nominal=60, min=40, max=75, critical_min=30, critical_max=85)]
         case SensorType.CLIMATE if "server" in sensor_id:

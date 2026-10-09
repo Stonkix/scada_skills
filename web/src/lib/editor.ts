@@ -202,10 +202,12 @@ export function toObjects(l: Layout, base: ObjectsResponse, sensorTypes: SensorT
   return {
     ...base,
     extent: l.metadata.extent,
-    site: of(l, 'site')[0] ? poly(of(l, 'site')[0]) : base.site,
-    buildings: of(l, 'building').map((f) => ({ id: f.id, name: f.properties.name, building_type: p(f, 'building_type'), floors: p(f, 'floors'), geometry: poly(f) })),
+    sites: of(l, 'site').map((f) => ({ id: f.id, name: f.properties.name, site_type: p(f, 'site_type') ?? 'plant',
+      address: p(f, 'address') ?? null, gate: p(f, 'gate') ?? null, geometry: poly(f) })),
+    buildings: of(l, 'building').map((f) => ({ id: f.id, site_id: null, name: f.properties.name, building_type: p(f, 'building_type'), floors: p(f, 'floors'), geometry: poly(f) })),
     rooms: [], // the editor draws rooms itself (selectable)
     roads: of(l, 'road').map((f) => ({ id: f.id, name: f.properties.name, width_m: p(f, 'width_m'), speed_limit_kmh: p(f, 'speed_limit_kmh'),
+      road_class: p(f, 'road_class') ?? 'site', connects: p(f, 'connects') ?? null,
       geometry: { type: 'LineString' as const, coordinates: (f.geometry as { coordinates: Pt[] }).coordinates } })),
     geozones: of(l, 'geozone').map((f) => ({ id: f.id, name: f.properties.name, zone_type: p(f, 'zone_type'), speed_limit_kmh: p(f, 'speed_limit_kmh') ?? null, geometry: poly(f) })),
     checkpoints: of(l, 'checkpoint').map((f) => {

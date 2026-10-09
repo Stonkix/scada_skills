@@ -3,6 +3,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 from scada_common import Geo, SensorType
+from scada_common.catalog import Reporting
 from scada_common.enums import VehicleKind
 
 
@@ -18,6 +19,7 @@ class SensorTypeInfo(BaseModel):
     name: str = Field(..., examples=["Климат (температура и влажность)"])
     is_mobile: bool = Field(..., description="Подвижный датчик: позиция приходит в событиях, а не задана на плане")
     metrics: list[MetricSpec]
+    reporting: Reporting = Field(..., description="Частота передачи данных устройствами этого типа")
 
 
 class Threshold(BaseModel):
@@ -112,6 +114,7 @@ class Vehicle(BaseModel):
     model: str = Field(..., examples=["КАМАЗ 65115"])
     sensor_id: str = Field(..., examples=["gnss-truck-1"], description="GNSS-трекер машины")
     carrier: str | None = Field(None, examples=["ООО «ТрансЛогистик»"])
+    home_site_id: str | None = Field(None, examples=["s-podolsk"], description="Площадка базирования")
 
 
 class HistoryPoint(BaseModel):

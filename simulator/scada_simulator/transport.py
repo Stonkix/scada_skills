@@ -1,7 +1,8 @@
 """Delivers simulated device messages to connectors exactly as real devices would.
 
 GNSS trackers, climate and motion sensors publish over MQTT; ANPR cameras and
-access controllers post webhooks over HTTP. Nothing bypasses connectors.
+access controllers post webhooks over HTTP; the emulated TMS posts waybills to
+connectors' document endpoint. Nothing bypasses connectors.
 """
 
 import asyncio
@@ -18,6 +19,7 @@ from scada_connectors.mqtt import api_key_properties
 log = logging.getLogger(__name__)
 
 MQTT_ADAPTERS = {"gnss", "climate", "motion"}
+DOCUMENTS = {"waybill": "/documents/waybill"}
 
 
 @dataclass
@@ -64,12 +66,17 @@ class Transport:
     async def send(self, batch: list[Outgoing]) -> None:
         batch = [o for o in batch if o.device_id not in self.silenced]
         http: dict[str, list[dict]] = defaultdict(list)
+        docs = []
         for o in batch:
             if o.adapter in MQTT_ADAPTERS:
                 await self._publish(o)
+            elif o.adapter in DOCUMENTS:
+                docs.append(o)
             else:
                 http[o.adapter].append(o.payload)
         await asyncio.gather(*(self._post(adapter, items) for adapter, items in http.items()))
+        for o in docs:  # in order: a trip's statuses must not overtake each other
+            await self._document(o)
 
     async def _publish(self, o: Outgoing) -> None:
         if self._mqtt is None:
@@ -94,6 +101,18 @@ class Transport:
         except httpx.HTTPError as e:
             self.failed[adapter] += len(items)
             self.last_error = f"http {adapter}: {e!r}"
+
+    async def _document(self, o: Outgoing) -> None:
+        try:
+            resp = await self._http.post(DOCUMENTS[o.adapter], json=o.payload)
+            if resp.status_code >= 400:
+                self.failed[o.adapter] += 1
+                self.last_error = f"http {o.adapter}: {resp.status_code} {resp.text[:200]}"
+            else:
+                self.sent[o.adapter] += 1
+        except httpx.HTTPError as e:
+            self.failed[o.adapter] += 1
+            self.last_error = f"http {o.adapter}: {e!r}"
 
     async def aclose(self) -> None:
         await self._http.aclose()

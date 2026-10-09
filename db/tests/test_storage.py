@@ -44,7 +44,9 @@ def test_seed_is_consistent(session: Session) -> None:
     trackers = {s.vehicle_id for s in sensors if s.is_mobile}
     assert trackers == vehicles, "every vehicle has exactly one GNSS tracker"
     assert all(s.geom is None for s in sensors if s.is_mobile)
-    assert all(s.geom is not None for s in sensors if not s.is_mobile)
+    # a fixed sensor is placed on the plan, or registered in a building that has no floor plan yet
+    assert all(s.geom is not None or (s.building_id and s.zone_id == s.building_id) for s in sensors if not s.is_mobile)
+    assert any(s.geom is None and not s.is_mobile for s in sensors), "the demo has a building without a floor plan"
 
 
 def test_thresholds_have_one_current_version(session: Session) -> None:

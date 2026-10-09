@@ -11,7 +11,7 @@ from enum import StrEnum
 
 from geoalchemy2 import Geometry
 from scada_common import SensorType
-from scada_common.enums import AlertKind, AlertStatus, Role, Severity, VehicleKind, WhitelistKind
+from scada_common.enums import AlertKind, AlertStatus, Role, Severity, TripStatus, VehicleKind, WhitelistKind
 from sqlalchemy import (
     BigInteger,
     Boolean,
@@ -128,6 +128,8 @@ class Road(Base):
     name: Mapped[str] = mapped_column(String(128))
     width_m: Mapped[float] = mapped_column(Float)
     speed_limit_kmh: Mapped[float] = mapped_column(Float)
+    road_class: Mapped[str] = mapped_column(String(16), server_default="site", comment="site | public")
+    connects: Mapped[list[str] | None] = mapped_column(ARRAY(String(64)), comment="Public roads: the two sites")
     geom = mapped_column(Geometry("LINESTRING", srid=SRID), nullable=False)
 
 
@@ -174,6 +176,7 @@ class Vehicle(Base):
     kind: Mapped[VehicleKind] = mapped_column(str_enum(VehicleKind))
     model: Mapped[str] = mapped_column(String(128))
     carrier: Mapped[str | None] = mapped_column(String(128))
+    home_site_id: Mapped[str | None] = mapped_column(String(64), comment="Site from the plan where it is based")
     is_active: Mapped[bool] = mapped_column(Boolean, server_default=text("true"))
 
 
@@ -300,3 +303,30 @@ class Alert(Base):
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     comment: Mapped[str | None] = mapped_column(Text)
     escalation_level: Mapped[int] = mapped_column(Integer, server_default="0")
+
+
+# --- logistics ------------------------------------------------------------------------------------
+
+
+class Trip(Base):
+    """A trip by waybill (путевой лист / ЭТрН), pushed by the transport system through connectors."""
+
+    __tablename__ = "trips"
+    __table_args__ = (Index("ix_trips_vehicle_updated", "vehicle_id", text("updated_at DESC")),)
+
+    id: Mapped[str] = mapped_column(String(64), primary_key=True, comment="Waybill number")
+    vehicle_id: Mapped[str] = mapped_column(ForeignKey("vehicles.id", ondelete="CASCADE"))
+    origin_site_id: Mapped[str] = mapped_column(String(64))
+    destination_site_id: Mapped[str] = mapped_column(String(64))
+    cargo: Mapped[str] = mapped_column(String(256))
+    weight_t: Mapped[float] = mapped_column(Float)
+    pallets: Mapped[int | None] = mapped_column(Integer)
+    temperature_mode: Mapped[str | None] = mapped_column(String(64), comment="Reefer cargo, e.g. «-18…-22 °C»")
+    driver_name: Mapped[str | None] = mapped_column(String(128), comment="ПДн: маскируется для ролей без доступа")
+    status: Mapped[TripStatus] = mapped_column(str_enum(TripStatus))
+    planned_departure: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    departed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    eta: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    arrived_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    created_at: Mapped[datetime] = created_at()
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

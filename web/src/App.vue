@@ -5,17 +5,18 @@ import ToastStack from '@/components/ToastStack.vue'
 import { ROLE_NAMES, useAuth } from '@/stores/auth'
 import { useLive } from '@/stores/live'
 import { useObjects } from '@/stores/objects'
+import { useTrips } from '@/stores/trips'
 
 const auth = useAuth()
 const live = useLive()
 const objects = useObjects()
+const trips = useTrips()
 const route = useRoute()
 const router = useRouter()
 
 const nav = computed(() =>
   [
     { to: '/', label: 'Карта', show: auth.can('map:view') },
-    { to: '/real', label: '3D-карта', show: auth.can('map:view') },
     { to: '/alerts', label: 'Тревоги', show: auth.can('map:view') },
     { to: '/kpi', label: 'KPI', show: auth.can('kpi:view') },
     { to: '/analytics', label: 'Replay', show: auth.can('kpi:view') },
@@ -33,8 +34,10 @@ watch(
     if (on) {
       await objects.load()
       await live.start()
+      trips.start()
     } else {
       live.stop()
+      trips.stop()
       objects.data = null
       if (!route.meta.public) router.push({ name: 'login' })
     }

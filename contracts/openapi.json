@@ -2052,6 +2052,151 @@
         }
       }
     },
+    "/trips": {
+      "get": {
+        "tags": [
+          "trips"
+        ],
+        "summary": "List Trips",
+        "description": "Рейсы, новые сверху. Активный рейс у машины — не больше одного.",
+        "operationId": "list_trips_trips_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Vehicle Id"
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "true — незавершённые рейсы",
+              "title": "Active"
+            },
+            "description": "true — незавершённые рейсы"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 500,
+              "minimum": 1,
+              "default": 100,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Trip"
+                  },
+                  "title": "Response List Trips Trips Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/vehicles/{vehicle_id}/trip": {
+      "get": {
+        "tags": [
+          "trips"
+        ],
+        "summary": "Current Trip",
+        "description": "Текущий рейс машины (последний незавершённый), иначе последний завершённый; null — рейсов не было.",
+        "operationId": "current_trip_vehicles__vehicle_id__trip_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "vehicle_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Vehicle Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/Trip"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Current Trip Vehicles  Vehicle Id  Trip Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [
@@ -2562,6 +2707,21 @@
             "title": "Id",
             "examples": [
               "b-wh2"
+            ]
+          },
+          "site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Site Id",
+            "description": "Площадка, на которой стоит здание",
+            "examples": [
+              "s-podolsk"
             ]
           },
           "name": {
@@ -3404,8 +3564,12 @@
           "georef": {
             "$ref": "#/components/schemas/Georef"
           },
-          "site": {
-            "$ref": "#/components/schemas/PolygonGeometry"
+          "sites": {
+            "items": {
+              "$ref": "#/components/schemas/Site"
+            },
+            "type": "array",
+            "title": "Sites"
           },
           "buildings": {
             "items": {
@@ -3469,7 +3633,7 @@
           "layout_version",
           "extent",
           "georef",
-          "site",
+          "sites",
           "buildings",
           "rooms",
           "roads",
@@ -3931,6 +4095,37 @@
           "speed_limit_kmh": {
             "type": "number",
             "title": "Speed Limit Kmh"
+          },
+          "road_class": {
+            "type": "string",
+            "enum": [
+              "site",
+              "public"
+            ],
+            "title": "Road Class",
+            "description": "site — проезд площадки, public — трасса между площадками",
+            "default": "site"
+          },
+          "connects": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Connects",
+            "description": "Для трасс: две площадки",
+            "examples": [
+              [
+                "s-podolsk",
+                "s-domodedovo"
+              ]
+            ]
           },
           "geometry": {
             "$ref": "#/components/schemas/LineGeometry"
@@ -4553,6 +4748,78 @@
         ],
         "title": "Severity"
       },
+      "Site": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "examples": [
+              "s-podolsk"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "examples": [
+              "Завод «Подольск»"
+            ]
+          },
+          "site_type": {
+            "type": "string",
+            "enum": [
+              "plant",
+              "dc",
+              "cold_store"
+            ],
+            "title": "Site Type",
+            "default": "plant"
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Address"
+          },
+          "gate": {
+            "anyOf": [
+              {
+                "prefixItems": [
+                  {
+                    "type": "number"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "type": "array",
+                "maxItems": 2,
+                "minItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gate",
+            "description": "Въезд (КПП) в метрах плана"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/PolygonGeometry"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "geometry"
+        ],
+        "title": "Site",
+        "description": "Площадка предприятия: завод, РЦ, склад. Площадки разнесены по региону, между ними — дороги общего пользования."
+      },
       "Threshold": {
         "properties": {
           "metric": {
@@ -4682,6 +4949,193 @@
         ],
         "title": "TokenPair"
       },
+      "Trip": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id",
+            "description": "Номер путевого листа",
+            "examples": [
+              "ПЛ-2026-000123"
+            ]
+          },
+          "vehicle_id": {
+            "type": "string",
+            "title": "Vehicle Id",
+            "examples": [
+              "v-truck-1"
+            ]
+          },
+          "plate": {
+            "type": "string",
+            "title": "Plate",
+            "examples": [
+              "А123ВС77"
+            ]
+          },
+          "origin_site_id": {
+            "type": "string",
+            "title": "Origin Site Id",
+            "examples": [
+              "s-podolsk"
+            ]
+          },
+          "destination_site_id": {
+            "type": "string",
+            "title": "Destination Site Id",
+            "examples": [
+              "s-chekhov"
+            ]
+          },
+          "route_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Route Id",
+            "description": "Трасса между площадками",
+            "examples": [
+              "route-chekhov-podolsk"
+            ]
+          },
+          "cargo": {
+            "type": "string",
+            "title": "Cargo",
+            "examples": [
+              "Металлоконструкции"
+            ]
+          },
+          "weight_t": {
+            "type": "number",
+            "title": "Weight T",
+            "examples": [
+              12.4
+            ]
+          },
+          "pallets": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pallets"
+          },
+          "temperature_mode": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature Mode",
+            "examples": [
+              "-18…-22 °C"
+            ]
+          },
+          "driver_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Driver Name",
+            "description": "ФИО; маскируется без права people:view_pii"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TripStatus"
+          },
+          "planned_departure": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planned Departure"
+          },
+          "departed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Departed At"
+          },
+          "eta": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eta"
+          },
+          "arrived_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Arrived At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "vehicle_id",
+          "plate",
+          "origin_site_id",
+          "destination_site_id",
+          "cargo",
+          "weight_t",
+          "status",
+          "updated_at"
+        ],
+        "title": "Trip",
+        "description": "Рейс по путевому листу: откуда, куда, что везём. Приходит из транспортной системы через коннекторы."
+      },
+      "TripStatus": {
+        "type": "string",
+        "enum": [
+          "planned",
+          "loading",
+          "en_route",
+          "unloading",
+          "done"
+        ],
+        "title": "TripStatus"
+      },
       "User": {
         "properties": {
           "id": {
@@ -4801,6 +5255,21 @@
             "title": "Carrier",
             "examples": [
               "ООО «ТрансЛогистик»"
+            ]
+          },
+          "home_site_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Home Site Id",
+            "description": "Площадка базирования",
+            "examples": [
+              "s-podolsk"
             ]
           }
         },

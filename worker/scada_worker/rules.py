@@ -149,7 +149,8 @@ def _speed(rule: Rule, ctx: Context, snap: Snapshot, state: RuleState) -> list[S
     if ctx.event.type != SensorType.GNSS or ctx.vehicle is None:
         return []
     p, speed = rule.params, ctx.event.payload.speed_kmh
-    in_zone = any(z.id == p.get("zone_id") for z in ctx.zones)
+    # one zone by id, or every zone of a type (each site has its own speed geozone)
+    in_zone = any(z.id == p.get("zone_id") or z.zone_type == p.get("zone_type") for z in ctx.zones)
     limit = p.get("limit_kmh", 20)
     if state.held(f"{rule.id}:{ctx.vehicle.id}", in_zone and speed > limit, ctx.event.ts, p.get("min_duration_s", 0)):
         sev = "critical" if speed > p.get("critical_kmh", float("inf")) else rule.severity

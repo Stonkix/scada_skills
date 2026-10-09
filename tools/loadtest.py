@@ -23,6 +23,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+from scada_common import SensorType, catalog
 
 API = os.environ.get("API_URL", "http://127.0.0.1:8000")
 CONNECTORS = os.environ.get("CONNECTORS_URL", "http://127.0.0.1:8001")
@@ -101,6 +102,8 @@ async def blast(key: str, ids: list[str], duration: float, concurrency: int, bat
     # the same sensor would be the *same* event and be dropped as a repeat: yesterday these sensors didn't exist.
     # Late events are stored and aggregated but don't move the live map or fire rules, so the test stays quiet.
     clock = {i: int(time.time() * 1000) - DAY_MS for i in ids}
+    # each synthetic logger reports at the fastest rate connectors accept for its type (REPORTING.min_interval_s)
+    step_ms = int(catalog.REPORTING[SensorType.CLIMATE].min_interval_s * 1000)
 
     async def one(client: httpx.AsyncClient) -> None:
         nonlocal accepted, rejected, errors
@@ -108,7 +111,7 @@ async def blast(key: str, ids: list[str], duration: float, concurrency: int, bat
             items = []
             for _ in range(batch):
                 sid = random.choice(ids)
-                clock[sid] += 1
+                clock[sid] += step_ms
                 items.append({"device": sid, "temperature": round(random.uniform(16, 20), 2),
                               "humidity": round(random.uniform(45, 60), 1), "ts_ms": clock[sid]})
             t0 = time.perf_counter()

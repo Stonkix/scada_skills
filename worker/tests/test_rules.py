@@ -20,7 +20,7 @@ RULES = {
     "rule-threshold": Rule("rule-threshold", 1, "Пороги", "threshold", "warning",
                            {"hysteresis_pct": 5, "min_duration_s": 30, "exclude_metrics": ["speed_kmh"]}, None, 300),
     "rule-speed": Rule("rule-speed", 1, "Скорость", "speed", "warning",
-                       {"zone_id": "z-site", "limit_kmh": 20, "critical_kmh": 30, "min_duration_s": 5}, None, None),
+                       {"zone_type": "speed", "limit_kmh": 20, "critical_kmh": 30, "min_duration_s": 5}, None, None),
     "rule-plate": Rule("rule-plate", 1, "Номер", "whitelist", "warning",
                        {"sensor_type": "anpr_camera", "list": "plate", "zones": ["z-gate"]}, None, None),
     "rule-card": Rule("rule-card", 1, "Пропуск", "whitelist", "warning",
@@ -100,6 +100,16 @@ def test_speed_rule_and_excluded_speed_threshold() -> None:
     assert ("open", "rule-speed", "v1", "critical") in out
     assert not [x for x in out if x[2] == "gnss:speed_kmh"], "speed is excluded from the threshold rule"
     assert ("clear", "rule-speed", "v1") in clears(run("gnss", gnss(17), st, T0 + timedelta(seconds=8), zones=[SITE]))
+
+
+def test_speed_rule_covers_every_site_but_not_the_highway() -> None:
+    other_site = ZoneRef("z-dmd-speed", "РЦ", "speed", box(15000, 2800, 15420, 3100))
+    st = RuleState()
+    run("gnss", gnss(35), st, zones=[other_site])
+    assert ("open", "rule-speed", "v1", "critical") in run("gnss", gnss(35), st, T0 + timedelta(seconds=6), zones=[other_site])
+    highway = RuleState()
+    run("gnss", gnss(80), highway, zones=[])
+    assert not opens(run("gnss", gnss(80), highway, T0 + timedelta(seconds=60), zones=[]))
 
 
 def test_low_fuel_goes_through_threshold_rule() -> None:

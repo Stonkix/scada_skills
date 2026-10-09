@@ -15,6 +15,14 @@ class VehicleKind(StrEnum):
     CAR = "car"
 
 
+class TripStatus(StrEnum):
+    PLANNED = "planned"  # путевой лист выписан
+    LOADING = "loading"  # погрузка на площадке отправления
+    EN_ROUTE = "en_route"  # в пути
+    UNLOADING = "unloading"  # разгрузка на площадке назначения
+    DONE = "done"
+
+
 class AlertKind(StrEnum):
     THRESHOLD = "threshold"  # выход метрики за пороги
     GEOZONE = "geozone"  # въезд/выезд/нахождение в геозоне

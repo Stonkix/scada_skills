@@ -1,12 +1,12 @@
 import * as THREE from 'three'
-import type { Building, Vehicle, VehicleLive } from '@/api/types'
+import type { Building, Room, Sensor, Vehicle, VehicleLive } from '@/api/types'
 
 /**
  * Procedural low-poly models in a z-up world of plan metres (x east, y north on the plan).
  * Built from primitives on purpose: no binary assets to ship, license or load offline.
  */
 
-export type Pickable = { kind: 'building' | 'vehicle'; id: string }
+export type Pickable = { kind: 'building' | 'vehicle' | 'sensor'; id: string }
 
 export const STATUS_COLOR: Record<VehicleLive['status'], string> = {
   moving: '#fbbf24',
@@ -229,3 +229,70 @@ export function selectionRing(): THREE.Mesh {
 }
 
 export { bbox }
+
+// --- x-ray view of a building: the Sims "walls down" look -------------------------------------------
+
+/** Storey height by building type: the shell of the normal model is floors × this. */
+export const FLOOR_H: Record<Building['building_type'], number> = { office: 3.6, production: 4.5, warehouse: 10, garage: 7 }
+export const floorBase = (b: Building, floor: number) => (Math.max(1, floor) - 1) * FLOOR_H[b.building_type]
+
+export const SENSOR_STATUS_COLOR: Record<string, string> = {
+  ok: '#22c55e',
+  warning: '#f59e0b',
+  critical: '#ef4444',
+  offline: '#64748b',
+  unknown: '#64748b',
+}
+
+/** Glass shell of the whole building with crisp edges, so the floor inside stays readable. */
+export function xrayShell(b: Building): THREE.Group {
+  const ring = b.geometry.coordinates[0] as [number, number][]
+  const h = b.floors * FLOOR_H[b.building_type]
+  const g = new THREE.Group()
+  const shell = extrude(ring, h, new THREE.MeshLambertMaterial({ color: '#94a3b8', transparent: true, opacity: 0.1, depthWrite: false }))
+  const edges = new THREE.LineSegments(
+    new THREE.EdgesGeometry(shell.geometry),
+    new THREE.LineBasicMaterial({ color: '#7dd3fc', transparent: true, opacity: 0.55 }),
+  )
+  g.add(shell, edges)
+  return g
+}
+
+/** One storey: the slab, each room tinted by its worst sensor, knee-high walls along the rooms. */
+export function storey(b: Building, floor: number, rooms: Room[], roomColor: (id: string) => string): THREE.Group {
+  const ring = b.geometry.coordinates[0] as [number, number][]
+  const z = floorBase(b, floor)
+  const g = new THREE.Group()
+  g.add(extrude(ring, 0.3, lambert('#334155'), z))
+  for (const r of rooms) {
+    const rr = r.geometry.coordinates[0] as [number, number][]
+    const slab = extrude(rr, 0.15, new THREE.MeshLambertMaterial({ color: roomColor(r.id), transparent: true, opacity: 0.55 }), z + 0.3)
+    g.add(slab)
+    // walls: a thin band along the room outline, the Sims cutaway height
+    for (let i = 0; i < rr.length - 1; i++) {
+      const [x0, y0] = rr[i]
+      const [x1, y1] = rr[i + 1]
+      const len = Math.hypot(x1 - x0, y1 - y0)
+      const wall = box(len, 0.35, 1.4, SHARED.white, (x0 + x1) / 2, (y0 + y1) / 2, z + 0.3 + 0.7)
+      wall.rotation.z = Math.atan2(y1 - y0, x1 - x0)
+      g.add(wall)
+    }
+  }
+  return g
+}
+
+/** A sensor pin: a post with a glowing head, coloured by status; picked as the sensor. */
+export function sensorPin(s: Sensor, z: number, color: string): THREE.Group {
+  const g = new THREE.Group()
+  const mat = new THREE.MeshLambertMaterial({ color, emissive: color, emissiveIntensity: 0.45 })
+  const post = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 2.6, 8), SHARED.steel)
+  post.rotation.x = Math.PI / 2
+  post.position.z = 1.3
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 12), mat)
+  head.position.z = 3.2
+  g.add(post, head)
+  g.position.set(s.geo?.x ?? 0, s.geo?.y ?? 0, z)
+  g.userData.pick = { kind: 'sensor', id: s.id } satisfies Pickable
+  g.userData.head = mat
+  return g
+}

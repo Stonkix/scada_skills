@@ -23,6 +23,13 @@ export const useLive = defineStore('live', () => {
   const soundOn = ref(true)
   let socket: LiveSocket | null = null
   let pending = false
+  const sensorListeners = new Set<(s: SensorLive) => void>()
+
+  /** Every sensor report as it arrives (the map makes the sensor blink). Returns the unsubscribe. */
+  function onSensorEvent(cb: (s: SensorLive) => void): () => void {
+    sensorListeners.add(cb)
+    return () => sensorListeners.delete(cb)
+  }
 
   /** Coalesce bursts of messages into one reactive update per animation frame. */
   function flush() {
@@ -53,6 +60,7 @@ export const useLive = defineStore('live', () => {
     switch (msg.type) {
       case 'sensor':
         sensors.value.set(msg.data.sensor_id, msg.data)
+        sensorListeners.forEach((cb) => cb(msg.data))
         break
       case 'vehicle':
         vehicles.value.set(msg.data.vehicle_id, msg.data)
@@ -114,6 +122,6 @@ export const useLive = defineStore('live', () => {
 
   return {
     sensors, vehicles, people, alerts, status, lastMessage, soundOn,
-    start, stop, replaceAlert, openAlerts, criticalCount, alertedObjects,
+    start, stop, replaceAlert, openAlerts, criticalCount, alertedObjects, onSensorEvent,
   }
 })

@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
 from geoalchemy2.shape import to_shape
 from scada_db import models as m
+from shapely.geometry import shape
 from sqlalchemy import select
 
 from app.auth.security import Principal
@@ -20,6 +21,7 @@ from app.layout.schemas import (
     PolygonGeometry,
     Road,
     Room,
+    Site,
 )
 from app.registry import repo
 
@@ -44,20 +46,27 @@ def get_objects(db: DB, _: CanView) -> ObjectsResponse:
     """Вся статика одним ответом. Кэшируйте по `layout_version`: она растёт при каждом сохранении плана."""
     layout = _latest(db)
     meta = layout.geojson["metadata"]
-    site = next((f for f in layout.geojson["features"] if f["properties"]["kind"] == "site"), None)
-    x0, y0, x1, y1 = meta["extent"]
+    sites = [f for f in layout.geojson["features"] if f["properties"]["kind"] == "site"]
+    site_shapes = [(f["id"], shape(f["geometry"])) for f in sites]
+
+    def site_of(geom) -> str | None:
+        c = to_shape(geom).centroid
+        return next((sid for sid, s in site_shapes if s.contains(c)), None)
+
     zones = db.scalars(select(m.Zone).order_by(m.Zone.id)).all()
     return ObjectsResponse(
         layout_version=layout.version,
         extent=meta["extent"],
         georef=Georef(**meta["georef"]),
-        site=PolygonGeometry(coordinates=site["geometry"]["coordinates"]) if site else
-        PolygonGeometry(coordinates=[[(x0, y0), (x1, y0), (x1, y1), (x0, y1), (x0, y0)]]),
-        buildings=[Building(id=b.id, name=b.name, building_type=b.building_type, floors=b.floors, geometry=_poly(b.geom))
+        sites=[Site(id=f["id"], name=p["name"], site_type=p.get("site_type", "plant"), address=p.get("address"),
+                    gate=p.get("gate"), geometry=PolygonGeometry(coordinates=f["geometry"]["coordinates"]))
+               for f in sites for p in [f["properties"]]],
+        buildings=[Building(id=b.id, site_id=site_of(b.geom), name=b.name, building_type=b.building_type, floors=b.floors, geometry=_poly(b.geom))
                    for b in db.scalars(select(m.Building).order_by(m.Building.id))],
         rooms=[Room(id=z.id, name=z.name, building_id=z.building_id, floor=z.floor, room_type=z.zone_type,
                     geometry=_poly(z.geom)) for z in zones if z.kind == "room"],
         roads=[Road(id=r.id, name=r.name, width_m=r.width_m, speed_limit_kmh=r.speed_limit_kmh,
+                    road_class=r.road_class, connects=r.connects,
                     geometry=LineGeometry(coordinates=list(to_shape(r.geom).coords)))
                for r in db.scalars(select(m.Road).order_by(m.Road.id))],
         geozones=[Geozone(id=z.id, name=z.name, zone_type=z.zone_type, speed_limit_kmh=z.speed_limit_kmh,

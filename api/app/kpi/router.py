@@ -4,7 +4,7 @@ from datetime import UTC, timedelta
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, Query
-from scada_common import keys
+from scada_common import SensorType, catalog, keys
 from scada_db import models as m
 from sqlalchemy import select
 
@@ -30,8 +30,9 @@ from app.registry.schemas import RoutePoint
 
 router = APIRouter(tags=["analytics"])
 CanView = Annotated[Principal, Depends(require("kpi:view"))]
-GATE_ZONE = "z-gate"
-GNSS_PERIOD_S = 2  # trackers report every ~2 s: each sample stands for that much time
+# trackers report by exception (scada_common.catalog.REPORTING): a fix stands for the time until the next one,
+# capped so that a tracker silent for an hour does not count as an hour of anything
+MAX_FIX_SPAN_S = catalog.REPORTING[SensorType.GNSS].offline_after_s or 300
 
 
 def _utc(dt):
@@ -46,15 +47,23 @@ def kpi(db: DB, ch: CH, _: CanView, start: FromQ = None, end: ToQ = None) -> Kpi
     trackers = {v.sensor_id: v for v in repo.vehicles(db)}
 
     rows = ch.query("""
-        SELECT sensor_id,
-               max(metrics['odometer_km']) - min(metrics['odometer_km']) AS km,
-               countIf(metrics['speed_kmh'] > 1) AS moving,
-               countIf(metrics['speed_kmh'] <= 1 AND metrics['engine_on'] = 1) AS idle,
-               countIf(metrics['speed_kmh'] <= 1 AND metrics['engine_on'] = 0) AS stopped
-        FROM telemetry
-        WHERE type = 'gnss' AND x >= 0 AND y >= 0  -- on site: the public road beyond the gate has x < 0
-          AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}
-        GROUP BY sensor_id""", parameters=p).result_rows
+        SELECT sensor_id, max(odo) - min(odo) AS km,
+               sumIf(span, speed > 1) AS moving,
+               sumIf(span, speed <= 1 AND engine = 1) AS idle,
+               sumIf(span, speed <= 1 AND engine = 0) AS stopped
+        FROM (
+            SELECT sensor_id, odo, speed, engine,
+                   if(isNull(next_ts), 0, least(dateDiff('millisecond', ts, assumeNotNull(next_ts)) / 1000, {cap:UInt32})) AS span
+            FROM (
+                SELECT sensor_id, ts, metrics['odometer_km'] AS odo, metrics['speed_kmh'] AS speed,
+                       metrics['engine_on'] AS engine,
+                       leadInFrame(toNullable(ts)) OVER (PARTITION BY sensor_id ORDER BY ts
+                                                         ROWS BETWEEN CURRENT ROW AND 1 FOLLOWING) AS next_ts
+                FROM telemetry
+                WHERE type = 'gnss' AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}
+            )
+        )
+        GROUP BY sensor_id""", parameters=p | {"cap": MAX_FIX_SPAN_S}).result_rows
     vehicles = []
     for sid, km, moving, idle, stopped in rows:
         if sid not in trackers:
@@ -62,21 +71,21 @@ def kpi(db: DB, ch: CH, _: CanView, start: FromQ = None, end: ToQ = None) -> Kpi
         on_site = moving + idle + stopped
         vehicles.append(VehicleKpi(
             vehicle_id=trackers[sid].id, plate=trackers[sid].plate, mileage_km=round(km or 0, 2),
-            moving_min=round(moving * GNSS_PERIOD_S / 60, 1), idle_min=round(idle * GNSS_PERIOD_S / 60, 1),
-            stopped_min=round(stopped * GNSS_PERIOD_S / 60, 1),
+            moving_min=round(moving / 60, 1), idle_min=round(idle / 60, 1), stopped_min=round(stopped / 60, 1),
             utilization_pct=round(100 * moving / on_site, 1) if on_site else 0.0))
     vehicles.sort(key=lambda v: v.vehicle_id)
 
     span_h = (end - start).total_seconds() / 3600
     bucket_min = 5 if span_h <= 3 else 60 if span_h <= 48 else 1440  # ~10-50 bars whatever the period
+    gates = list(db.scalars(select(m.Zone.id).where(m.Zone.zone_type == "gate"))) or [""]  # every site's КПП
     by_hour = ch.query("""
         SELECT toStartOfInterval(ts, toIntervalMinute({b:UInt32})) h, countIf(transition = 'enter'),
                countIf(transition = 'exit') FROM zone_events
-        WHERE zone_id = {zone:String} AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}
-        GROUP BY h ORDER BY h""", parameters=p | {"zone": GATE_ZONE, "b": bucket_min}).result_rows
+        WHERE zone_id IN {zones:Array(String)} AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}
+        GROUP BY h ORDER BY h""", parameters=p | {"zones": gates, "b": bucket_min}).result_rows
     plates = ch.query("""
-        SELECT count() FROM telemetry WHERE type = 'anpr_camera' AND zone_id = {zone:String}
-          AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}""", parameters=p | {"zone": GATE_ZONE}).result_rows
+        SELECT count() FROM telemetry WHERE type = 'anpr_camera' AND zone_id IN {zones:Array(String)}
+          AND ts BETWEEN {from:DateTime64(3)} AND {to:DateTime64(3)}""", parameters=p | {"zones": gates}).result_rows
     gate = GateKpi(entries=sum(r[1] for r in by_hour), exits=sum(r[2] for r in by_hour), plates_recognized=plates[0][0],
                    bucket_minutes=bucket_min,
                    by_hour=[HourCount(hour=_utc(h), entries=e, exits=x) for h, e, x in by_hour])

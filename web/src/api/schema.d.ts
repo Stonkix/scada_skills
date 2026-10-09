@@ -590,6 +590,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/trips": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Trips
+         * @description Рейсы, новые сверху. Активный рейс у машины — не больше одного.
+         */
+        get: operations["list_trips_trips_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/vehicles/{vehicle_id}/trip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Current Trip
+         * @description Текущий рейс машины (последний незавершённый), иначе последний завершённый; null — рейсов не было.
+         */
+        get: operations["current_trip_vehicles__vehicle_id__trip_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -810,6 +850,12 @@ export interface components {
              * @example b-wh2
              */
             id: string;
+            /**
+             * Site Id
+             * @description Площадка, на которой стоит здание
+             * @example s-podolsk
+             */
+            site_id?: string | null;
             /**
              * Name
              * @example Склад №2 (холодный)
@@ -1216,7 +1262,8 @@ export interface components {
                 number
             ];
             georef: components["schemas"]["Georef"];
-            site: components["schemas"]["PolygonGeometry"];
+            /** Sites */
+            sites: components["schemas"]["Site"][];
             /** Buildings */
             buildings: components["schemas"]["Building"][];
             /** Rooms */
@@ -1421,6 +1468,22 @@ export interface components {
             width_m: number;
             /** Speed Limit Kmh */
             speed_limit_kmh: number;
+            /**
+             * Road Class
+             * @description site — проезд площадки, public — трасса между площадками
+             * @default site
+             * @enum {string}
+             */
+            road_class: "site" | "public";
+            /**
+             * Connects
+             * @description Для трасс: две площадки
+             * @example [
+             *       "s-podolsk",
+             *       "s-domodedovo"
+             *     ]
+             */
+            connects?: string[] | null;
             geometry: components["schemas"]["LineGeometry"];
         };
         /**
@@ -1657,6 +1720,39 @@ export interface components {
          */
         Severity: "info" | "warning" | "critical";
         /**
+         * Site
+         * @description Площадка предприятия: завод, РЦ, склад. Площадки разнесены по региону, между ними — дороги общего пользования.
+         */
+        Site: {
+            /**
+             * Id
+             * @example s-podolsk
+             */
+            id: string;
+            /**
+             * Name
+             * @example Завод «Подольск»
+             */
+            name: string;
+            /**
+             * Site Type
+             * @default plant
+             * @enum {string}
+             */
+            site_type: "plant" | "dc" | "cold_store";
+            /** Address */
+            address?: string | null;
+            /**
+             * Gate
+             * @description Въезд (КПП) в метрах плана
+             */
+            gate?: [
+                number,
+                number
+            ] | null;
+            geometry: components["schemas"]["PolygonGeometry"];
+        };
+        /**
          * Threshold
          * @description Пороги одной метрики. Норма — [min, max]; вне нормы — warning; вне [critical_min, critical_max] — critical.
          */
@@ -1717,6 +1813,85 @@ export interface components {
             expires_in: number;
             user: components["schemas"]["User"];
         };
+        /**
+         * Trip
+         * @description Рейс по путевому листу: откуда, куда, что везём. Приходит из транспортной системы через коннекторы.
+         */
+        Trip: {
+            /**
+             * Id
+             * @description Номер путевого листа
+             * @example ПЛ-2026-000123
+             */
+            id: string;
+            /**
+             * Vehicle Id
+             * @example v-truck-1
+             */
+            vehicle_id: string;
+            /**
+             * Plate
+             * @example А123ВС77
+             */
+            plate: string;
+            /**
+             * Origin Site Id
+             * @example s-podolsk
+             */
+            origin_site_id: string;
+            /**
+             * Destination Site Id
+             * @example s-chekhov
+             */
+            destination_site_id: string;
+            /**
+             * Route Id
+             * @description Трасса между площадками
+             * @example route-chekhov-podolsk
+             */
+            route_id?: string | null;
+            /**
+             * Cargo
+             * @example Металлоконструкции
+             */
+            cargo: string;
+            /**
+             * Weight T
+             * @example 12.4
+             */
+            weight_t: number;
+            /** Pallets */
+            pallets?: number | null;
+            /**
+             * Temperature Mode
+             * @example -18…-22 °C
+             */
+            temperature_mode?: string | null;
+            /**
+             * Driver Name
+             * @description ФИО; маскируется без права people:view_pii
+             */
+            driver_name?: string | null;
+            status: components["schemas"]["TripStatus"];
+            /** Planned Departure */
+            planned_departure?: string | null;
+            /** Departed At */
+            departed_at?: string | null;
+            /** Eta */
+            eta?: string | null;
+            /** Arrived At */
+            arrived_at?: string | null;
+            /**
+             * Updated At
+             * Format: date-time
+             */
+            updated_at: string;
+        };
+        /**
+         * TripStatus
+         * @enum {string}
+         */
+        TripStatus: "planned" | "loading" | "en_route" | "unloading" | "done";
         /** User */
         User: {
             /** Id */
@@ -1775,6 +1950,12 @@ export interface components {
              * @example ООО «ТрансЛогистик»
              */
             carrier?: string | null;
+            /**
+             * Home Site Id
+             * @description Площадка базирования
+             * @example s-podolsk
+             */
+            home_site_id?: string | null;
         };
         /**
          * VehicleKind
@@ -2998,6 +3179,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Prediction"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_trips_trips_get: {
+        parameters: {
+            query?: {
+                vehicle_id?: string | null;
+                /** @description true — незавершённые рейсы */
+                active?: boolean | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trip"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    current_trip_vehicles__vehicle_id__trip_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                vehicle_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Trip"] | null;
                 };
             };
             /** @description Validation Error */

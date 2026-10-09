@@ -25,8 +25,20 @@ class Georef(BaseModel):
     rotation_deg: float = 0.0
 
 
+class Site(BaseModel):
+    """Площадка предприятия: завод, РЦ, склад. Площадки разнесены по региону, между ними — дороги общего пользования."""
+
+    id: str = Field(..., examples=["s-podolsk"])
+    name: str = Field(..., examples=["Завод «Подольск»"])
+    site_type: Literal["plant", "dc", "cold_store"] = "plant"
+    address: str | None = None
+    gate: Coord | None = Field(None, description="Въезд (КПП) в метрах плана")
+    geometry: PolygonGeometry
+
+
 class Building(BaseModel):
     id: str = Field(..., examples=["b-wh2"])
+    site_id: str | None = Field(None, examples=["s-podolsk"], description="Площадка, на которой стоит здание")
     name: str = Field(..., examples=["Склад №2 (холодный)"])
     building_type: Literal["office", "warehouse", "production", "garage"]
     floors: int = Field(..., ge=1)
@@ -47,6 +59,8 @@ class Road(BaseModel):
     name: str
     width_m: float
     speed_limit_kmh: float
+    road_class: Literal["site", "public"] = Field("site", description="site — проезд площадки, public — трасса между площадками")
+    connects: list[str] | None = Field(None, examples=[["s-podolsk", "s-domodedovo"]], description="Для трасс: две площадки")
     geometry: LineGeometry
 
 
@@ -74,7 +88,7 @@ class ObjectsResponse(BaseModel):
     units: Literal["m"] = "m"
     extent: tuple[float, float, float, float] = Field(..., description="[x_min, y_min, x_max, y_max]")
     georef: Georef
-    site: PolygonGeometry
+    sites: list[Site]
     buildings: list[Building]
     rooms: list[Room]
     roads: list[Road]

@@ -16,6 +16,8 @@ from scada_common import keys
 from scada_db.config import settings
 
 from scada_connectors.adapters import ADAPTERS
+from scada_connectors.documents import EXAMPLE as WAYBILL_EXAMPLE
+from scada_connectors.documents import DocumentError, Waybill, store_waybill
 from scada_connectors.mqtt import API_KEY_PROPERTY, MqttIngress
 from scada_connectors.pipeline import IngestError, Pipeline
 from scada_connectors.registry import Registry
@@ -112,6 +114,25 @@ async def ingest(
     out = IngestOut(accepted=len(result.accepted), event_ids=result.accepted,
                     rejected=[RejectionOut(**vars(r)) for r in result.rejected])
     return JSONResponse(out.model_dump(), status_code=202 if result.accepted or not items else 422)
+
+
+@app.post("/documents/waybill", tags=["documents"], status_code=202,
+          responses={401: {}, 403: {}, 422: {}, 429: {}})
+async def waybill(
+    request: Request,
+    body: Annotated[Waybill, Body(openapi_examples={"waybill": {"value": WAYBILL_EXAMPLE}})],
+    x_api_key: Annotated[str | None, Header()] = None,
+) -> dict[str, str]:
+    """Путевой лист / ЭТрН из транспортной системы: рейс машины между площадками и груз.
+    Присылайте при каждой смене статуса — последняя версия заменяет прежнюю (по номеру путевого листа)."""
+    key = await request.app.state.pipeline.authorize(x_api_key, 1)
+    if key.sensor_types is not None:
+        raise IngestError(403, f"API key '{key.name}' is limited to sensor types and may not send documents")
+    try:
+        trip_id = await asyncio.to_thread(store_waybill, body)
+    except DocumentError as e:
+        raise IngestError(422, str(e)) from e
+    return {"trip_id": trip_id}
 
 
 @app.get("/health", tags=["system"])

@@ -9,7 +9,7 @@ from typing import Any
 
 import yaml
 
-from scada_simulator.sim import GATE, OFF_SITE, Simulation, Task, skud
+from scada_simulator.sim import Simulation, Task, skud
 from scada_simulator.transport import Outgoing
 
 
@@ -54,17 +54,21 @@ def _in_stop_zone(sim: Simulation, x: float, y: float) -> bool:
                for a in sim.world.areas.values())
 
 
-def _vehicle(sim: Simulation, vehicle_id: str | None, kind: str = "truck", on_roadway: bool = False):
+def _vehicle(sim: Simulation, vehicle_id: str | None, kind: str | tuple[str, ...] = "truck",
+             on_roadway: bool = False):
+    """The named vehicle, or a random one moving on a site; kinds are tried in order of preference."""
     if vehicle_id:
         try:
             return sim.vehicle(vehicle_id)
         except StopIteration:
             raise ScenarioError(f"unknown vehicle {vehicle_id}") from None
-    moving = [v for v in sim.vehicles if v.kind == kind and v.speed_kmh > 0 and 0 < v.x < 800
-              and not (on_roadway and _in_stop_zone(sim, v.x, v.y))]
-    if not moving:
-        raise ScenarioError(f"no moving {kind} on site right now")
-    return sim.rnd.choice(moving)
+    kinds = (kind,) if isinstance(kind, str) else kind
+    for k in kinds:
+        moving = [v for v in sim.vehicles if v.kind == k and v.speed_kmh > 0 and sim.site_at(v.x, v.y)
+                  and not (on_roadway and _in_stop_zone(sim, v.x, v.y))]
+        if moving:
+            return sim.rnd.choice(moving)
+    raise ScenarioError(f"no moving {' or '.join(kinds)} on site right now")
 
 
 def _sensor(sim: Simulation, sensor_id: str, sensor_type: str) -> None:
@@ -75,8 +79,9 @@ def _sensor(sim: Simulation, sensor_id: str, sensor_type: str) -> None:
 
 @action
 def vehicle_breakdown(sim: Simulation, duration_s: float, vehicle: str | None = None) -> list[Outgoing]:
-    v = _vehicle(sim, vehicle, on_roadway=True)
-    if not (0 < v.x < 800 and 0 < v.y < 500):  # a breakdown beyond the gate is not our alarm
+    # trucks spend most of their time on highways: a loader or a service car will do on site
+    v = _vehicle(sim, vehicle, kind=("truck", "loader", "car"), on_roadway=True)
+    if sim.site_at(v.x, v.y) is None:  # a breakdown on a public road is not our alarm
         raise ScenarioError(f"{v.id} is not on site right now; omit 'vehicle' to pick a moving truck")
     if _in_stop_zone(sim, v.x, v.y):
         raise ScenarioError(f"{v.id} is at a dock/parking where stopping is normal; omit 'vehicle'")
@@ -93,15 +98,16 @@ def vehicle_speeding(sim: Simulation, kmh: float, duration_s: float, vehicle: st
 
 @action
 def vehicle_arrival(sim: Simulation, vehicle: str) -> list[Outgoing]:
-    """Send a vehicle that waits beyond the gate through КПП-1 to a dock and back out."""
+    """Send a vehicle that waits beyond the gate of the main plant through КПП-1 to a dock and back out."""
     v = _vehicle(sim, vehicle)
+    site = sim.main
     v.parked_off_site = False
-    v.x, v.y = OFF_SITE
-    v.path, v.dwell_left = [], 0
-    dock = sim.rnd.choice(sim._docks)
-    v.tasks = [Task("drive", GATE), Task("event", emit=("cam-gate-in", "approach")), Task("drive", dock),
-               Task("dwell", seconds=90), Task("drive", GATE), Task("event", emit=("cam-gate-out", "leave")),
-               Task("drive", OFF_SITE), Task("park")]  # back to waiting beyond the gate
+    v.x, v.y = site.approach
+    v.path, v.dwell_left, v.trip = [], 0, None
+    dock = sim.rnd.choice(site.docks)
+    v.tasks = [Task("drive", site.gate), Task("event", emit=(site.cam_in, "approach")), Task("drive", dock),
+               Task("dwell", seconds=90), Task("drive", site.gate), Task("event", emit=(site.cam_out, "leave")),
+               Task("drive", site.approach), Task("park")]  # back to waiting beyond the gate
     return []
 
 

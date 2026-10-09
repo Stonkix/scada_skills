@@ -3,21 +3,21 @@
  "metadata": {
   "units": "m",
   "extent": [
-   0,
-   0,
-   800,
-   500
+   -5594,
+   -29006,
+   16643,
+   7332
   ],
   "georef": {
-   "origin_lat": 55.7,
-   "origin_lon": 37.4,
+   "origin_lat": 55.4265,
+   "origin_lon": 37.569,
    "rotation_deg": 0.0
   }
  },
  "features": [
   {
    "type": "Feature",
-   "id": "site",
+   "id": "s-podolsk",
    "geometry": {
     "type": "Polygon",
     "coordinates": [
@@ -46,9 +46,19 @@
     ]
    },
    "properties": {
-    "id": "site",
+    "id": "s-podolsk",
     "kind": "site",
-    "name": "Производственная площадка"
+    "name": "Завод «Подольск»",
+    "site_type": "plant",
+    "address": "Подольск, промзона",
+    "gate": [
+     0,
+     250
+    ],
+    "approach": [
+     -60,
+     250
+    ]
    }
   },
   {
@@ -1079,7 +1089,8 @@
     "kind": "road",
     "name": "Главный проезд",
     "width_m": 12,
-    "speed_limit_kmh": 20
+    "speed_limit_kmh": 20,
+    "road_class": "site"
    }
   },
   {
@@ -1103,7 +1114,8 @@
     "kind": "road",
     "name": "Западный проезд",
     "width_m": 8,
-    "speed_limit_kmh": 20
+    "speed_limit_kmh": 20,
+    "road_class": "site"
    }
   },
   {
@@ -1127,7 +1139,8 @@
     "kind": "road",
     "name": "Восточный проезд",
     "width_m": 8,
-    "speed_limit_kmh": 20
+    "speed_limit_kmh": 20,
+    "road_class": "site"
    }
   },
   {
@@ -1151,7 +1164,8 @@
     "kind": "road",
     "name": "Южный проезд",
     "width_m": 8,
-    "speed_limit_kmh": 20
+    "speed_limit_kmh": 20,
+    "road_class": "site"
    }
   },
   {
@@ -1175,7 +1189,8 @@
     "kind": "road",
     "name": "Северный проезд",
     "width_m": 8,
-    "speed_limit_kmh": 20
+    "speed_limit_kmh": 20,
+    "road_class": "site"
    }
   },
   {
@@ -1199,7 +1214,8 @@
     "kind": "road",
     "name": "Подъезд к складу №1",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
    }
   },
   {
@@ -1223,7 +1239,8 @@
     "kind": "road",
     "name": "Подъезд к складу №2",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
    }
   },
   {
@@ -1247,7 +1264,8 @@
     "kind": "road",
     "name": "Подъезд к складу №3",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
    }
   },
   {
@@ -1271,7 +1289,8 @@
     "kind": "road",
     "name": "Подъезд к цеху №1",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
    }
   },
   {
@@ -1295,7 +1314,8 @@
     "kind": "road",
     "name": "Подъезд к цеху №2",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
    }
   },
   {
@@ -1319,7 +1339,8 @@
     "kind": "road",
     "name": "Подъезд к гаражу",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
    }
   },
   {
@@ -1343,7 +1364,33 @@
     "kind": "road",
     "name": "Въезд на стоянку",
     "width_m": 8,
-    "speed_limit_kmh": 10
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-podolsk-access",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -60,
+      250
+     ],
+     [
+      0,
+      250
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-podolsk-access",
+    "kind": "road",
+    "name": "Выезд с завода на дорогу общего пользования",
+    "width_m": 10,
+    "speed_limit_kmh": 40,
+    "road_class": "site"
    }
   },
   {
@@ -1601,7 +1648,7 @@
    "properties": {
     "id": "z-site-speed",
     "kind": "geozone",
-    "name": "Ограничение скорости по территории",
+    "name": "Ограничение скорости: завод",
     "zone_type": "speed",
     "speed_limit_kmh": 20
    }
@@ -2224,6 +2271,1802 @@
   },
   {
    "type": "Feature",
+   "id": "s-domodedovo",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15072,
+       2889
+      ],
+      [
+       15492,
+       2889
+      ],
+      [
+       15492,
+       3189
+      ],
+      [
+       15072,
+       3189
+      ],
+      [
+       15072,
+       2889
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "s-domodedovo",
+    "kind": "site",
+    "name": "РЦ «Домодедово»",
+    "site_type": "dc",
+    "address": "Домодедово, у трассы М-4 «Дон»",
+    "gate": [
+     15072,
+     3009
+    ],
+    "approach": [
+     15012,
+     3009
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dmd-main",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15072,
+      3009
+     ],
+     [
+      15472,
+      3009
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dmd-main",
+    "kind": "road",
+    "name": "РЦ «Домодедово»: главный проезд",
+    "width_m": 12,
+    "speed_limit_kmh": 20,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dmd-access",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15012,
+      3009
+     ],
+     [
+      15072,
+      3009
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dmd-access",
+    "kind": "road",
+    "name": "Выезд: РЦ «Домодедово»",
+    "width_m": 10,
+    "speed_limit_kmh": 40,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-dmd-gate",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15072,
+       2989
+      ],
+      [
+       15112,
+       2989
+      ],
+      [
+       15112,
+       3029
+      ],
+      [
+       15072,
+       3029
+      ],
+      [
+       15072,
+       2989
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-dmd-gate",
+    "kind": "geozone",
+    "name": "РЦ «Домодедово»: КПП",
+    "zone_type": "gate"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-dmd-speed",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15072,
+       2889
+      ],
+      [
+       15492,
+       2889
+      ],
+      [
+       15492,
+       3189
+      ],
+      [
+       15072,
+       3189
+      ],
+      [
+       15072,
+       2889
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-dmd-speed",
+    "kind": "geozone",
+    "name": "Ограничение скорости: РЦ «Домодедово»",
+    "zone_type": "speed",
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-dmd-gate-in",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15097,
+     3017
+    ]
+   },
+   "properties": {
+    "id": "cam-dmd-gate-in",
+    "kind": "sensor",
+    "name": "РЦ «Домодедово»: камера КПП, въезд",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-dmd-gate",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-dmd-gate-out",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15097,
+     3001
+    ]
+   },
+   "properties": {
+    "id": "cam-dmd-gate-out",
+    "kind": "sensor",
+    "name": "РЦ «Домодедово»: камера КПП, выезд",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-dmd-gate",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-dmd-xd",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15192,
+       3039
+      ],
+      [
+       15402,
+       3039
+      ],
+      [
+       15402,
+       3129
+      ],
+      [
+       15192,
+       3129
+      ],
+      [
+       15192,
+       3039
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-dmd-xd",
+    "kind": "building",
+    "name": "Склад кросс-докинга",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-dmd-xd-dock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15192,
+       3039
+      ],
+      [
+       15402,
+       3039
+      ],
+      [
+       15402,
+       3064
+      ],
+      [
+       15192,
+       3064
+      ],
+      [
+       15192,
+       3039
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-dmd-xd-dock",
+    "kind": "room",
+    "name": "Склад кросс-докинга: приёмка и отгрузка",
+    "building_id": "b-dmd-xd",
+    "floor": 1,
+    "room_type": "dock"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-dmd-xd-storage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15192,
+       3064
+      ],
+      [
+       15402,
+       3064
+      ],
+      [
+       15402,
+       3129
+      ],
+      [
+       15192,
+       3129
+      ],
+      [
+       15192,
+       3064
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-dmd-xd-storage",
+    "kind": "room",
+    "name": "Склад кросс-докинга: хранение",
+    "building_id": "b-dmd-xd",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-dmd-docks-xd",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15192,
+       3014
+      ],
+      [
+       15402,
+       3014
+      ],
+      [
+       15402,
+       3039
+      ],
+      [
+       15192,
+       3039
+      ],
+      [
+       15192,
+       3014
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-dmd-docks-xd",
+    "kind": "geozone",
+    "name": "Рампа: Склад кросс-докинга",
+    "zone_type": "docks"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dmd-dock-xd-1",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15244.5,
+      3009
+     ],
+     [
+      15244.5,
+      3029
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dmd-dock-xd-1",
+    "kind": "road",
+    "name": "Подъезд к рампе: Склад кросс-докинга",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dmd-dock-xd-2",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15297.0,
+      3009
+     ],
+     [
+      15297.0,
+      3029
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dmd-dock-xd-2",
+    "kind": "road",
+    "name": "Подъезд к рампе: Склад кросс-докинга",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dmd-dock-xd-3",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15349.5,
+      3009
+     ],
+     [
+      15349.5,
+      3029
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dmd-dock-xd-3",
+    "kind": "road",
+    "name": "Подъезд к рампе: Склад кросс-докинга",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-dmd-xd",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15234.5,
+     3039
+    ]
+   },
+   "properties": {
+    "id": "acs-dmd-xd",
+    "kind": "sensor",
+    "name": "СКУД: вход, Склад кросс-докинга",
+    "sensor_type": "access_control",
+    "zone_id": "b-dmd-xd",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-dmd-dock-xd",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15309.0,
+     3034
+    ]
+   },
+   "properties": {
+    "id": "cam-dmd-dock-xd",
+    "kind": "sensor",
+    "name": "Камера рампы: Склад кросс-докинга",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-dmd-docks-xd",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-dmd-xd",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15204,
+     3117
+    ]
+   },
+   "properties": {
+    "id": "mot-dmd-xd",
+    "kind": "sensor",
+    "name": "Движение: Склад кросс-докинга",
+    "sensor_type": "motion",
+    "zone_id": "r-dmd-xd-storage",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-dmd-office",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15112,
+       3109
+      ],
+      [
+       15167,
+       3109
+      ],
+      [
+       15167,
+       3149
+      ],
+      [
+       15112,
+       3149
+      ],
+      [
+       15112,
+       3109
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-dmd-office",
+    "kind": "building",
+    "name": "Офис: РЦ «Домодедово»",
+    "building_type": "office",
+    "floors": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-dmd-office-f1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15112,
+       3109
+      ],
+      [
+       15167,
+       3109
+      ],
+      [
+       15167,
+       3149
+      ],
+      [
+       15112,
+       3149
+      ],
+      [
+       15112,
+       3109
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-dmd-office-f1",
+    "kind": "room",
+    "name": "Офис РЦ «Домодедово», 1 эт.",
+    "building_id": "b-dmd-office",
+    "floor": 1,
+    "room_type": "lobby"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-dmd-office-f2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15112,
+       3109
+      ],
+      [
+       15167,
+       3109
+      ],
+      [
+       15167,
+       3149
+      ],
+      [
+       15112,
+       3149
+      ],
+      [
+       15112,
+       3109
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-dmd-office-f2",
+    "kind": "room",
+    "name": "Офис РЦ «Домодедово», 2 эт.",
+    "building_id": "b-dmd-office",
+    "floor": 2,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-dmd-office",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15120,
+     3109
+    ]
+   },
+   "properties": {
+    "id": "acs-dmd-office",
+    "kind": "sensor",
+    "name": "Турникет: офис РЦ «Домодедово»",
+    "sensor_type": "access_control",
+    "zone_id": "b-dmd-office",
+    "building_id": "b-dmd-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-dmd-server",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15159,
+     3141
+    ]
+   },
+   "properties": {
+    "id": "clim-dmd-server",
+    "kind": "sensor",
+    "name": "Климат, серверная: РЦ «Домодедово»",
+    "sensor_type": "climate",
+    "zone_id": "r-dmd-office-f2",
+    "building_id": "b-dmd-office",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-dmd-parking",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15412,
+       2909
+      ],
+      [
+       15482,
+       2909
+      ],
+      [
+       15482,
+       2989
+      ],
+      [
+       15412,
+       2989
+      ],
+      [
+       15412,
+       2909
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-dmd-parking",
+    "kind": "geozone",
+    "name": "Стоянка грузовиков: РЦ «Домодедово»",
+    "zone_type": "parking"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-dmd-parking",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15447.0,
+      3009
+     ],
+     [
+      15447.0,
+      2949.0
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-dmd-parking",
+    "kind": "road",
+    "name": "Въезд на стоянку: РЦ «Домодедово»",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cp-dmd",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15092,
+     3009
+    ]
+   },
+   "properties": {
+    "id": "cp-dmd",
+    "kind": "checkpoint",
+    "name": "КПП: РЦ «Домодедово»",
+    "checkpoint_type": "vehicle",
+    "zone_id": "z-dmd-gate"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-dmd-hangar",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       15417,
+       3054
+      ],
+      [
+       15477,
+       3054
+      ],
+      [
+       15477,
+       3124
+      ],
+      [
+       15417,
+       3124
+      ],
+      [
+       15417,
+       3054
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-dmd-hangar",
+    "kind": "building",
+    "name": "Ангар сезонного хранения",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "s-chekhov",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4541,
+       -28506
+      ],
+      [
+       -4081,
+       -28506
+      ],
+      [
+       -4081,
+       -28186
+      ],
+      [
+       -4541,
+       -28186
+      ],
+      [
+       -4541,
+       -28506
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "s-chekhov",
+    "kind": "site",
+    "name": "Холодильный склад «Чехов»",
+    "site_type": "cold_store",
+    "address": "Чехов, у трассы М-2 «Крым»",
+    "gate": [
+     -4541,
+     -28366
+    ],
+    "approach": [
+     -4601,
+     -28366
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-main",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4541,
+      -28366
+     ],
+     [
+      -4101,
+      -28366
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-main",
+    "kind": "road",
+    "name": "Холодильный склад «Чехов»: главный проезд",
+    "width_m": 12,
+    "speed_limit_kmh": 20,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-access",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4601,
+      -28366
+     ],
+     [
+      -4541,
+      -28366
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-access",
+    "kind": "road",
+    "name": "Выезд: Холодильный склад «Чехов»",
+    "width_m": 10,
+    "speed_limit_kmh": 40,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-chk-gate",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4541,
+       -28386
+      ],
+      [
+       -4501,
+       -28386
+      ],
+      [
+       -4501,
+       -28346
+      ],
+      [
+       -4541,
+       -28346
+      ],
+      [
+       -4541,
+       -28386
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-chk-gate",
+    "kind": "geozone",
+    "name": "Холодильный склад «Чехов»: КПП",
+    "zone_type": "gate"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-chk-speed",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4541,
+       -28506
+      ],
+      [
+       -4081,
+       -28506
+      ],
+      [
+       -4081,
+       -28186
+      ],
+      [
+       -4541,
+       -28186
+      ],
+      [
+       -4541,
+       -28506
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-chk-speed",
+    "kind": "geozone",
+    "name": "Ограничение скорости: Холодильный склад «Чехов»",
+    "zone_type": "speed",
+    "speed_limit_kmh": 20
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-chk-gate-in",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4516,
+     -28358
+    ]
+   },
+   "properties": {
+    "id": "cam-chk-gate-in",
+    "kind": "sensor",
+    "name": "Холодильный склад «Чехов»: камера КПП, въезд",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-chk-gate",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-chk-gate-out",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4516,
+     -28374
+    ]
+   },
+   "properties": {
+    "id": "cam-chk-gate-out",
+    "kind": "sensor",
+    "name": "Холодильный склад «Чехов»: камера КПП, выезд",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-chk-gate",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-chk-cold1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4451,
+       -28336
+      ],
+      [
+       -4301,
+       -28336
+      ],
+      [
+       -4301,
+       -28246
+      ],
+      [
+       -4451,
+       -28246
+      ],
+      [
+       -4451,
+       -28336
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-chk-cold1",
+    "kind": "building",
+    "name": "Холодильная камера №1",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-chk-cold1-dock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4451,
+       -28336
+      ],
+      [
+       -4301,
+       -28336
+      ],
+      [
+       -4301,
+       -28311
+      ],
+      [
+       -4451,
+       -28311
+      ],
+      [
+       -4451,
+       -28336
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-chk-cold1-dock",
+    "kind": "room",
+    "name": "Холодильная камера №1: приёмка и отгрузка",
+    "building_id": "b-chk-cold1",
+    "floor": 1,
+    "room_type": "dock"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-chk-cold1-storage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4451,
+       -28311
+      ],
+      [
+       -4301,
+       -28311
+      ],
+      [
+       -4301,
+       -28246
+      ],
+      [
+       -4451,
+       -28246
+      ],
+      [
+       -4451,
+       -28311
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-chk-cold1-storage",
+    "kind": "room",
+    "name": "Холодильная камера №1: хранение",
+    "building_id": "b-chk-cold1",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-chk-docks-cold1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4451,
+       -28361
+      ],
+      [
+       -4301,
+       -28361
+      ],
+      [
+       -4301,
+       -28336
+      ],
+      [
+       -4451,
+       -28336
+      ],
+      [
+       -4451,
+       -28361
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-chk-docks-cold1",
+    "kind": "geozone",
+    "name": "Рампа: Холодильная камера №1",
+    "zone_type": "docks"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-dock-cold1-1",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4413.5,
+      -28366
+     ],
+     [
+      -4413.5,
+      -28346
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-dock-cold1-1",
+    "kind": "road",
+    "name": "Подъезд к рампе: Холодильная камера №1",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-dock-cold1-2",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4376.0,
+      -28366
+     ],
+     [
+      -4376.0,
+      -28346
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-dock-cold1-2",
+    "kind": "road",
+    "name": "Подъезд к рампе: Холодильная камера №1",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-dock-cold1-3",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4338.5,
+      -28366
+     ],
+     [
+      -4338.5,
+      -28346
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-dock-cold1-3",
+    "kind": "road",
+    "name": "Подъезд к рампе: Холодильная камера №1",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-chk-cold1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4423.5,
+     -28336
+    ]
+   },
+   "properties": {
+    "id": "acs-chk-cold1",
+    "kind": "sensor",
+    "name": "СКУД: вход, Холодильная камера №1",
+    "sensor_type": "access_control",
+    "zone_id": "b-chk-cold1",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-chk-dock-cold1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4364.0,
+     -28341
+    ]
+   },
+   "properties": {
+    "id": "cam-chk-dock-cold1",
+    "kind": "sensor",
+    "name": "Камера рампы: Холодильная камера №1",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-chk-docks-cold1",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-chk-cold1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4439,
+     -28258
+    ]
+   },
+   "properties": {
+    "id": "mot-chk-cold1",
+    "kind": "sensor",
+    "name": "Движение: Холодильная камера №1",
+    "sensor_type": "motion",
+    "zone_id": "r-chk-cold1-storage",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-chk-cold2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4271,
+       -28336
+      ],
+      [
+       -4121,
+       -28336
+      ],
+      [
+       -4121,
+       -28246
+      ],
+      [
+       -4271,
+       -28246
+      ],
+      [
+       -4271,
+       -28336
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-chk-cold2",
+    "kind": "building",
+    "name": "Холодильная камера №2",
+    "building_type": "warehouse",
+    "floors": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-chk-cold2-dock",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4271,
+       -28336
+      ],
+      [
+       -4121,
+       -28336
+      ],
+      [
+       -4121,
+       -28311
+      ],
+      [
+       -4271,
+       -28311
+      ],
+      [
+       -4271,
+       -28336
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-chk-cold2-dock",
+    "kind": "room",
+    "name": "Холодильная камера №2: приёмка и отгрузка",
+    "building_id": "b-chk-cold2",
+    "floor": 1,
+    "room_type": "dock"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-chk-cold2-storage",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4271,
+       -28311
+      ],
+      [
+       -4121,
+       -28311
+      ],
+      [
+       -4121,
+       -28246
+      ],
+      [
+       -4271,
+       -28246
+      ],
+      [
+       -4271,
+       -28311
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-chk-cold2-storage",
+    "kind": "room",
+    "name": "Холодильная камера №2: хранение",
+    "building_id": "b-chk-cold2",
+    "floor": 1,
+    "room_type": "storage"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-chk-docks-cold2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4271,
+       -28361
+      ],
+      [
+       -4121,
+       -28361
+      ],
+      [
+       -4121,
+       -28336
+      ],
+      [
+       -4271,
+       -28336
+      ],
+      [
+       -4271,
+       -28361
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-chk-docks-cold2",
+    "kind": "geozone",
+    "name": "Рампа: Холодильная камера №2",
+    "zone_type": "docks"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-dock-cold2-1",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4233.5,
+      -28366
+     ],
+     [
+      -4233.5,
+      -28346
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-dock-cold2-1",
+    "kind": "road",
+    "name": "Подъезд к рампе: Холодильная камера №2",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-dock-cold2-2",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4196.0,
+      -28366
+     ],
+     [
+      -4196.0,
+      -28346
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-dock-cold2-2",
+    "kind": "road",
+    "name": "Подъезд к рампе: Холодильная камера №2",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-dock-cold2-3",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4158.5,
+      -28366
+     ],
+     [
+      -4158.5,
+      -28346
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-dock-cold2-3",
+    "kind": "road",
+    "name": "Подъезд к рампе: Холодильная камера №2",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-chk-cold2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4243.5,
+     -28336
+    ]
+   },
+   "properties": {
+    "id": "acs-chk-cold2",
+    "kind": "sensor",
+    "name": "СКУД: вход, Холодильная камера №2",
+    "sensor_type": "access_control",
+    "zone_id": "b-chk-cold2",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cam-chk-dock-cold2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4184.0,
+     -28341
+    ]
+   },
+   "properties": {
+    "id": "cam-chk-dock-cold2",
+    "kind": "sensor",
+    "name": "Камера рампы: Холодильная камера №2",
+    "sensor_type": "anpr_camera",
+    "zone_id": "z-chk-docks-cold2",
+    "building_id": null,
+    "floor": null
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-chk-cold2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4259,
+     -28258
+    ]
+   },
+   "properties": {
+    "id": "mot-chk-cold2",
+    "kind": "sensor",
+    "name": "Движение: Холодильная камера №2",
+    "sensor_type": "motion",
+    "zone_id": "r-chk-cold2-storage",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "b-chk-office",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4521,
+       -28286
+      ],
+      [
+       -4471,
+       -28286
+      ],
+      [
+       -4471,
+       -28246
+      ],
+      [
+       -4521,
+       -28246
+      ],
+      [
+       -4521,
+       -28286
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "b-chk-office",
+    "kind": "building",
+    "name": "Офис: Холодильный склад «Чехов»",
+    "building_type": "office",
+    "floors": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-chk-office-f1",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4521,
+       -28286
+      ],
+      [
+       -4471,
+       -28286
+      ],
+      [
+       -4471,
+       -28246
+      ],
+      [
+       -4521,
+       -28246
+      ],
+      [
+       -4521,
+       -28286
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-chk-office-f1",
+    "kind": "room",
+    "name": "Офис Холодильный склад «Чехов», 1 эт.",
+    "building_id": "b-chk-office",
+    "floor": 1,
+    "room_type": "lobby"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "r-chk-office-f2",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4521,
+       -28286
+      ],
+      [
+       -4471,
+       -28286
+      ],
+      [
+       -4471,
+       -28246
+      ],
+      [
+       -4521,
+       -28246
+      ],
+      [
+       -4521,
+       -28286
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "r-chk-office-f2",
+    "kind": "room",
+    "name": "Офис Холодильный склад «Чехов», 2 эт.",
+    "building_id": "b-chk-office",
+    "floor": 2,
+    "room_type": "office"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "acs-chk-office",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4513,
+     -28286
+    ]
+   },
+   "properties": {
+    "id": "acs-chk-office",
+    "kind": "sensor",
+    "name": "Турникет: офис Холодильный склад «Чехов»",
+    "sensor_type": "access_control",
+    "zone_id": "b-chk-office",
+    "building_id": "b-chk-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-chk-server",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4479,
+     -28254
+    ]
+   },
+   "properties": {
+    "id": "clim-chk-server",
+    "kind": "sensor",
+    "name": "Климат, серверная: Холодильный склад «Чехов»",
+    "sensor_type": "climate",
+    "zone_id": "r-chk-office-f2",
+    "building_id": "b-chk-office",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "z-chk-parking",
+   "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+     [
+      [
+       -4241,
+       -28486
+      ],
+      [
+       -4101,
+       -28486
+      ],
+      [
+       -4101,
+       -28396
+      ],
+      [
+       -4241,
+       -28396
+      ],
+      [
+       -4241,
+       -28486
+      ]
+     ]
+    ]
+   },
+   "properties": {
+    "id": "z-chk-parking",
+    "kind": "geozone",
+    "name": "Стоянка грузовиков: Холодильный склад «Чехов»",
+    "zone_type": "parking"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "road-chk-parking",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4171.0,
+      -28366
+     ],
+     [
+      -4171.0,
+      -28441.0
+     ]
+    ]
+   },
+   "properties": {
+    "id": "road-chk-parking",
+    "kind": "road",
+    "name": "Въезд на стоянку: Холодильный склад «Чехов»",
+    "width_m": 8,
+    "speed_limit_kmh": 10,
+    "road_class": "site"
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "cp-chk",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4521,
+     -28366
+    ]
+   },
+   "properties": {
+    "id": "cp-chk",
+    "kind": "checkpoint",
+    "name": "КПП: Холодильный склад «Чехов»",
+    "checkpoint_type": "vehicle",
+    "zone_id": "z-chk-gate"
+   }
+  },
+  {
+   "type": "Feature",
    "id": "mot-wh1-dock",
    "geometry": {
     "type": "Point",
@@ -2680,6 +4523,2757 @@
     "zone_id": "r-garage-bay",
     "building_id": "b-garage",
     "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-dmd-xd-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15349.5,
+     3051.5
+    ]
+   },
+   "properties": {
+    "id": "clim-dmd-xd-dock",
+    "kind": "sensor",
+    "name": "Климат: Склад кросс-докинга: приёмка и отгрузка",
+    "sensor_type": "climate",
+    "zone_id": "r-dmd-xd-dock",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-dmd-xd-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15244.5,
+     3051.5
+    ]
+   },
+   "properties": {
+    "id": "mot-dmd-xd-dock",
+    "kind": "sensor",
+    "name": "Движение: Склад кросс-докинга: приёмка и отгрузка",
+    "sensor_type": "motion",
+    "zone_id": "r-dmd-xd-dock",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-dmd-xd-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15349.5,
+     3096.5
+    ]
+   },
+   "properties": {
+    "id": "clim-dmd-xd-storage",
+    "kind": "sensor",
+    "name": "Климат: Склад кросс-докинга: хранение",
+    "sensor_type": "climate",
+    "zone_id": "r-dmd-xd-storage",
+    "building_id": "b-dmd-xd",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-dmd-office-f1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15153.25,
+     3129.0
+    ]
+   },
+   "properties": {
+    "id": "clim-dmd-office-f1",
+    "kind": "sensor",
+    "name": "Климат: Офис РЦ «Домодедово», 1 эт.",
+    "sensor_type": "climate",
+    "zone_id": "r-dmd-office-f1",
+    "building_id": "b-dmd-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-dmd-office-f1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15125.75,
+     3129.0
+    ]
+   },
+   "properties": {
+    "id": "mot-dmd-office-f1",
+    "kind": "sensor",
+    "name": "Движение: Офис РЦ «Домодедово», 1 эт.",
+    "sensor_type": "motion",
+    "zone_id": "r-dmd-office-f1",
+    "building_id": "b-dmd-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-dmd-office-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     15125.75,
+     3129.0
+    ]
+   },
+   "properties": {
+    "id": "mot-dmd-office-f2",
+    "kind": "sensor",
+    "name": "Движение: Офис РЦ «Домодедово», 2 эт.",
+    "sensor_type": "motion",
+    "zone_id": "r-dmd-office-f2",
+    "building_id": "b-dmd-office",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-chk-cold1-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4338.5,
+     -28323.5
+    ]
+   },
+   "properties": {
+    "id": "clim-chk-cold1-dock",
+    "kind": "sensor",
+    "name": "Климат: Холодильная камера №1: приёмка и отгрузка",
+    "sensor_type": "climate",
+    "zone_id": "r-chk-cold1-dock",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-chk-cold1-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4413.5,
+     -28323.5
+    ]
+   },
+   "properties": {
+    "id": "mot-chk-cold1-dock",
+    "kind": "sensor",
+    "name": "Движение: Холодильная камера №1: приёмка и отгрузка",
+    "sensor_type": "motion",
+    "zone_id": "r-chk-cold1-dock",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-chk-cold1-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4338.5,
+     -28278.5
+    ]
+   },
+   "properties": {
+    "id": "clim-chk-cold1-storage",
+    "kind": "sensor",
+    "name": "Климат: Холодильная камера №1: хранение",
+    "sensor_type": "climate",
+    "zone_id": "r-chk-cold1-storage",
+    "building_id": "b-chk-cold1",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-chk-cold2-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4158.5,
+     -28323.5
+    ]
+   },
+   "properties": {
+    "id": "clim-chk-cold2-dock",
+    "kind": "sensor",
+    "name": "Климат: Холодильная камера №2: приёмка и отгрузка",
+    "sensor_type": "climate",
+    "zone_id": "r-chk-cold2-dock",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-chk-cold2-dock",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4233.5,
+     -28323.5
+    ]
+   },
+   "properties": {
+    "id": "mot-chk-cold2-dock",
+    "kind": "sensor",
+    "name": "Движение: Холодильная камера №2: приёмка и отгрузка",
+    "sensor_type": "motion",
+    "zone_id": "r-chk-cold2-dock",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-chk-cold2-storage",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4158.5,
+     -28278.5
+    ]
+   },
+   "properties": {
+    "id": "clim-chk-cold2-storage",
+    "kind": "sensor",
+    "name": "Климат: Холодильная камера №2: хранение",
+    "sensor_type": "climate",
+    "zone_id": "r-chk-cold2-storage",
+    "building_id": "b-chk-cold2",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "clim-chk-office-f1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4483.5,
+     -28266.0
+    ]
+   },
+   "properties": {
+    "id": "clim-chk-office-f1",
+    "kind": "sensor",
+    "name": "Климат: Офис Холодильный склад «Чехов», 1 эт.",
+    "sensor_type": "climate",
+    "zone_id": "r-chk-office-f1",
+    "building_id": "b-chk-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-chk-office-f1",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4508.5,
+     -28266.0
+    ]
+   },
+   "properties": {
+    "id": "mot-chk-office-f1",
+    "kind": "sensor",
+    "name": "Движение: Офис Холодильный склад «Чехов», 1 эт.",
+    "sensor_type": "motion",
+    "zone_id": "r-chk-office-f1",
+    "building_id": "b-chk-office",
+    "floor": 1
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "mot-chk-office-f2",
+   "geometry": {
+    "type": "Point",
+    "coordinates": [
+     -4508.5,
+     -28266.0
+    ]
+   },
+   "properties": {
+    "id": "mot-chk-office-f2",
+    "kind": "sensor",
+    "name": "Движение: Офис Холодильный склад «Чехов», 2 эт.",
+    "sensor_type": "motion",
+    "zone_id": "r-chk-office-f2",
+    "building_id": "b-chk-office",
+    "floor": 2
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "route-chekhov-domodedovo",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4601.0,
+      -28366.0
+     ],
+     [
+      -4813.1,
+      -28026.3
+     ],
+     [
+      -4823.8,
+      -28019.7
+     ],
+     [
+      -4846.8,
+      -28017.4
+     ],
+     [
+      -4886.3,
+      -27916.6
+     ],
+     [
+      -4930.3,
+      -27815.9
+     ],
+     [
+      -4933.0,
+      -27783.1
+     ],
+     [
+      -4958.0,
+      -27721.3
+     ],
+     [
+      -5054.1,
+      -27422.2
+     ],
+     [
+      -5094.5,
+      -27364.0
+     ],
+     [
+      -4899.4,
+      -27209.6
+     ],
+     [
+      -4905.4,
+      -27187.5
+     ],
+     [
+      -4780.7,
+      -27050.0
+     ],
+     [
+      -4695.0,
+      -26946.6
+     ],
+     [
+      -4607.3,
+      -26829.9
+     ],
+     [
+      -4394.9,
+      -26523.8
+     ],
+     [
+      -4378.1,
+      -26501.1
+     ],
+     [
+      -4359.7,
+      -26486.9
+     ],
+     [
+      -4347.9,
+      -26482.3
+     ],
+     [
+      -4300.8,
+      -26478.6
+     ],
+     [
+      -3744.7,
+      -26536.3
+     ],
+     [
+      -3164.3,
+      -26602.3
+     ],
+     [
+      -2806.0,
+      -26637.7
+     ],
+     [
+      -2699.8,
+      -26651.6
+     ],
+     [
+      -2605.8,
+      -26656.8
+     ],
+     [
+      -2433.2,
+      -26656.6
+     ],
+     [
+      -2199.8,
+      -26666.5
+     ],
+     [
+      -2125.8,
+      -26670.2
+     ],
+     [
+      -2048.5,
+      -26687.4
+     ],
+     [
+      -2030.7,
+      -26697.1
+     ],
+     [
+      -2011.9,
+      -26723.7
+     ],
+     [
+      -2009.0,
+      -26741.7
+     ],
+     [
+      -2011.4,
+      -26759.6
+     ],
+     [
+      -2019.9,
+      -26776.0
+     ],
+     [
+      -2033.4,
+      -26790.4
+     ],
+     [
+      -2051.1,
+      -26798.9
+     ],
+     [
+      -2070.6,
+      -26802.3
+     ],
+     [
+      -2089.2,
+      -26799.2
+     ],
+     [
+      -2109.6,
+      -26787.8
+     ],
+     [
+      -2125.6,
+      -26769.0
+     ],
+     [
+      -2150.1,
+      -26694.4
+     ],
+     [
+      -2155.5,
+      -26622.2
+     ],
+     [
+      -2166.4,
+      -26093.5
+     ],
+     [
+      -2115.9,
+      -24560.6
+     ],
+     [
+      -2118.5,
+      -24173.2
+     ],
+     [
+      -2130.7,
+      -23932.8
+     ],
+     [
+      -2166.2,
+      -23523.6
+     ],
+     [
+      -2224.7,
+      -23114.4
+     ],
+     [
+      -2263.7,
+      -22905.2
+     ],
+     [
+      -2307.9,
+      -22703.4
+     ],
+     [
+      -2428.5,
+      -22069.8
+     ],
+     [
+      -2552.5,
+      -21499.6
+     ],
+     [
+      -2595.1,
+      -21244.4
+     ],
+     [
+      -2617.5,
+      -21018.8
+     ],
+     [
+      -2628.0,
+      -20698.3
+     ],
+     [
+      -2624.6,
+      -20491.4
+     ],
+     [
+      -2613.4,
+      -20341.8
+     ],
+     [
+      -2592.1,
+      -20158.5
+     ],
+     [
+      -2520.5,
+      -19772.2
+     ],
+     [
+      -2335.8,
+      -18975.8
+     ],
+     [
+      -2103.3,
+      -17929.6
+     ],
+     [
+      -1967.8,
+      -17237.9
+     ],
+     [
+      -1773.0,
+      -16138.2
+     ],
+     [
+      -1648.0,
+      -15466.3
+     ],
+     [
+      -1547.9,
+      -14881.3
+     ],
+     [
+      -1425.7,
+      -14240.9
+     ],
+     [
+      -1334.0,
+      -13862.1
+     ],
+     [
+      -1237.8,
+      -13521.5
+     ],
+     [
+      -984.2,
+      -12743.8
+     ],
+     [
+      -609.3,
+      -11626.6
+     ],
+     [
+      -471.0,
+      -11202.0
+     ],
+     [
+      -420.8,
+      -11071.7
+     ],
+     [
+      -349.0,
+      -10909.8
+     ],
+     [
+      -325.0,
+      -10859.2
+     ],
+     [
+      -243.7,
+      -10710.5
+     ],
+     [
+      -198.7,
+      -10635.6
+     ],
+     [
+      -78.2,
+      -10457.1
+     ],
+     [
+      0.8,
+      -10351.7
+     ],
+     [
+      133.8,
+      -10198.0
+     ],
+     [
+      303.6,
+      -10027.7
+     ],
+     [
+      759.4,
+      -9606.4
+     ],
+     [
+      865.0,
+      -9490.4
+     ],
+     [
+      1045.2,
+      -9268.5
+     ],
+     [
+      1162.1,
+      -9095.3
+     ],
+     [
+      1248.5,
+      -8949.4
+     ],
+     [
+      1321.2,
+      -8807.3
+     ],
+     [
+      1397.3,
+      -8641.3
+     ],
+     [
+      1909.1,
+      -7355.4
+     ],
+     [
+      2010.2,
+      -7079.6
+     ],
+     [
+      2098.4,
+      -6785.9
+     ],
+     [
+      2147.6,
+      -6582.2
+     ],
+     [
+      2197.2,
+      -6331.6
+     ],
+     [
+      2235.2,
+      -6061.3
+     ],
+     [
+      2258.1,
+      -5805.3
+     ],
+     [
+      2268.5,
+      -5547.9
+     ],
+     [
+      2287.6,
+      -3022.0
+     ],
+     [
+      2297.2,
+      -2822.2
+     ],
+     [
+      2326.2,
+      -2410.5
+     ],
+     [
+      2368.9,
+      -2057.6
+     ],
+     [
+      2877.5,
+      436.5
+     ],
+     [
+      2909.1,
+      666.1
+     ],
+     [
+      2921.5,
+      735.5
+     ],
+     [
+      2941.1,
+      823.8
+     ],
+     [
+      2961.5,
+      863.6
+     ],
+     [
+      2986.3,
+      901.0
+     ],
+     [
+      3232.3,
+      1198.3
+     ],
+     [
+      3288.1,
+      1253.1
+     ],
+     [
+      3367.2,
+      1297.4
+     ],
+     [
+      4062.6,
+      1505.9
+     ],
+     [
+      4122.0,
+      1520.5
+     ],
+     [
+      4197.7,
+      1524.7
+     ],
+     [
+      4404.4,
+      1522.6
+     ],
+     [
+      4924.5,
+      1524.6
+     ],
+     [
+      4955.4,
+      1529.5
+     ],
+     [
+      4984.3,
+      1539.0
+     ],
+     [
+      5072.1,
+      1573.4
+     ],
+     [
+      5103.0,
+      1594.6
+     ],
+     [
+      5122.6,
+      1612.7
+     ],
+     [
+      5311.5,
+      1836.0
+     ],
+     [
+      5350.4,
+      1865.4
+     ],
+     [
+      5823.8,
+      2109.2
+     ],
+     [
+      5860.6,
+      2136.0
+     ],
+     [
+      5875.1,
+      2154.4
+     ],
+     [
+      5889.4,
+      2185.5
+     ],
+     [
+      5996.1,
+      2553.5
+     ],
+     [
+      6024.4,
+      2639.9
+     ],
+     [
+      6051.1,
+      2679.7
+     ],
+     [
+      6085.6,
+      2714.3
+     ],
+     [
+      6207.8,
+      2811.7
+     ],
+     [
+      6256.8,
+      2840.7
+     ],
+     [
+      6431.6,
+      2908.3
+     ],
+     [
+      6494.9,
+      2939.1
+     ],
+     [
+      6730.7,
+      3092.8
+     ],
+     [
+      7101.2,
+      3327.4
+     ],
+     [
+      7714.9,
+      3731.4
+     ],
+     [
+      7743.3,
+      3743.2
+     ],
+     [
+      7777.0,
+      3750.8
+     ],
+     [
+      8030.2,
+      3766.0
+     ],
+     [
+      8319.6,
+      3811.2
+     ],
+     [
+      8341.8,
+      3815.6
+     ],
+     [
+      8355.3,
+      3823.3
+     ],
+     [
+      8364.2,
+      3838.5
+     ],
+     [
+      8356.3,
+      4189.8
+     ],
+     [
+      8365.2,
+      4307.8
+     ],
+     [
+      8372.8,
+      4358.7
+     ],
+     [
+      8381.2,
+      4389.2
+     ],
+     [
+      8393.7,
+      4416.9
+     ],
+     [
+      8428.9,
+      4464.7
+     ],
+     [
+      8695.4,
+      4723.9
+     ],
+     [
+      8861.4,
+      4880.4
+     ],
+     [
+      8887.2,
+      4910.5
+     ],
+     [
+      8902.2,
+      4935.3
+     ],
+     [
+      8948.6,
+      5036.0
+     ],
+     [
+      9024.1,
+      5186.8
+     ],
+     [
+      9320.1,
+      5813.1
+     ],
+     [
+      9358.4,
+      5867.5
+     ],
+     [
+      9373.6,
+      5883.7
+     ],
+     [
+      9400.1,
+      5908.7
+     ],
+     [
+      9442.1,
+      5941.1
+     ],
+     [
+      9477.2,
+      5962.6
+     ],
+     [
+      9543.4,
+      5991.1
+     ],
+     [
+      9586.1,
+      6001.8
+     ],
+     [
+      9656.6,
+      6009.5
+     ],
+     [
+      9701.8,
+      6007.8
+     ],
+     [
+      10245.5,
+      5928.1
+     ],
+     [
+      10402.5,
+      5898.9
+     ],
+     [
+      10451.9,
+      5886.8
+     ],
+     [
+      10512.0,
+      5865.7
+     ],
+     [
+      10599.3,
+      5828.1
+     ],
+     [
+      10659.9,
+      5793.9
+     ],
+     [
+      10726.0,
+      5749.8
+     ],
+     [
+      10764.1,
+      5719.5
+     ],
+     [
+      10796.0,
+      5688.2
+     ],
+     [
+      10848.6,
+      5627.8
+     ],
+     [
+      10868.9,
+      5595.9
+     ],
+     [
+      10875.8,
+      5578.3
+     ],
+     [
+      10876.7,
+      5556.0
+     ],
+     [
+      10866.3,
+      5534.0
+     ],
+     [
+      10858.8,
+      5526.6
+     ],
+     [
+      10838.4,
+      5517.0
+     ],
+     [
+      10814.7,
+      5515.4
+     ],
+     [
+      10798.6,
+      5520.2
+     ],
+     [
+      10772.0,
+      5536.8
+     ],
+     [
+      10733.1,
+      5605.0
+     ],
+     [
+      10707.1,
+      5668.8
+     ],
+     [
+      10697.8,
+      5704.3
+     ],
+     [
+      10695.2,
+      5728.2
+     ],
+     [
+      10694.4,
+      5755.6
+     ],
+     [
+      10696.8,
+      5797.0
+     ],
+     [
+      10705.5,
+      5853.9
+     ],
+     [
+      10728.9,
+      5925.7
+     ],
+     [
+      10737.3,
+      5941.9
+     ],
+     [
+      10763.2,
+      5976.5
+     ],
+     [
+      11110.4,
+      6368.9
+     ],
+     [
+      11259.0,
+      6528.3
+     ],
+     [
+      11305.1,
+      6587.9
+     ],
+     [
+      11329.1,
+      6611.5
+     ],
+     [
+      11354.8,
+      6622.9
+     ],
+     [
+      11463.4,
+      6600.9
+     ],
+     [
+      11626.3,
+      6558.1
+     ],
+     [
+      11800.6,
+      6508.5
+     ],
+     [
+      11991.1,
+      6447.7
+     ],
+     [
+      12223.5,
+      6381.5
+     ],
+     [
+      12376.2,
+      6350.2
+     ],
+     [
+      12489.9,
+      6330.6
+     ],
+     [
+      12701.9,
+      6301.3
+     ],
+     [
+      12873.0,
+      6278.8
+     ],
+     [
+      12931.7,
+      6274.6
+     ],
+     [
+      12968.9,
+      6276.5
+     ],
+     [
+      13033.3,
+      6287.6
+     ],
+     [
+      13064.6,
+      6296.5
+     ],
+     [
+      13106.5,
+      6314.2
+     ],
+     [
+      13210.1,
+      6284.7
+     ],
+     [
+      13339.9,
+      6242.1
+     ],
+     [
+      13766.0,
+      6091.6
+     ],
+     [
+      13778.3,
+      6083.8
+     ],
+     [
+      13802.3,
+      6060.0
+     ],
+     [
+      13881.7,
+      5937.5
+     ],
+     [
+      13972.2,
+      5850.4
+     ],
+     [
+      14336.6,
+      5371.8
+     ],
+     [
+      14558.5,
+      5089.4
+     ],
+     [
+      14669.3,
+      4984.3
+     ],
+     [
+      14759.1,
+      5014.2
+     ],
+     [
+      15056.2,
+      5102.1
+     ],
+     [
+      15463.7,
+      4298.3
+     ],
+     [
+      15483.9,
+      4267.7
+     ],
+     [
+      15499.3,
+      4265.2
+     ],
+     [
+      15512.0,
+      4273.2
+     ],
+     [
+      15546.3,
+      4309.8
+     ],
+     [
+      15613.5,
+      4348.4
+     ],
+     [
+      15632.3,
+      4362.6
+     ],
+     [
+      15678.4,
+      4407.9
+     ],
+     [
+      15719.3,
+      4458.2
+     ],
+     [
+      15735.3,
+      4463.2
+     ],
+     [
+      15752.4,
+      4463.9
+     ],
+     [
+      15798.8,
+      4449.9
+     ],
+     [
+      15812.4,
+      4454.2
+     ],
+     [
+      15865.3,
+      4497.2
+     ],
+     [
+      15883.4,
+      4501.1
+     ],
+     [
+      15918.0,
+      4499.8
+     ],
+     [
+      15963.2,
+      4491.7
+     ],
+     [
+      16029.8,
+      4468.0
+     ],
+     [
+      16094.2,
+      4455.8
+     ],
+     [
+      16116.0,
+      4448.5
+     ],
+     [
+      16123.6,
+      4441.3
+     ],
+     [
+      16143.3,
+      4369.7
+     ],
+     [
+      16095.1,
+      4269.8
+     ],
+     [
+      15953.0,
+      4010.1
+     ],
+     [
+      15937.2,
+      4005.7
+     ],
+     [
+      15916.0,
+      3981.6
+     ],
+     [
+      15951.6,
+      3946.0
+     ],
+     [
+      15852.8,
+      3863.9
+     ],
+     [
+      15899.9,
+      3792.2
+     ],
+     [
+      15901.9,
+      3775.0
+     ],
+     [
+      15894.5,
+      3754.5
+     ],
+     [
+      15654.3,
+      3511.9
+     ],
+     [
+      15510.7,
+      3361.0
+     ],
+     [
+      15507.3,
+      3348.2
+     ],
+     [
+      15012.0,
+      3009.0
+     ]
+    ]
+   },
+   "properties": {
+    "id": "route-chekhov-domodedovo",
+    "kind": "road",
+    "name": "Трасса: Холодильный склад «Чехов» — РЦ «Домодедово»",
+    "width_m": 10,
+    "speed_limit_kmh": 70,
+    "road_class": "public",
+    "connects": [
+     "s-chekhov",
+     "s-domodedovo"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "route-chekhov-podolsk",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      -4601.0,
+      -28366.0
+     ],
+     [
+      -4813.1,
+      -28026.3
+     ],
+     [
+      -4823.8,
+      -28019.7
+     ],
+     [
+      -4846.8,
+      -28017.4
+     ],
+     [
+      -4886.3,
+      -27916.6
+     ],
+     [
+      -4930.3,
+      -27815.9
+     ],
+     [
+      -4933.0,
+      -27783.1
+     ],
+     [
+      -4958.0,
+      -27721.3
+     ],
+     [
+      -5054.1,
+      -27422.2
+     ],
+     [
+      -5094.5,
+      -27364.0
+     ],
+     [
+      -4899.4,
+      -27209.6
+     ],
+     [
+      -4905.4,
+      -27187.5
+     ],
+     [
+      -4780.7,
+      -27050.0
+     ],
+     [
+      -4695.0,
+      -26946.6
+     ],
+     [
+      -4607.3,
+      -26829.9
+     ],
+     [
+      -4394.9,
+      -26523.8
+     ],
+     [
+      -4378.1,
+      -26501.1
+     ],
+     [
+      -4359.7,
+      -26486.9
+     ],
+     [
+      -4347.9,
+      -26482.3
+     ],
+     [
+      -4300.8,
+      -26478.6
+     ],
+     [
+      -3744.7,
+      -26536.3
+     ],
+     [
+      -3164.3,
+      -26602.3
+     ],
+     [
+      -2806.0,
+      -26637.7
+     ],
+     [
+      -2699.8,
+      -26651.6
+     ],
+     [
+      -2605.8,
+      -26656.8
+     ],
+     [
+      -2433.2,
+      -26656.6
+     ],
+     [
+      -2199.8,
+      -26666.5
+     ],
+     [
+      -2125.8,
+      -26670.2
+     ],
+     [
+      -2048.5,
+      -26687.4
+     ],
+     [
+      -2030.7,
+      -26697.1
+     ],
+     [
+      -2011.9,
+      -26723.7
+     ],
+     [
+      -2009.0,
+      -26741.7
+     ],
+     [
+      -2011.4,
+      -26759.6
+     ],
+     [
+      -2019.9,
+      -26776.0
+     ],
+     [
+      -2033.4,
+      -26790.4
+     ],
+     [
+      -2051.1,
+      -26798.9
+     ],
+     [
+      -2070.6,
+      -26802.3
+     ],
+     [
+      -2089.2,
+      -26799.2
+     ],
+     [
+      -2109.6,
+      -26787.8
+     ],
+     [
+      -2125.6,
+      -26769.0
+     ],
+     [
+      -2150.1,
+      -26694.4
+     ],
+     [
+      -2155.5,
+      -26622.2
+     ],
+     [
+      -2166.4,
+      -26093.5
+     ],
+     [
+      -2114.8,
+      -24473.5
+     ],
+     [
+      -2118.5,
+      -24173.2
+     ],
+     [
+      -2130.7,
+      -23932.8
+     ],
+     [
+      -2166.2,
+      -23523.6
+     ],
+     [
+      -2224.7,
+      -23114.4
+     ],
+     [
+      -2263.7,
+      -22905.2
+     ],
+     [
+      -2307.9,
+      -22703.4
+     ],
+     [
+      -2428.5,
+      -22069.8
+     ],
+     [
+      -2552.5,
+      -21499.6
+     ],
+     [
+      -2595.1,
+      -21244.4
+     ],
+     [
+      -2617.5,
+      -21018.8
+     ],
+     [
+      -2625.3,
+      -20839.3
+     ],
+     [
+      -2628.0,
+      -20698.3
+     ],
+     [
+      -2624.6,
+      -20491.4
+     ],
+     [
+      -2613.4,
+      -20341.8
+     ],
+     [
+      -2592.1,
+      -20158.5
+     ],
+     [
+      -2520.5,
+      -19772.2
+     ],
+     [
+      -2335.8,
+      -18975.8
+     ],
+     [
+      -2103.3,
+      -17929.6
+     ],
+     [
+      -1967.8,
+      -17237.9
+     ],
+     [
+      -1773.0,
+      -16138.2
+     ],
+     [
+      -1648.0,
+      -15466.3
+     ],
+     [
+      -1547.9,
+      -14881.3
+     ],
+     [
+      -1425.7,
+      -14240.9
+     ],
+     [
+      -1334.0,
+      -13862.1
+     ],
+     [
+      -1262.2,
+      -13602.5
+     ],
+     [
+      -1216.7,
+      -13454.8
+     ],
+     [
+      -984.2,
+      -12743.8
+     ],
+     [
+      -609.3,
+      -11626.6
+     ],
+     [
+      -471.0,
+      -11202.0
+     ],
+     [
+      -420.8,
+      -11071.7
+     ],
+     [
+      -349.0,
+      -10909.8
+     ],
+     [
+      -325.0,
+      -10859.2
+     ],
+     [
+      -243.7,
+      -10710.5
+     ],
+     [
+      -198.7,
+      -10635.6
+     ],
+     [
+      -78.2,
+      -10457.1
+     ],
+     [
+      0.8,
+      -10351.7
+     ],
+     [
+      133.8,
+      -10198.0
+     ],
+     [
+      303.6,
+      -10027.7
+     ],
+     [
+      759.4,
+      -9606.4
+     ],
+     [
+      865.0,
+      -9490.4
+     ],
+     [
+      1045.2,
+      -9268.5
+     ],
+     [
+      1162.1,
+      -9095.3
+     ],
+     [
+      1248.5,
+      -8949.4
+     ],
+     [
+      1321.2,
+      -8807.3
+     ],
+     [
+      1397.3,
+      -8641.3
+     ],
+     [
+      1956.7,
+      -7230.9
+     ],
+     [
+      2040.5,
+      -6984.5
+     ],
+     [
+      2098.4,
+      -6785.9
+     ],
+     [
+      2147.6,
+      -6582.2
+     ],
+     [
+      2197.2,
+      -6331.6
+     ],
+     [
+      2235.2,
+      -6061.3
+     ],
+     [
+      2250.7,
+      -5905.3
+     ],
+     [
+      2258.1,
+      -5805.3
+     ],
+     [
+      2268.5,
+      -5547.9
+     ],
+     [
+      2287.6,
+      -3022.0
+     ],
+     [
+      2315.1,
+      -2539.3
+     ],
+     [
+      2326.2,
+      -2410.5
+     ],
+     [
+      2347.6,
+      -2297.0
+     ],
+     [
+      2359.2,
+      -2272.9
+     ],
+     [
+      2377.8,
+      -2248.6
+     ],
+     [
+      2395.3,
+      -2238.3
+     ],
+     [
+      2409.6,
+      -2234.1
+     ],
+     [
+      2425.0,
+      -2234.1
+     ],
+     [
+      2441.6,
+      -2239.0
+     ],
+     [
+      2456.7,
+      -2249.7
+     ],
+     [
+      2470.0,
+      -2265.6
+     ],
+     [
+      2475.8,
+      -2296.8
+     ],
+     [
+      2471.3,
+      -2312.5
+     ],
+     [
+      2456.3,
+      -2335.8
+     ],
+     [
+      2428.2,
+      -2361.4
+     ],
+     [
+      2411.8,
+      -2371.7
+     ],
+     [
+      2361.1,
+      -2400.6
+     ],
+     [
+      2265.1,
+      -2448.5
+     ],
+     [
+      2009.0,
+      -2577.4
+     ],
+     [
+      1793.3,
+      -2681.9
+     ],
+     [
+      1731.2,
+      -2706.5
+     ],
+     [
+      1710.5,
+      -2711.4
+     ],
+     [
+      1665.9,
+      -2711.8
+     ],
+     [
+      1641.8,
+      -2706.4
+     ],
+     [
+      1616.8,
+      -2696.3
+     ],
+     [
+      1579.8,
+      -2670.4
+     ],
+     [
+      1554.8,
+      -2641.0
+     ],
+     [
+      1479.3,
+      -2520.2
+     ],
+     [
+      1361.4,
+      -2317.7
+     ],
+     [
+      1204.1,
+      -2035.2
+     ],
+     [
+      1144.7,
+      -1946.0
+     ],
+     [
+      986.7,
+      -1730.9
+     ],
+     [
+      757.8,
+      -1460.7
+     ],
+     [
+      753.7,
+      -1449.1
+     ],
+     [
+      759.8,
+      -1416.8
+     ],
+     [
+      758.7,
+      -1407.1
+     ],
+     [
+      748.8,
+      -1390.1
+     ],
+     [
+      731.6,
+      -1380.6
+     ],
+     [
+      698.9,
+      -1381.7
+     ],
+     [
+      687.9,
+      -1375.9
+     ],
+     [
+      669.4,
+      -1363.0
+     ],
+     [
+      640.9,
+      -1331.2
+     ],
+     [
+      842.4,
+      -1140.3
+     ],
+     [
+      979.5,
+      -1017.0
+     ],
+     [
+      1057.1,
+      -933.0
+     ],
+     [
+      1101.4,
+      -867.7
+     ],
+     [
+      1165.7,
+      -746.4
+     ],
+     [
+      1214.4,
+      -638.3
+     ],
+     [
+      1159.5,
+      -609.8
+     ],
+     [
+      1133.8,
+      -473.1
+     ],
+     [
+      1163.0,
+      -421.1
+     ],
+     [
+      925.7,
+      -305.3
+     ],
+     [
+      880.3,
+      -279.5
+     ],
+     [
+      552.7,
+      -62.7
+     ],
+     [
+      228.0,
+      157.4
+     ],
+     [
+      144.0,
+      223.8
+     ],
+     [
+      26.4,
+      338.6
+     ],
+     [
+      -60.0,
+      250.0
+     ]
+    ]
+   },
+   "properties": {
+    "id": "route-chekhov-podolsk",
+    "kind": "road",
+    "name": "Трасса: Холодильный склад «Чехов» — Завод «Подольск»",
+    "width_m": 10,
+    "speed_limit_kmh": 70,
+    "road_class": "public",
+    "connects": [
+     "s-chekhov",
+     "s-podolsk"
+    ]
+   }
+  },
+  {
+   "type": "Feature",
+   "id": "route-domodedovo-podolsk",
+   "geometry": {
+    "type": "LineString",
+    "coordinates": [
+     [
+      15012.0,
+      3009.0
+     ],
+     [
+      15507.3,
+      3348.2
+     ],
+     [
+      15510.7,
+      3361.0
+     ],
+     [
+      15654.3,
+      3511.9
+     ],
+     [
+      15894.5,
+      3754.5
+     ],
+     [
+      15901.9,
+      3775.0
+     ],
+     [
+      15899.9,
+      3792.2
+     ],
+     [
+      15852.8,
+      3863.9
+     ],
+     [
+      15951.6,
+      3946.0
+     ],
+     [
+      15916.0,
+      3981.6
+     ],
+     [
+      15937.2,
+      4005.7
+     ],
+     [
+      15953.0,
+      4010.1
+     ],
+     [
+      16095.1,
+      4269.8
+     ],
+     [
+      16143.3,
+      4369.7
+     ],
+     [
+      16123.6,
+      4441.3
+     ],
+     [
+      16116.0,
+      4448.5
+     ],
+     [
+      16094.2,
+      4455.8
+     ],
+     [
+      16029.8,
+      4468.0
+     ],
+     [
+      15963.2,
+      4491.7
+     ],
+     [
+      15918.0,
+      4499.8
+     ],
+     [
+      15883.4,
+      4501.1
+     ],
+     [
+      15865.3,
+      4497.2
+     ],
+     [
+      15812.4,
+      4454.2
+     ],
+     [
+      15798.8,
+      4449.9
+     ],
+     [
+      15752.4,
+      4463.9
+     ],
+     [
+      15735.3,
+      4463.2
+     ],
+     [
+      15719.3,
+      4458.2
+     ],
+     [
+      15678.4,
+      4407.9
+     ],
+     [
+      15632.3,
+      4362.6
+     ],
+     [
+      15613.5,
+      4348.4
+     ],
+     [
+      15546.3,
+      4309.8
+     ],
+     [
+      15512.0,
+      4273.2
+     ],
+     [
+      15499.3,
+      4265.2
+     ],
+     [
+      15483.9,
+      4267.7
+     ],
+     [
+      15463.7,
+      4298.3
+     ],
+     [
+      15056.2,
+      5102.1
+     ],
+     [
+      14835.2,
+      5036.1
+     ],
+     [
+      14805.1,
+      5031.4
+     ],
+     [
+      14728.4,
+      5034.3
+     ],
+     [
+      14630.1,
+      5046.7
+     ],
+     [
+      14597.2,
+      5055.1
+     ],
+     [
+      14558.5,
+      5089.4
+     ],
+     [
+      14336.6,
+      5371.8
+     ],
+     [
+      13972.2,
+      5850.4
+     ],
+     [
+      13881.7,
+      5937.5
+     ],
+     [
+      13802.3,
+      6060.0
+     ],
+     [
+      13778.3,
+      6083.8
+     ],
+     [
+      13766.0,
+      6091.6
+     ],
+     [
+      13339.9,
+      6242.1
+     ],
+     [
+      13210.1,
+      6284.7
+     ],
+     [
+      13106.5,
+      6314.2
+     ],
+     [
+      13064.6,
+      6296.5
+     ],
+     [
+      13033.3,
+      6287.6
+     ],
+     [
+      12968.9,
+      6276.5
+     ],
+     [
+      12931.7,
+      6274.6
+     ],
+     [
+      12873.0,
+      6278.8
+     ],
+     [
+      12701.9,
+      6301.3
+     ],
+     [
+      12489.9,
+      6330.6
+     ],
+     [
+      12376.2,
+      6350.2
+     ],
+     [
+      12223.5,
+      6381.5
+     ],
+     [
+      11991.1,
+      6447.7
+     ],
+     [
+      11749.4,
+      6523.6
+     ],
+     [
+      11527.3,
+      6584.7
+     ],
+     [
+      11389.2,
+      6617.9
+     ],
+     [
+      11366.9,
+      6627.7
+     ],
+     [
+      11355.3,
+      6643.5
+     ],
+     [
+      11357.9,
+      6666.0
+     ],
+     [
+      11390.5,
+      6742.2
+     ],
+     [
+      11410.0,
+      6800.0
+     ],
+     [
+      11413.2,
+      6822.8
+     ],
+     [
+      11408.0,
+      6831.3
+     ],
+     [
+      11400.8,
+      6832.0
+     ],
+     [
+      11391.5,
+      6824.3
+     ],
+     [
+      11366.3,
+      6740.7
+     ],
+     [
+      11328.3,
+      6661.4
+     ],
+     [
+      11306.9,
+      6629.6
+     ],
+     [
+      11240.5,
+      6546.2
+     ],
+     [
+      10807.9,
+      6054.4
+     ],
+     [
+      10748.4,
+      5984.6
+     ],
+     [
+      10725.3,
+      5952.2
+     ],
+     [
+      10675.0,
+      5901.2
+     ],
+     [
+      10638.4,
+      5880.6
+     ],
+     [
+      10596.4,
+      5872.6
+     ],
+     [
+      10545.8,
+      5873.0
+     ],
+     [
+      10388.5,
+      5908.1
+     ],
+     [
+      9794.8,
+      5996.0
+     ],
+     [
+      9680.4,
+      6009.1
+     ],
+     [
+      9610.3,
+      6005.6
+     ],
+     [
+      9543.4,
+      5991.1
+     ],
+     [
+      9477.2,
+      5962.6
+     ],
+     [
+      9442.1,
+      5941.1
+     ],
+     [
+      9400.1,
+      5908.7
+     ],
+     [
+      9358.4,
+      5867.5
+     ],
+     [
+      9331.9,
+      5831.7
+     ],
+     [
+      9304.2,
+      5783.0
+     ],
+     [
+      9024.1,
+      5186.8
+     ],
+     [
+      8948.6,
+      5036.0
+     ],
+     [
+      8902.2,
+      4935.3
+     ],
+     [
+      8887.2,
+      4910.5
+     ],
+     [
+      8861.4,
+      4880.4
+     ],
+     [
+      8695.4,
+      4723.9
+     ],
+     [
+      8428.9,
+      4464.7
+     ],
+     [
+      8393.7,
+      4416.9
+     ],
+     [
+      8381.2,
+      4389.2
+     ],
+     [
+      8372.8,
+      4358.7
+     ],
+     [
+      8365.2,
+      4307.8
+     ],
+     [
+      8356.3,
+      4189.8
+     ],
+     [
+      8364.2,
+      3838.5
+     ],
+     [
+      8355.3,
+      3823.3
+     ],
+     [
+      8341.8,
+      3815.6
+     ],
+     [
+      8319.6,
+      3811.2
+     ],
+     [
+      8030.2,
+      3766.0
+     ],
+     [
+      7777.0,
+      3750.8
+     ],
+     [
+      7743.3,
+      3743.2
+     ],
+     [
+      7714.9,
+      3731.4
+     ],
+     [
+      7101.2,
+      3327.4
+     ],
+     [
+      6730.7,
+      3092.8
+     ],
+     [
+      6494.9,
+      2939.1
+     ],
+     [
+      6431.6,
+      2908.3
+     ],
+     [
+      6256.8,
+      2840.7
+     ],
+     [
+      6207.8,
+      2811.7
+     ],
+     [
+      6085.6,
+      2714.3
+     ],
+     [
+      6051.1,
+      2679.7
+     ],
+     [
+      6024.4,
+      2639.9
+     ],
+     [
+      5996.1,
+      2553.5
+     ],
+     [
+      5889.4,
+      2185.5
+     ],
+     [
+      5875.1,
+      2154.4
+     ],
+     [
+      5860.6,
+      2136.0
+     ],
+     [
+      5823.8,
+      2109.2
+     ],
+     [
+      5350.4,
+      1865.4
+     ],
+     [
+      5311.5,
+      1836.0
+     ],
+     [
+      5122.6,
+      1612.7
+     ],
+     [
+      5103.0,
+      1594.6
+     ],
+     [
+      5072.1,
+      1573.4
+     ],
+     [
+      4984.3,
+      1539.0
+     ],
+     [
+      4955.4,
+      1529.5
+     ],
+     [
+      4924.5,
+      1524.6
+     ],
+     [
+      4404.4,
+      1522.6
+     ],
+     [
+      4197.7,
+      1524.7
+     ],
+     [
+      4122.0,
+      1520.5
+     ],
+     [
+      4062.6,
+      1505.9
+     ],
+     [
+      3367.2,
+      1297.4
+     ],
+     [
+      2757.7,
+      1110.6
+     ],
+     [
+      2570.5,
+      1060.8
+     ],
+     [
+      2486.0,
+      1046.9
+     ],
+     [
+      2451.8,
+      1046.3
+     ],
+     [
+      2321.4,
+      1049.3
+     ],
+     [
+      2008.6,
+      1066.4
+     ],
+     [
+      1964.4,
+      1061.2
+     ],
+     [
+      1482.9,
+      938.3
+     ],
+     [
+      1382.7,
+      918.8
+     ],
+     [
+      1335.3,
+      915.8
+     ],
+     [
+      1313.1,
+      919.3
+     ],
+     [
+      1278.1,
+      931.5
+     ],
+     [
+      1243.5,
+      948.3
+     ],
+     [
+      1007.0,
+      1098.7
+     ],
+     [
+      993.1,
+      1110.7
+     ],
+     [
+      980.7,
+      1128.1
+     ],
+     [
+      933.8,
+      1209.5
+     ],
+     [
+      807.8,
+      1356.8
+     ],
+     [
+      795.7,
+      1367.3
+     ],
+     [
+      765.3,
+      1384.6
+     ],
+     [
+      714.6,
+      1391.4
+     ],
+     [
+      520.3,
+      1378.7
+     ],
+     [
+      271.6,
+      1413.1
+     ],
+     [
+      259.4,
+      1410.1
+     ],
+     [
+      248.2,
+      1397.7
+     ],
+     [
+      172.4,
+      896.1
+     ],
+     [
+      130.4,
+      768.6
+     ],
+     [
+      119.1,
+      753.1
+     ],
+     [
+      101.0,
+      745.8
+     ],
+     [
+      -42.6,
+      710.3
+     ],
+     [
+      -97.4,
+      700.1
+     ],
+     [
+      -104.2,
+      694.9
+     ],
+     [
+      -118.7,
+      668.6
+     ],
+     [
+      -154.9,
+      578.8
+     ],
+     [
+      -194.6,
+      462.4
+     ],
+     [
+      -66.5,
+      408.0
+     ],
+     [
+      -3.1,
+      367.4
+     ],
+     [
+      26.4,
+      338.6
+     ],
+     [
+      -60.0,
+      250.0
+     ]
+    ]
+   },
+   "properties": {
+    "id": "route-domodedovo-podolsk",
+    "kind": "road",
+    "name": "Трасса: РЦ «Домодедово» — Завод «Подольск»",
+    "width_m": 10,
+    "speed_limit_kmh": 70,
+    "road_class": "public",
+    "connects": [
+     "s-domodedovo",
+     "s-podolsk"
+    ]
    }
   }
  ]

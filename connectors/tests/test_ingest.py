@@ -1,5 +1,6 @@
 """Integration: HTTP ingest against the running Redis/Postgres. Skipped when the stack is down."""
 
+import itertools
 import json
 import os
 import time
@@ -7,7 +8,10 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from scada_common import keys
+from scada_db import models as m
 from scada_db import redis_init
+from scada_db.postgres import engine
+from sqlalchemy.orm import Session
 from scada_db.seed_data import api_keys
 
 os.environ["CONNECTORS_MQTT"] = "0"
@@ -31,8 +35,13 @@ def client():
         yield c
 
 
+_older = itertools.count()
+
+
 def _climate(device: str = "clim-wh1-storage", **over) -> dict:
-    return {"device": device, "temperature": 18.5, "humidity": 50, "ts_ms": int(time.time() * 1000)} | over
+    # each reading a bit older than the previous: never closer than the climate min interval to another one
+    ts_ms = int(time.time() * 1000) - next(_older) * 11_000
+    return {"device": device, "temperature": 18.5, "humidity": 50, "ts_ms": ts_ms} | over
 
 
 def _last(stream: str) -> dict:
@@ -99,6 +108,29 @@ def test_rate_limit(client: TestClient) -> None:
         assert resp.status_code == 429
     finally:
         r.delete(window)
+
+
+def test_reports_faster_than_the_type_allows_are_rejected(client: TestClient) -> None:
+    base = int(time.time() * 1000) + 30_000  # newer than anything the simulator has sent for this sensor
+    first = client.post("/ingest/climate", json=_climate("clim-wh3-dock", ts_ms=base), headers={"X-API-Key": SIM_KEY})
+    assert first.status_code == 202, first.text
+    again = client.post("/ingest/climate", json=_climate("clim-wh3-dock", ts_ms=base + 2_000), headers={"X-API-Key": SIM_KEY})
+    assert again.json()["rejected"][0]["reason"] == "too_frequent"
+
+
+def test_waybill_creates_and_updates_a_trip(client: TestClient) -> None:
+    doc = {"waybill_no": "ПЛ-TEST-000001", "plate": "А123ВС77", "origin_site_id": "s-podolsk",
+           "destination_site_id": "s-chekhov", "cargo": "Тестовый груз", "weight_t": 3.5, "status": "loading"}
+    assert client.post("/documents/waybill", json=doc).status_code == 401
+    assert client.post("/documents/waybill", json=doc, headers={"X-API-Key": CLIMATE_ONLY_KEY}).status_code == 403
+    assert client.post("/documents/waybill", json=doc | {"plate": "Х000ХХ00"}, headers={"X-API-Key": SIM_KEY}).status_code == 422
+    resp = client.post("/documents/waybill", json=doc | {"status": "en_route"}, headers={"X-API-Key": SIM_KEY})
+    assert resp.status_code == 202 and resp.json() == {"trip_id": "ПЛ-TEST-000001"}
+    with Session(engine()) as s:
+        trip = s.get(m.Trip, "ПЛ-TEST-000001")
+        assert (trip.vehicle_id, trip.status) == ("v-truck-1", "en_route")
+        s.delete(trip)
+        s.commit()
 
 
 def test_adapters_catalog(client: TestClient) -> None:

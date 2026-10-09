@@ -13,7 +13,7 @@ from typing import Any
 import redis.asyncio as aioredis
 from prometheus_client import Counter
 from pydantic import ValidationError
-from scada_common import keys, metrics, parse_event
+from scada_common import catalog, keys, metrics, parse_event
 
 from scada_connectors.adapters import ADAPTERS, Adapter
 from scada_connectors.registry import ApiKeyInfo, Registry
@@ -62,6 +62,7 @@ class Pipeline:
         self.redis = redis
         self.registry = registry
         self.stats = Stats()
+        self.last_ts: dict[str, datetime] = {}  # newest accepted measurement per sensor (rate guard)
 
     def get_adapter(self, name: str) -> Adapter:
         if name not in ADAPTERS:
@@ -114,6 +115,14 @@ class Pipeline:
             return None, ("contract_violation", _errors(e))
         if event.ts > now + MAX_FUTURE_SKEW:
             return None, ("clock_skew", f"ts {event.ts.isoformat()} is in the future")
+        # a device reporting faster than its type allows is misconfigured: protect the stores from it
+        min_interval = catalog.REPORTING[sensor.type].min_interval_s
+        prev = self.last_ts.get(sensor.id)
+        if min_interval and prev is not None and timedelta(0) < event.ts - prev < timedelta(seconds=min_interval):
+            return None, ("too_frequent", f"{sensor.id}: {(event.ts - prev).total_seconds():.1f} s since the previous "
+                                          f"report, the minimum for {sensor.type} is {min_interval:g} s")
+        if prev is None or event.ts > prev:
+            self.last_ts[sensor.id] = event.ts
         return event, None
 
     async def ingest(self, adapter_name: str, items: list[Any], api_key: str | None,

@@ -1,27 +1,38 @@
-"""Generate deploy/seed/layout.geojson — the demo enterprise plan.
+"""Generate deploy/seed/layout.geojson — the demo enterprise: three sites across Moscow oblast.
 
-Coordinates are local metres: origin is the south-west corner of the site,
-x grows east, y grows north. `metadata.georef` gives the WGS84 anchor so the
-frontend can switch to a real basemap via an affine transform.
+Coordinates are local metres: the origin is the south-west corner of the main plant
+(Podolsk), x grows east, y grows north. `metadata.georef` anchors the origin in WGS84;
+the other sites sit tens of kilometres away and public roads between them follow real
+highways (routes come from OSRM once and are cached in routes.json, so builds and the
+running system never need the internet).
 
 Every feature has `id`, `kind`, `name`; the rest of the properties depend on kind:
-  site       —
+  site       site_type (plant|dc|cold_store), address, gate (x, y), approach (x, y)
   building   building_type (office|warehouse|production|garage), floors
   room       building_id, floor, room_type
-  road       width_m, speed_limit_kmh
+  road       width_m, speed_limit_kmh, road_class (site|public), connects ([site, site] for public)
   checkpoint checkpoint_type (vehicle|pedestrian), zone_id
   geozone    zone_type (gate|docks|parking|restricted|speed)
   sensor     sensor_type, zone_id, building_id (null outdoors), floor
 
-Run:  python deploy/seed/build_layout.py
+Run:  python deploy/seed/build_layout.py [--refresh-routes]
 """
 
 import json
+import sys
+import urllib.request
+from itertools import combinations
 from pathlib import Path
 
-OUT = Path(__file__).with_name("layout.geojson")
+from scada_common.geo import Georef
+from shapely.geometry import LineString
 
-SITE_W, SITE_H = 800, 500
+OUT = Path(__file__).with_name("layout.geojson")
+ROUTES = Path(__file__).with_name("routes.json")
+OSRM = "https://router.project-osrm.org/route/v1/driving/{a};{b}?overview=full&geometries=geojson"
+
+GEOREF = Georef(origin_lat=55.4265, origin_lon=37.5690, rotation_deg=0.0)  # SW corner of the Podolsk plant
+SITE_W, SITE_H = 800, 500  # the main plant
 
 
 def rect(x0: float, y0: float, x1: float, y1: float) -> dict:
@@ -46,7 +57,23 @@ def feature(geometry: dict, **props) -> dict:
 features: list[dict] = []
 add = features.append
 
-add(feature(rect(0, 0, SITE_W, SITE_H), id="site", kind="site", name="Производственная площадка"))
+
+def sensor(sid: str, stype: str, name: str, x: float, y: float, zone_id: str,
+           building_id: str | None = None, floor: int | None = None) -> None:
+    add(feature(point(x, y), id=sid, kind="sensor", name=name, sensor_type=stype,
+                zone_id=zone_id, building_id=building_id, floor=floor))
+
+
+def site_road(rid: str, name: str, *pts: tuple[float, float], width_m: float = 8, speed_limit_kmh: float = 20) -> None:
+    add(feature(line(*pts), id=rid, kind="road", name=name, width_m=width_m, speed_limit_kmh=speed_limit_kmh,
+                road_class="site"))
+
+
+# =============================================================================================
+# Site 1: the plant in Podolsk (ids predate the region and stay short: b-wh1, z-gate, ...)
+# =============================================================================================
+add(feature(rect(0, 0, SITE_W, SITE_H), id="s-podolsk", kind="site", name="Завод «Подольск»", site_type="plant",
+            address="Подольск, промзона", gate=[0, 250], approach=[-60, 250]))
 
 # --- Buildings: id, name, type, floors, bbox -------------------------------------------------
 BUILDINGS = [
@@ -94,19 +121,19 @@ add(feature(rect(680, 60, 770, 160), id="r-garage-bay", kind="room", name="Ре�
             building_id="b-garage", floor=1, room_type="repair"))
 
 # --- Roads ----------------------------------------------------------------------------------
-add(feature(line((0, 250), (790, 250)), id="road-main", kind="road", name="Главный проезд", width_m=12, speed_limit_kmh=20))
-add(feature(line((190, 30), (190, 470)), id="road-west", kind="road", name="Западный проезд", width_m=8, speed_limit_kmh=20))
-add(feature(line((790, 30), (790, 470)), id="road-east", kind="road", name="Восточный проезд", width_m=8, speed_limit_kmh=20))
-add(feature(line((190, 30), (790, 30)), id="road-south", kind="road", name="Южный проезд", width_m=8, speed_limit_kmh=20))
-add(feature(line((190, 470), (790, 470)), id="road-north", kind="road", name="Северный проезд", width_m=8, speed_limit_kmh=20))
+site_road("road-main", "Главный проезд", (0, 250), (790, 250), width_m=12)
+site_road("road-west", "Западный проезд", (190, 30), (190, 470))
+site_road("road-east", "Восточный проезд", (790, 30), (790, 470))
+site_road("road-south", "Южный проезд", (190, 30), (790, 30))
+site_road("road-north", "Северный проезд", (190, 470), (790, 470))
 for i, x in enumerate((290, 470, 650), start=1):
-    add(feature(line((x, 250), (x, 290)), id=f"road-dock-wh{i}", kind="road", name=f"Подъезд к складу №{i}",
-                width_m=8, speed_limit_kmh=10))
+    site_road(f"road-dock-wh{i}", f"Подъезд к складу №{i}", (x, 250), (x, 290), speed_limit_kmh=10)
 for i, x in enumerate((310, 550), start=1):
-    add(feature(line((x, 250), (x, 200)), id=f"road-prod{i}", kind="road", name=f"Подъезд к цеху №{i}",
-                width_m=8, speed_limit_kmh=10))
-add(feature(line((725, 250), (725, 160)), id="road-garage", kind="road", name="Подъезд к гаражу", width_m=8, speed_limit_kmh=10))
-add(feature(line((190, 110), (100, 110)), id="road-parking", kind="road", name="Въезд на стоянку", width_m=8, speed_limit_kmh=10))
+    site_road(f"road-prod{i}", f"Подъезд к цеху №{i}", (x, 250), (x, 200), speed_limit_kmh=10)
+site_road("road-garage", "Подъезд к гаражу", (725, 250), (725, 160), speed_limit_kmh=10)
+site_road("road-parking", "Въезд на стоянку", (190, 110), (100, 110), speed_limit_kmh=10)
+site_road("road-podolsk-access", "Выезд с завода на дорогу общего пользования", (-60, 250), (0, 250),
+          width_m=10, speed_limit_kmh=40)
 
 # --- Geozones -------------------------------------------------------------------------------
 add(feature(rect(0, 230, 40, 270), id="z-gate", kind="geozone", name="КПП-1: въездная зона", zone_type="gate"))
@@ -114,7 +141,7 @@ for i, (x0, x1) in enumerate([(220, 360), (400, 540), (580, 720)], start=1):
     add(feature(rect(x0, 270, x1, 300), id=f"z-docks-wh{i}", kind="geozone", name=f"Рампа склада №{i}", zone_type="docks"))
 add(feature(rect(30, 40, 110, 180), id="z-parking", kind="geozone", name="Стоянка грузовиков", zone_type="parking"))
 add(feature(rect(645, 40, 795, 175), id="z-garage-yard", kind="geozone", name="Двор ремзоны", zone_type="restricted"))
-add(feature(rect(0, 0, SITE_W, SITE_H), id="z-site-speed", kind="geozone", name="Ограничение скорости по территории",
+add(feature(rect(0, 0, SITE_W, SITE_H), id="z-site-speed", kind="geozone", name="Ограничение скорости: завод",
             zone_type="speed", speed_limit_kmh=20))
 
 # --- Checkpoints ----------------------------------------------------------------------------
@@ -122,12 +149,6 @@ add(feature(point(20, 250), id="cp-1", kind="checkpoint", name="КПП-1 (тра
 add(feature(point(50, 415), id="cp-2", kind="checkpoint", name="КПП-2 (проходная)", checkpoint_type="pedestrian", zone_id="b-admin"))
 
 # --- Fixed sensors (mobile GNSS trackers live on vehicles, not on the plan) ------------------
-def sensor(sid: str, stype: str, name: str, x: float, y: float, zone_id: str,
-           building_id: str | None = None, floor: int | None = None) -> None:
-    add(feature(point(x, y), id=sid, kind="sensor", name=name, sensor_type=stype,
-                zone_id=zone_id, building_id=building_id, floor=floor))
-
-
 sensor("cam-gate-in", "anpr_camera", "Камера КПП-1, въезд", 25, 258, "z-gate")
 sensor("cam-gate-out", "anpr_camera", "Камера КПП-1, выезд", 25, 242, "z-gate")
 
@@ -154,6 +175,87 @@ for i, x in enumerate((290, 470, 650), start=1):
     sensor(f"cam-dock-wh{i}", "anpr_camera", f"Камера рампы склада №{i}", x + 12, 285, f"z-docks-wh{i}")
 sensor("cam-garage", "anpr_camera", "Камера въезда в ремзону", 735, 175, "z-garage-yard")
 
+
+# =============================================================================================
+# Remote sites: a yard along a main road (y = road_y) with the gate on the west side,
+# warehouses north of the road with docks in front, an office and a truck parking.
+# =============================================================================================
+def remote_site(sid: str, code: str, name: str, site_type: str, address: str, sw_lat: float, sw_lon: float,
+                size: tuple[float, float], road_y: float, warehouses: list[tuple[str, str, float, float]],
+                office: tuple[float, float, float, float], parking: tuple[float, float, float, float]) -> None:
+    """warehouses: (suffix, name, x0, x1) — 90 m deep, starting 30 m north of the road."""
+    ox, oy = GEOREF.to_local(sw_lat, sw_lon)
+    ox, oy = round(ox), round(oy)
+    w, h = size
+    P = lambda x, y: (ox + x, oy + y)  # noqa: E731
+    R = lambda x0, y0, x1, y1: rect(ox + x0, oy + y0, ox + x1, oy + y1)  # noqa: E731
+    gate, approach = P(0, road_y), P(-60, road_y)
+    add(feature(R(0, 0, w, h), id=f"s-{sid}", kind="site", name=name, site_type=site_type, address=address,
+                gate=list(gate), approach=list(approach)))
+    site_road(f"road-{code}-main", f"{name}: главный проезд", gate, P(w - 20, road_y), width_m=12)
+    site_road(f"road-{code}-access", f"Выезд: {name}", approach, gate, width_m=10, speed_limit_kmh=40)
+    add(feature(R(0, road_y - 20, 40, road_y + 20), id=f"z-{code}-gate", kind="geozone", name=f"{name}: КПП",
+                zone_type="gate"))
+    add(feature(R(0, 0, w, h), id=f"z-{code}-speed", kind="geozone", name=f"Ограничение скорости: {name}",
+                zone_type="speed", speed_limit_kmh=20))
+    sensor(f"cam-{code}-gate-in", "anpr_camera", f"{name}: камера КПП, въезд", *P(25, road_y + 8), f"z-{code}-gate")
+    sensor(f"cam-{code}-gate-out", "anpr_camera", f"{name}: камера КПП, выезд", *P(25, road_y - 8), f"z-{code}-gate")
+
+    y0, y1 = road_y + 30, road_y + 120
+    for suffix, bname, x0, x1 in warehouses:
+        bid = f"b-{code}-{suffix}"
+        add(feature(R(x0, y0, x1, y1), id=bid, kind="building", name=bname, building_type="warehouse", floors=1))
+        add(feature(R(x0, y0, x1, y0 + 25), id=f"r-{code}-{suffix}-dock", kind="room", name=f"{bname}: приёмка и отгрузка",
+                    building_id=bid, floor=1, room_type="dock"))
+        add(feature(R(x0, y0 + 25, x1, y1), id=f"r-{code}-{suffix}-storage", kind="room", name=f"{bname}: хранение",
+                    building_id=bid, floor=1, room_type="storage"))
+        add(feature(R(x0, road_y + 5, x1, y0), id=f"z-{code}-docks-{suffix}", kind="geozone", name=f"Рампа: {bname}",
+                    zone_type="docks"))
+        xs = [x0 + (x1 - x0) * k / 4 for k in (1, 2, 3)]
+        for k, x in enumerate(xs, start=1):
+            site_road(f"road-{code}-dock-{suffix}-{k}", f"Подъезд к рампе: {bname}", P(x, road_y), P(x, y0 - 10),
+                      speed_limit_kmh=10)
+        sensor(f"acs-{code}-{suffix}", "access_control", f"СКУД: вход, {bname}", *P(xs[0] - 10, y0), bid, bid, 1)
+        sensor(f"cam-{code}-dock-{suffix}", "anpr_camera", f"Камера рампы: {bname}", *P(xs[1] + 12, y0 - 5),
+               f"z-{code}-docks-{suffix}")
+        sensor(f"mot-{code}-{suffix}", "motion", f"Движение: {bname}", *P(x0 + 12, y1 - 12),
+               f"r-{code}-{suffix}-storage", bid, 1)
+
+    bx0, by0, bx1, by1 = office
+    bid = f"b-{code}-office"
+    add(feature(R(*office), id=bid, kind="building", name=f"Офис: {name}", building_type="office", floors=2))
+    for floor in (1, 2):
+        add(feature(R(*office), id=f"r-{code}-office-f{floor}", kind="room", name=f"Офис {name}, {floor} эт.",
+                    building_id=bid, floor=floor, room_type="lobby" if floor == 1 else "office"))
+    sensor(f"acs-{code}-office", "access_control", f"Турникет: офис {name}", *P(bx0 + 8, by0), bid, bid, 1)
+    sensor(f"clim-{code}-server", "climate", f"Климат, серверная: {name}", *P(bx1 - 8, by1 - 8),
+           f"r-{code}-office-f2", bid, 2)
+
+    px0, py0, px1, py1 = parking
+    add(feature(R(*parking), id=f"z-{code}-parking", kind="geozone", name=f"Стоянка грузовиков: {name}",
+                zone_type="parking"))
+    xm = (px0 + px1) / 2
+    site_road(f"road-{code}-parking", f"Въезд на стоянку: {name}", P(xm, road_y), P(xm, (py0 + py1) / 2),
+              speed_limit_kmh=10)
+    add(feature(point(*P(20, road_y)), id=f"cp-{code}", kind="checkpoint", name=f"КПП: {name}",
+                checkpoint_type="vehicle", zone_id=f"z-{code}-gate"))
+
+
+remote_site("domodedovo", "dmd", "РЦ «Домодедово»", "dc", "Домодедово, у трассы М-4 «Дон»",
+            sw_lat=55.4525, sw_lon=37.8080, size=(420, 300), road_y=120,
+            warehouses=[("xd", "Склад кросс-докинга", 120, 330)],
+            office=(40, 220, 95, 260), parking=(340, 20, 410, 100))
+# A building drawn without a floor plan: its sensors are registered (deploy/seed/sensors.json) but not placed.
+# The lazy-user path: the map shows the sensors in the building card and recommends placing them.
+_dmd_x, _dmd_y = (round(v) for v in GEOREF.to_local(55.4525, 37.8080))
+add(feature(rect(_dmd_x + 345, _dmd_y + 165, _dmd_x + 405, _dmd_y + 235), id="b-dmd-hangar", kind="building",
+            name="Ангар сезонного хранения", building_type="warehouse", floors=1))
+
+remote_site("chekhov", "chk", "Холодильный склад «Чехов»", "cold_store", "Чехов, у трассы М-2 «Крым»",
+            sw_lat=55.1700, sw_lon=37.4970, size=(460, 320), road_y=140,
+            warehouses=[("cold1", "Холодильная камера №1", 90, 240), ("cold2", "Холодильная камера №2", 270, 420)],
+            office=(20, 220, 70, 260), parking=(300, 20, 440, 110))
+
 # Every room gets climate and motion coverage; rooms already equipped above are skipped.
 _equipped = {(f["properties"]["sensor_type"], f["properties"]["zone_id"]) for f in features
              if f["properties"]["kind"] == "sensor"}
@@ -166,19 +268,63 @@ for f in [f for f in features if f["properties"]["kind"] == "room"]:
             sensor(f"{prefix}-{short}", stype, f"{label}: {p['name']}", x0 + (x1 - x0) * fx, (y0 + y1) / 2,
                    p["id"], p["building_id"], p["floor"])
 
+
+# =============================================================================================
+# Public roads between the sites: real highways from OSRM, cached
+# =============================================================================================
+def _osrm(a: tuple[float, float], b: tuple[float, float]) -> list[list[float]]:
+    """[[lon, lat], ...] of the driving route between two local points."""
+    ends = [GEOREF.to_wgs84(*p) for p in (a, b)]
+    url = OSRM.format(a=f"{ends[0][1]:.6f},{ends[0][0]:.6f}", b=f"{ends[1][1]:.6f},{ends[1][0]:.6f}")
+    req = urllib.request.Request(url, headers={"User-Agent": "scada-hackathon-layout-builder"})
+    with urllib.request.urlopen(req, timeout=30) as resp:
+        data = json.load(resp)
+    return data["routes"][0]["geometry"]["coordinates"]
+
+
+sites = {f["id"]: f["properties"] for f in features if f["properties"]["kind"] == "site"}
+cache = json.loads(ROUTES.read_text(encoding="utf-8")) if ROUTES.exists() else {}
+refresh = "--refresh-routes" in sys.argv
+for a, b in combinations(sorted(sites), 2):
+    key = f"{a}|{b}"
+    if refresh or key not in cache:
+        cache[key] = _osrm(tuple(sites[a]["approach"]), tuple(sites[b]["approach"]))
+    local = [GEOREF.to_local(lat, lon) for lon, lat in cache[key]]
+    # the router snaps to the nearest road: join its ends to our access roads with straight segments
+    pts = [tuple(sites[a]["approach"]), *local, tuple(sites[b]["approach"])]
+    simple = LineString(pts).simplify(2.0)
+    coords = [(round(x, 1), round(y, 1)) for x, y in simple.coords]
+    add(feature(line(*coords), id=f"route-{a[2:]}-{b[2:]}", kind="road",
+                name=f"Трасса: {sites[a]['name']} — {sites[b]['name']}", width_m=10, speed_limit_kmh=70,
+                road_class="public", connects=[a, b]))
+
+def _points(geometry: dict) -> list[list[float]]:
+    t, c = geometry["type"], geometry["coordinates"]
+    return [c] if t == "Point" else c if t == "LineString" else [p for ring in c for p in ring]
+
+
+all_pts = [p for f in features for p in _points(f["geometry"])]
+MARGIN = 500
+extent = [min(p[0] for p in all_pts) - MARGIN, min(p[1] for p in all_pts) - MARGIN,
+          max(p[0] for p in all_pts) + MARGIN, max(p[1] for p in all_pts) + MARGIN]
+extent = [round(v) for v in extent]
+
 layout = {
     "type": "FeatureCollection",
     "metadata": {
         "units": "m",
-        "extent": [0, 0, SITE_W, SITE_H],
-        "georef": {"origin_lat": 55.700000, "origin_lon": 37.400000, "rotation_deg": 0.0},
+        "extent": extent,
+        "georef": {"origin_lat": GEOREF.origin_lat, "origin_lon": GEOREF.origin_lon, "rotation_deg": GEOREF.rotation_deg},
     },
     "features": features,
 }
 
 if __name__ == "__main__":
+    ROUTES.write_text(json.dumps(cache, separators=(",", ":")) + "\n", encoding="utf-8")
     OUT.write_text(json.dumps(layout, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     kinds: dict[str, int] = {}
     for f in features:
         kinds[f["properties"]["kind"]] = kinds.get(f["properties"]["kind"], 0) + 1
-    print(f"wrote {OUT.name}: {kinds}")
+    routes = {f["id"]: round(LineString(f["geometry"]["coordinates"]).length / 1000, 1)
+              for f in features if f["properties"].get("road_class") == "public"}
+    print(f"wrote {OUT.name}: {kinds}; extent {extent}; routes km {routes}")

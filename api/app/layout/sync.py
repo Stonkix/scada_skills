@@ -100,12 +100,15 @@ def apply(db: Session, geojson: dict, previous: dict | None = None) -> dict[str,
 
     # geometry tables: upsert by id, delete what is gone (sensors keep working: building_id -> NULL)
     for model, kind, fields in ((m.Building, "building", ("building_type", "floors")),
-                                (m.Road, "road", ("width_m", "speed_limit_kmh")),
+                                (m.Road, "road", ("width_m", "speed_limit_kmh", "road_class", "connects")),
                                 (m.Checkpoint, "checkpoint", ("checkpoint_type", "zone_id"))):
         rows = of(kind)
         for f in rows:
             p = f.properties.model_dump()
-            db.merge(model(id=f.id, name=p["name"], geom=geom(f), **{k: p.get(k) for k in fields}))
+            values = {k: p.get(k) for k in fields}
+            if kind == "road":
+                values["road_class"] = values["road_class"] or "site"
+            db.merge(model(id=f.id, name=p["name"], geom=geom(f), **values))
         db.execute(delete(model).where(model.id.notin_([f.id for f in rows] or [""])))
     zones = of("room") + of("geozone")
     for f in zones:

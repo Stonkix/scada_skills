@@ -55,3 +55,32 @@ export function toLocalInput(d: Date): string {
   return new Date(d.getTime() - off).toISOString().slice(0, 16)
 }
 export const fromLocalInput = (s: string) => new Date(s).toISOString()
+
+export const TRIP_STATUS_LABEL = {
+  planned: 'Запланирован',
+  loading: 'Погрузка',
+  en_route: 'В пути',
+  unloading: 'Разгрузка',
+  done: 'Завершён',
+} as const
+export const SITE_TYPE_LABEL = { plant: 'Производство', dc: 'Распределительный центр', cold_store: 'Холодильный склад' } as const
+const hm = new Intl.DateTimeFormat('ru-RU', { hour: '2-digit', minute: '2-digit' })
+export const fmtHM = (iso: string | null | undefined) => (iso ? hm.format(new Date(iso)) : '—')
+export const fmtKm = (m: number) => (m >= 10_000 ? `${Math.round(m / 1000)} км` : `${(m / 1000).toFixed(1)} км`)
+
+/** The one or two values that say most about a sensor, for lists. */
+export function headline(type: string, values: Record<string, unknown> | undefined): string {
+  if (!values) return '—'
+  switch (type) {
+    case 'climate':
+      return [fmtValue(values.temperature_c, '°C'), fmtValue(values.humidity_pct, '%')].join(' · ')
+    case 'motion':
+      return values.detected ? 'движение' : 'тихо'
+    case 'access_control':
+      return `${values.direction === 'exit' ? 'выход' : 'вход'} ${values.card_id ?? ''}${values.granted === false ? ' — отказ' : ''}`
+    case 'anpr_camera':
+      return `${values.plate ?? ''} ${values.direction === 'leave' ? '↑ выезд' : '↓ въезд'}`
+    default:
+      return Object.values(values).slice(0, 2).map((v) => fmtValue(v)).join(' · ')
+  }
+}

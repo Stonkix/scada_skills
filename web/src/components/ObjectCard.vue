@@ -38,6 +38,19 @@ const forecastable = computed(() => sensor.value?.type === 'climate')
 // --- vehicle ---------------------------------------------------------------------------------------
 const vehicle = computed(() => (props.selection.kind === 'vehicle' ? objects.vehicles.get(props.selection.id) : undefined))
 const vehicleLive = computed(() => (vehicle.value ? live.vehicles.get(vehicle.value.id) : undefined))
+/** Zone, else the site it is on, else "on the road". */
+const whereIs = computed(() => {
+  const v = vehicleLive.value
+  if (!v) return '—'
+  if (v.zone_id) return objects.zoneNames.get(v.zone_id) ?? v.zone_id
+  const site = objects.data?.sites.find((s) => {
+    const ring = s.geometry.coordinates[0] as [number, number][]
+    const xs = ring.map((p) => p[0])
+    const ys = ring.map((p) => p[1])
+    return v.geo.x >= Math.min(...xs) && v.geo.x <= Math.max(...xs) && v.geo.y >= Math.min(...ys) && v.geo.y <= Math.max(...ys)
+  })
+  return site ? `${site.name}, проезд` : 'в пути, вне площадок'
+})
 const routeMinutes = ref<number | null>(null)
 const routeError = ref('')
 async function showRoute(minutes: number | null) {
@@ -139,10 +152,11 @@ const now = useNow()
           <dt>Курс</dt><dd class="mono">{{ fmtValue(vehicleLive.heading_deg, '°') }}</dd>
           <dt>Топливо</dt><dd class="mono" :class="{ 'st-warning': (vehicleLive.fuel_pct ?? 100) < 15 }">{{ fmtValue(vehicleLive.fuel_pct, '%') }}</dd>
           <dt>Двигатель</dt><dd>{{ vehicleLive.engine_on ? 'работает' : 'заглушен' }}</dd>
-          <dt>Зона</dt><dd>{{ vehicleLive.zone_id ? objects.zoneNames.get(vehicleLive.zone_id) ?? vehicleLive.zone_id : vehicleLive.geo.x < 0 ? 'за территорией' : 'проезд' }}</dd>
+          <dt>Где</dt><dd>{{ whereIs }}</dd>
         </dl>
       </template>
       <div v-else class="muted">Нет данных от трекера</div>
+      <slot name="vehicle" />
       <div class="row wrap">
         <span class="muted">Маршрут:</span>
         <button v-for="m in [15, 60]" :key="m" class="small" :class="{ on: routeMinutes === m }" @click="showRoute(m)">{{ m }} мин</button>

@@ -21,6 +21,7 @@ export type Selection =
   | { kind: 'sensor'; id: string }
   | { kind: 'vehicle'; id: string }
   | { kind: 'building'; id: string }
+  | { kind: 'site'; id: string }
   | null
 
 export const GEOZONE_STYLE: Record<string, L.PathOptions> = {

@@ -25,6 +25,7 @@ from app.live.broadcast import Broadcaster
 from app.live.router import router as live_router
 from app.predict.router import router as predict_router
 from app.registry.router import router as registry_router
+from app.trips.router import router as trips_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 log = logging.getLogger("api")
@@ -76,7 +77,8 @@ app.add_middleware(CORSMiddleware, allow_origins=api_settings.cors_origins, allo
 
 Instrumentator(excluded_handlers=["/metrics", "/health"]).instrument(app).expose(app, include_in_schema=False)
 
-for r in (auth_router, layout_router, registry_router, live_router, alerts_router, kpi_router, connectors_router, predict_router):
+for r in (auth_router, layout_router, registry_router, live_router, alerts_router, kpi_router, connectors_router, predict_router,
+          trips_router):
     app.include_router(r)
 
 

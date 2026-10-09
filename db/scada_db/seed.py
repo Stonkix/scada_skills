@@ -1,4 +1,4 @@
-"""Load the demo enterprise into Postgres from deploy/seed/{layout.geojson, fleet.json} and seed_data.
+"""Load the demo enterprise into Postgres from deploy/seed/{layout.geojson, fleet.json, sensors.json} and seed_data.
 
 Without --force the seed only runs on an empty registry, so `up` never wipes
 sensors added through the API. With --force every store is reset to the demo
@@ -19,7 +19,7 @@ from scada_db import clickhouse, models as m, redis_init, seed_data
 from scada_db.config import settings
 from scada_db.postgres import engine
 
-TABLES = ["alerts", "alert_rules", "thresholds", "sensors", "vehicles", "sensor_types", "whitelist", "schedules",
+TABLES = ["trips", "alerts", "alert_rules", "thresholds", "sensors", "vehicles", "sensor_types", "whitelist", "schedules",
           "layouts", "users", "roles", "api_keys", "checkpoints", "roads", "zones", "buildings"]
 CH_TABLES = ["telemetry", "telemetry_1m", "telemetry_1h", "alerts_log", "zone_events"]
 
@@ -75,6 +75,7 @@ def seed(force: bool = False) -> dict[str, int] | None:
                   "floor": p.get("floor"), "speed_limit_kmh": p.get("speed_limit_kmh"), "geom": _geom(f["geometry"])}
                  for f in by_kind["room"] + by_kind["geozone"] for p in [f["properties"]]],
         m.Road: [{"id": f["id"], "name": p["name"], "width_m": p["width_m"], "speed_limit_kmh": p["speed_limit_kmh"],
+                  "road_class": p.get("road_class", "site"), "connects": p.get("connects"),
                   "geom": _geom(f["geometry"])} for f in by_kind["road"] for p in [f["properties"]]],
         m.Checkpoint: [{"id": f["id"], "name": p["name"], "checkpoint_type": p["checkpoint_type"],
                         "zone_id": p["zone_id"], "geom": _geom(f["geometry"])}
@@ -94,6 +95,9 @@ def seed(force: bool = False) -> dict[str, int] | None:
         sensors.append({"id": f["id"], "type": p["sensor_type"], "name": p["name"], "is_mobile": False,
                         "building_id": p.get("building_id"), "zone_id": p.get("zone_id"), "floor": p.get("floor"),
                         "geom": _geom(f["geometry"])})
+    # registered in a building without a place on the plan (the building has no floor plan yet)
+    for s in _load_json("sensors.json"):
+        sensors.append({**s, "is_mobile": False, "floor": None, "geom": None})
     for v in fleet:
         sensors.append({"id": catalog.gnss_sensor_id(v["id"]), "type": SensorType.GNSS, "name": f"Трекер {v['plate']}",
                         "is_mobile": True, "vehicle_id": v["id"]})
