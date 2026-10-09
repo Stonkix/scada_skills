@@ -20,7 +20,16 @@ export default defineConfig({
       '/conn': { target: conn, changeOrigin: true, rewrite: (p) => p.replace(/^\/conn/, '') },
     },
   },
-  // ECharts is one ~580 kB chunk, loaded only by views with charts (lazy routes): expected, not a regression
-  build: { chunkSizeWarningLimit: 650 },
+  // ECharts (~580 kB), MapLibre (~800 kB) and three.js (~500 kB) are each one chunk, loaded only by the
+  // lazy routes that need them (charts, 3D map): expected, not a regression
+  build: {
+    chunkSizeWarningLimit: 850,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) =>
+          id.includes('node_modules/maplibre-gl') ? 'maplibre' : id.includes('node_modules/three') ? 'three' : undefined,
+      },
+    },
+  },
   test: { environment: 'jsdom' },
 })

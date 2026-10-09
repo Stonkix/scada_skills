@@ -14,6 +14,7 @@ export const router = createRouter({
   routes: [
     { path: '/login', name: 'login', component: () => import('@/views/LoginView.vue'), meta: { public: true, title: 'Вход' } },
     { path: '/', name: 'map', component: () => import('@/views/MapView.vue'), meta: { permission: 'map:view', title: 'Карта' } },
+    { path: '/real', name: 'real', component: () => import('@/views/RealMapView.vue'), meta: { permission: 'map:view', title: '3D-карта' } },
     { path: '/alerts', name: 'alerts', component: () => import('@/views/AlertsView.vue'), meta: { permission: 'map:view', title: 'Тревоги' } },
     { path: '/kpi', name: 'kpi', component: () => import('@/views/KpiView.vue'), meta: { permission: 'kpi:view', title: 'KPI' } },
     { path: '/analytics', name: 'analytics', component: () => import('@/views/AnalyticsView.vue'), meta: { permission: 'kpi:view', title: 'Replay и тепловая карта' } },
