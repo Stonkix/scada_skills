@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 from scada_common.enums import TripStatus
 from scada_db import models as m
 from scada_db.postgres import engine
-from sqlalchemy import select
+from sqlalchemy import select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
@@ -58,4 +58,8 @@ def store_waybill(w: Waybill) -> str:
                                                                   "updated_at": datetime.now(UTC)}
         stmt = insert(m.Trip).values(id=w.waybill_no, **values)
         s.execute(stmt.on_conflict_do_update(index_elements=[m.Trip.id], set_=values))
+        if w.status != TripStatus.DONE:  # a vehicle runs one trip at a time: a new one supersedes unfinished ones
+            s.execute(update(m.Trip).where(m.Trip.vehicle_id == vehicle_id, m.Trip.id != w.waybill_no,
+                                           m.Trip.status != TripStatus.DONE)
+                      .values(status=TripStatus.DONE, updated_at=datetime.now(UTC)))
         return w.waybill_no

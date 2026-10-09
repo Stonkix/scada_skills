@@ -560,16 +560,22 @@ function toggleTilt() {
   map.value?.easeTo({ pitch: tilted.value ? PITCH : 0, bearing: tilted.value ? map.value.getBearing() : 0, duration: 700 })
 }
 
-/** Deep links: /?sensor=clim-wh1-dock (connectors page), /?alert=123 (toasts, the journal). */
+/**
+ * Deep links: /?sensor=clim-wh1-dock (connectors, telemetry), /?alert=123 (toasts, the journal),
+ * /?vehicle=v-truck-1 (transport), /?site=s-chekhov and /?building=b-wh2 (objects).
+ */
 async function handleDeepLinks() {
-  const { sensor, alert } = route.query
+  const { sensor, alert, vehicle, site, building } = route.query
   if (typeof sensor === 'string' && objects.sensors.has(sensor)) select({ kind: 'sensor', id: sensor })
+  if (typeof vehicle === 'string' && objects.vehicles.has(vehicle)) select({ kind: 'vehicle', id: vehicle })
+  if (typeof site === 'string' && objects.sites.has(site)) select({ kind: 'site', id: site })
+  if (typeof building === 'string' && objects.buildings.has(building)) select({ kind: 'building', id: building })
   if (alert) {
     let a = live.alerts.get(Number(alert))
     if (!a) a = (await api.GET('/alerts/{alert_id}', { params: { path: { alert_id: Number(alert) } } })).data
     if (a) locate(a)
   }
-  if (sensor || alert) router.replace({ query: {} })
+  if (sensor || alert || vehicle || site || building) router.replace({ query: {} })
 }
 watch(() => route.query, () => map.value?.isStyleLoaded() && handleDeepLinks())
 

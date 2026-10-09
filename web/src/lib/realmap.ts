@@ -100,6 +100,7 @@ interface Mover {
   status: VehicleLive['status']
   anchor: [number, number]
   matrix: THREE.Matrix4
+  hidden: boolean
 }
 
 const SNAP_M = 2500 // farther than this from the shown position (a reconnect) -> jump; at ×30 time a fix is ~600 m ahead
@@ -219,7 +220,7 @@ export class SiteLayer implements CustomLayerInterface {
         m = {
           id: v.vehicle_id, model, x: v.geo.x, y: v.geo.y, heading: v.heading_deg, fx: v.geo.x, fy: v.geo.y,
           fheading: v.heading_deg, speed: v.speed_kmh, fixAt: now, status: v.status, anchor: [v.geo.x, v.geo.y],
-          matrix: anchorMatrix(this.georef, v.geo.x, v.geo.y),
+          matrix: anchorMatrix(this.georef, v.geo.x, v.geo.y), hidden: false,
         }
         this.movers.set(v.vehicle_id, m)
         continue
@@ -238,6 +239,34 @@ export class SiteLayer implements CustomLayerInterface {
       // standing vehicles report heading 0: keep the last real one
       if (v.speed_kmh > 0.5) m.fheading = v.heading_deg
     }
+    this.repaint()
+  }
+
+  /**
+   * Replay: put vehicles exactly where they were at the scrubbed moment (no easing, no prediction).
+   * Vehicles missing from `poses` are hidden.
+   */
+  setPoses(poses: { id: string; x: number; y: number; heading: number; moving: boolean }[], registry: Map<string, Vehicle>) {
+    const seen = new Set<string>()
+    for (const p of poses) {
+      seen.add(p.id)
+      let m = this.movers.get(p.id)
+      if (!m) {
+        const model = vehicleModel({ id: p.id, kind: registry.get(p.id)?.kind ?? 'truck' })
+        model.group.visible = false
+        this.scene.add(model.group)
+        m = { id: p.id, model, x: p.x, y: p.y, heading: p.heading, fx: p.x, fy: p.y, fheading: p.heading, speed: 0,
+          fixAt: 0, status: 'moving', anchor: [p.x, p.y], matrix: anchorMatrix(this.georef, p.x, p.y), hidden: false }
+        this.movers.set(p.id, m)
+      }
+      m.x = m.fx = p.x
+      m.y = m.fy = p.y
+      if (!Number.isNaN(p.heading)) m.heading = m.fheading = p.heading
+      m.speed = 0
+      m.status = p.moving ? 'moving' : 'stopped'
+      m.hidden = false
+    }
+    for (const m of this.movers.values()) if (!seen.has(m.id)) m.hidden = true
     this.repaint()
   }
 
@@ -344,7 +373,8 @@ export class SiteLayer implements CustomLayerInterface {
 
   /** Shown positions of all vehicles: the 2D icon layer for zoomed-out views. */
   vehicles(): { id: string; x: number; y: number; heading: number; status: VehicleLive['status'] }[] {
-    return [...this.movers.values()].map((m) => ({ id: m.id, x: m.x, y: m.y, heading: m.heading, status: m.status }))
+    return [...this.movers.values()].filter((m) => !m.hidden)
+      .map((m) => ({ id: m.id, x: m.x, y: m.y, heading: m.heading, status: m.status }))
   }
 
   private repaint() {
@@ -452,7 +482,7 @@ export class SiteLayer implements CustomLayerInterface {
     this.drawn = []
     this.renderer.resetState()
     for (const s of this.sites) this.draw(s.group, s.matrix, P)
-    if (zoom >= VEHICLES_3D_MIN_ZOOM) for (const m of this.movers.values()) this.draw(m.model.group, m.matrix, P)
+    if (zoom >= VEHICLES_3D_MIN_ZOOM) for (const m of this.movers.values()) if (!m.hidden) this.draw(m.model.group, m.matrix, P)
     if (ringMatrix) {
       busy = true
       this.draw(this.ringRoot, ringMatrix, P)

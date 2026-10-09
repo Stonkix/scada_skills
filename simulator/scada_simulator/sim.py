@@ -475,11 +475,25 @@ class Simulation:
             return True
         return False
 
+    def report_now(self, sensor_id: str) -> Outgoing:
+        """A fixed sensor reports right away (scenarios: the alarm must not wait for the next sample)."""
+        s, t = self.world.sensors[sensor_id], self.clock()
+        if s.type == "climate":
+            msg = self._climate(s, t)
+            p = msg.payload
+            temp_c = (p["temperature"] - 32) * 5 / 9 if p["unit"] == "F" else p["temperature"]
+            self.last_sent[s.id] = (t, (temp_c, p["humidity"]))
+        else:
+            msg = self._motion(s, t)
+            self.last_sent[s.id] = (t, (msg.payload["state"],))
+        return msg
+
     def _climate(self, s: SensorSpec, t: float) -> Outgoing:
         phase = (hash(s.id) % 1000) / 1000 * 2 * math.pi
         temp = s.nominal.get("temperature_c", 18) + 0.8 * math.sin(t / 900 + phase) + self.rnd.gauss(0, 0.12)
         if drift := self.effect("climate_drift", s.id):
-            ramp = min(1.0, (time.monotonic() - drift.started) / drift.params.get("ramp_s", 120))
+            ramp_s = drift.params.get("ramp_s", 0)
+            ramp = min(1.0, (time.monotonic() - drift.started) / ramp_s) if ramp_s > 0 else 1.0
             temp += drift.params["delta_c"] * ramp
         rh = s.nominal.get("humidity_pct", 55) + 4 * math.sin(t / 1300 + phase) + self.rnd.gauss(0, 0.4)
         fahrenheit = s.id.startswith("clim-prod")  # these units are configured in °F; connectors normalize

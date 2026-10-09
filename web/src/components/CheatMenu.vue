@@ -11,6 +11,7 @@ interface Scenario {
 }
 interface SimStatus {
   time_scale: number
+  chaos: { on: boolean; every_s: number; recent: { at: number; what: string }[] }
   effects: { kind: string; target: string; left_s: number }[]
   runs: { id: string; scenario: string; step: number; done: boolean; error: string | null }[]
 }
@@ -55,6 +56,21 @@ async function run(name: string) {
 }
 
 const SPEEDS = [1, 5, 10, 30] as const
+const CHAOS_EVERY = [10, 20, 40, 60] as const
+const chaosEvery = ref(20)
+
+/** Random incidents all over the region while switched on: every one raises an alarm at once. */
+async function setChaos(on: boolean) {
+  try {
+    await sim('/chaos', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ on, every_s: chaosEvery.value }) })
+    toasts.push({ kind: on ? 'warning' : 'info', title: on ? `Случайные аварии: примерно раз в ${chaosEvery.value} с` : 'Случайные аварии выключены' })
+    await refresh()
+  } catch (e) {
+    toasts.push({ kind: 'error', title: 'Не удалось переключить', text: errorText(e) })
+  }
+}
+const ago = (at: number) => `${Math.max(0, Math.round(Date.now() / 1000 - at))} с назад`
 
 /** Fast-forward for the show: vehicles drive and load N times faster; 1 is normal time. */
 async function setSpeed(scale: number) {
@@ -81,7 +97,7 @@ onMounted(async () => {
     error.value = `Симулятор недоступен: ${errorText(e)}`
   }
   await refresh()
-  timer = setInterval(refresh, 3000)
+  timer = setInterval(refresh, 2000)
 })
 onBeforeUnmount(() => clearInterval(timer))
 </script>
@@ -94,6 +110,19 @@ onBeforeUnmount(() => clearInterval(timer))
       <button class="small ghost" aria-label="Закрыть" @click="emit('close')">✕</button>
     </header>
     <div v-if="error" class="muted">{{ error }}</div>
+    <div class="chaos" :class="{ on: status?.chaos.on }">
+      <button class="chaos-btn" @click="setChaos(!status?.chaos.on)">
+        🎲 Случайные аварии: <b>{{ status?.chaos.on ? 'ВКЛ' : 'выкл' }}</b>
+      </button>
+      <label class="every">раз в
+        <select v-model.number="chaosEvery" @change="status?.chaos.on && setChaos(true)">
+          <option v-for="s in CHAOS_EVERY" :key="s" :value="s">~{{ s }} с</option>
+        </select>
+      </label>
+      <div v-for="e in status?.chaos.recent.slice(0, 4) ?? []" :key="e.at" class="chaos-log">
+        <span class="grow">{{ e.what }}</span><small class="muted">{{ ago(e.at) }}</small>
+      </div>
+    </div>
     <div class="speed">
       <span class="grow">Скорость времени</span>
       <button v-for="s in SPEEDS" :key="s" class="small" :class="{ on: (status?.time_scale ?? 1) === s }" @click="setSpeed(s)">
@@ -125,6 +154,46 @@ onBeforeUnmount(() => clearInterval(timer))
   padding: 12px;
   max-height: 100%;
   overflow: auto;
+}
+.chaos {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+.chaos.on {
+  border-color: var(--st-critical);
+  box-shadow: 0 0 12px #ef444455;
+}
+.chaos-btn {
+  justify-content: center;
+}
+.chaos.on .chaos-btn {
+  background: #7f1d1d;
+  border-color: var(--st-critical);
+  color: #fecaca;
+  animation: pulse 1.4s infinite;
+}
+@keyframes pulse {
+  50% {
+    opacity: 0.75;
+  }
+}
+.every {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.chaos-log {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 8px;
+  font-size: 11px;
 }
 .speed {
   display: flex;

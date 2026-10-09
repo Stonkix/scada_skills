@@ -119,7 +119,8 @@ def test_reports_faster_than_the_type_allows_are_rejected(client: TestClient) ->
 
 
 def test_waybill_creates_and_updates_a_trip(client: TestClient) -> None:
-    doc = {"waybill_no": "ПЛ-TEST-000001", "plate": "А123ВС77", "origin_site_id": "s-podolsk",
+    # v-truck-8 never runs trips in the simulator: the test does not disturb the live ones
+    doc = {"waybill_no": "ПЛ-TEST-000001", "plate": "Р135ЕК99", "origin_site_id": "s-podolsk",
            "destination_site_id": "s-chekhov", "cargo": "Тестовый груз", "weight_t": 3.5, "status": "loading"}
     assert client.post("/documents/waybill", json=doc).status_code == 401
     assert client.post("/documents/waybill", json=doc, headers={"X-API-Key": CLIMATE_ONLY_KEY}).status_code == 403
@@ -128,8 +129,14 @@ def test_waybill_creates_and_updates_a_trip(client: TestClient) -> None:
     assert resp.status_code == 202 and resp.json() == {"trip_id": "ПЛ-TEST-000001"}
     with Session(engine()) as s:
         trip = s.get(m.Trip, "ПЛ-TEST-000001")
-        assert (trip.vehicle_id, trip.status) == ("v-truck-1", "en_route")
-        s.delete(trip)
+        assert (trip.vehicle_id, trip.status) == ("v-truck-8", "en_route")
+    # the next waybill of the same truck supersedes the unfinished one
+    nxt = doc | {"waybill_no": "ПЛ-TEST-000002", "status": "loading"}
+    assert client.post("/documents/waybill", json=nxt, headers={"X-API-Key": SIM_KEY}).status_code == 202
+    with Session(engine()) as s:
+        assert s.get(m.Trip, "ПЛ-TEST-000001").status == "done"
+        for tid in ("ПЛ-TEST-000001", "ПЛ-TEST-000002"):
+            s.delete(s.get(m.Trip, tid))
         s.commit()
 
 

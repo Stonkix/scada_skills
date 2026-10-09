@@ -135,7 +135,9 @@ def _threshold(rule: Rule, ctx: Context, snap: Snapshot, state: RuleState) -> li
             continue
         obj = f"{ctx.sensor.id}:{metric}"
         lv = level(v, th)
-        if state.held(f"{rule.id}:{obj}", lv != "ok", ctx.event.ts, p.get("min_duration_s", 0)):
+        # a warning must hold for min_duration_s (noise); a critical value is an alarm at once
+        need = p.get("critical_min_duration_s", 0) if lv == "critical" else p.get("min_duration_s", 0)
+        if state.held(f"{rule.id}:{obj}", lv != "ok", ctx.event.ts, need):
             sev = p.get("critical_severity", "critical") if lv == "critical" else rule.severity
             name = METRICS.get(metric, {}).get("name", metric)
             out.append(Signal("open", rule, obj, sev, f"{name}: {ctx.sensor.name}",
@@ -239,8 +241,9 @@ def _breakdown(rule: Rule, ctx: Context, snap: Snapshot, state: RuleState) -> li
     if state.held(f"{rule.id}:{ctx.vehicle.id}", violated, ctx.event.ts, p.get("stopped_min", 10) * 60):
         mins = (ctx.event.ts - state.since[f"{rule.id}:{ctx.vehicle.id}"]).total_seconds() / 60
         where = next((z.name for z in ctx.zones if z.zone_type != "speed"), "на проезде")
+        how_long = f"{mins:.0f} мин" if mins >= 1 else "— двигатель только что заглушен"
         return [Signal("open", rule, ctx.vehicle.id, rule.severity, f"Техника стоит вне стоянки: {ctx.vehicle.plate}",
-                       f"{ctx.vehicle.plate} стоит с заглушенным двигателем {mins:.0f} мин ({where})", **ctx.refs)]
+                       f"{ctx.vehicle.plate} стоит с заглушенным двигателем {how_long} ({where})", **ctx.refs)]
     if not violated:
         return [Signal("clear", rule, ctx.vehicle.id)]
     return []

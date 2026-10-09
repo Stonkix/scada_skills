@@ -1,6 +1,7 @@
 """Scenario engine: YAML steps -> actions that start time-limited effects in the simulation."""
 
 import asyncio
+import time
 import uuid
 from collections.abc import Callable
 from dataclasses import dataclass, field
@@ -9,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from scada_simulator.sim import Simulation, Task, skud
+from scada_simulator.sim import Simulation, Task, anpr, skud
 from scada_simulator.transport import Outgoing
 
 
@@ -79,14 +80,18 @@ def vehicle_breakdown(sim: Simulation, duration_s: float, vehicle: str | None = 
     except ScenarioError:
         if vehicle:
             raise
-        # nobody is driving on a site right now: arm the service car (or a loader); it breaks down as soon as it
-        # is out on a roadway, within a minute — the demo never gets "no vehicle" for an answer
+        # nobody is driving on a site right now: the service car or a loader standing on a roadway breaks down
+        # where it is; if they all stand at docks/parkings, arm one to break down once it is out on a roadway
         spare = sorted((x for x in sim.vehicles if x.kind in ("car", "loader") and sim.site_at(x.x, x.y)),
-                       key=lambda x: (x.kind != "car", x.id))
+                       key=lambda x: (_in_stop_zone(sim, x.x, x.y), x.kind != "car", x.id))
         if not spare:
             raise
-        if duration_s:  # duration 0 is the runner's dry run
+        if not duration_s:  # duration 0 is the runner's dry run
+            return []
+        if _in_stop_zone(sim, spare[0].x, spare[0].y):
             sim.add_effect("breakdown_next", spare[0].id, duration_s + 300, break_s=duration_s)
+        else:
+            sim.add_effect("breakdown", spare[0].id, duration_s)
         return []
     if sim.site_at(v.x, v.y) is None:  # a breakdown on a public road is not our alarm
         raise ScenarioError(f"{v.id} is not on site right now; omit 'vehicle' to pick a moving truck")
@@ -100,6 +105,11 @@ def vehicle_breakdown(sim: Simulation, duration_s: float, vehicle: str | None = 
 def vehicle_speeding(sim: Simulation, kmh: float, duration_s: float, vehicle: str | None = None) -> list[Outgoing]:
     v = _vehicle(sim, vehicle, kind="car")
     sim.add_effect("speed", v.id, duration_s, kmh=kmh)
+    site = sim.site_at(v.x, v.y)
+    if not v.path and site:  # standing: drive off to the far end of the yard right now
+        target = max(site.yard, key=lambda n: (n[0] - v.x) ** 2 + (n[1] - v.y) ** 2)
+        v.dwell_left, v.tasks, v.engine_on = 0, [], True
+        v.path = sim.graph.path((v.x, v.y), target)[1:]
     return []
 
 
@@ -109,20 +119,20 @@ def vehicle_arrival(sim: Simulation, vehicle: str) -> list[Outgoing]:
     v = _vehicle(sim, vehicle)
     site = sim.main
     v.parked_off_site = False
-    v.x, v.y = site.approach
+    v.x, v.y = site.gate  # already at the barrier: the camera sees it on the next tick
     v.path, v.dwell_left, v.trip = [], 0, None
     dock = sim.rnd.choice(site.docks)
-    v.tasks = [Task("drive", site.gate), Task("event", emit=(site.cam_in, "approach")), Task("drive", dock),
+    v.tasks = [Task("event", emit=(site.cam_in, "approach")), Task("drive", dock),
                Task("dwell", seconds=90), Task("drive", site.gate), Task("event", emit=(site.cam_out, "leave")),
                Task("drive", site.approach), Task("park")]  # back to waiting beyond the gate
     return []
 
 
 @action
-def climate_drift(sim: Simulation, sensor: str, delta_c: float, duration_s: float, ramp_s: float = 120) -> list[Outgoing]:
+def climate_drift(sim: Simulation, sensor: str, delta_c: float, duration_s: float, ramp_s: float = 0) -> list[Outgoing]:
     _sensor(sim, sensor, "climate")
     sim.add_effect("climate_drift", sensor, duration_s, delta_c=delta_c, ramp_s=ramp_s)
-    return []
+    return [] if ramp_s else [sim.report_now(sensor)]  # a jump is reported at once
 
 
 @action
@@ -137,7 +147,7 @@ def sensor_offline(sim: Simulation, sensor: str, duration_s: float) -> list[Outg
 def motion_alarm(sim: Simulation, sensor: str, duration_s: float) -> list[Outgoing]:
     _sensor(sim, sensor, "motion")
     sim.add_effect("motion_alarm", sensor, duration_s)
-    return []
+    return [sim.report_now(sensor)]
 
 
 @action
@@ -164,6 +174,53 @@ def card_swipe(sim: Simulation, reader: str, card: str, granted: bool, event: st
     return [skud(reader, card, event, granted)]
 
 
+@action
+def plate_at_gate(sim: Simulation, camera: str | None = None) -> list[Outgoing]:
+    """A car with a plate nobody knows drives up to a gate camera (any site's КПП when camera is omitted)."""
+    cams = [s.cam_in for s in sim.sites.values() if s.cam_in]
+    camera = camera or sim.rnd.choice(cams)
+    _sensor(sim, camera, "anpr_camera")
+    letters = "АВЕКМНОРСТУХ"
+    r = sim.rnd
+    plate = f"{r.choice(letters)}{r.randint(100, 999)}{r.choice(letters)}{r.choice(letters)}{r.choice(['199', '799', '977'])}"
+    return [anpr(camera, plate, "approach")]
+
+
+# --- random incidents ("chaos"): one now and then, anywhere, while it is switched on ----------------------
+
+
+def random_incident(sim: Simulation) -> tuple[str, list[Outgoing]]:
+    """Pick an incident whose alarm shows at once, on a random site; returns (what happened, messages)."""
+    r = sim.rnd
+    kinds = ["overheat", "breakdown", "plate", "card", "intrusion", "speeding"]
+    r.shuffle(kinds)
+    for kind in kinds:
+        try:
+            if kind == "overheat":
+                s = r.choice(sim.world.sensors_of("climate"))
+                return f"Перегрев: {s.id}", climate_drift(sim, s.id, delta_c=14, duration_s=r.uniform(150, 300))
+            if kind == "breakdown":
+                out = vehicle_breakdown(sim, duration_s=r.uniform(150, 300))
+                return f"Поломка: {sim.effects[-1].target}", out
+            if kind == "plate":
+                out = plate_at_gate(sim)
+                return f"Номер вне базы: {out[0].payload['plate']}", out
+            if kind == "card":
+                reader = r.choice(sim.world.sensors_of("access_control")).id
+                return f"Чужой пропуск: {reader}", card_swipe(sim, reader, r.choice(["unknown", "expired"]), r.random() < 0.5)
+            if kind == "intrusion":
+                motion = [s for s in sim.world.sensors_of("motion") if s.building_id and sim.world.entrance(s.building_id)
+                          and sim.world.areas[s.building_id].type in ("warehouse", "production")]
+                s = r.choice(motion)
+                out = evacuate(sim, s.building_id, duration_s=300) + motion_alarm(sim, s.id, duration_s=150)
+                return f"Движение в пустом здании: {s.building_id}", out
+            if kind == "speeding":
+                return "Превышение скорости", vehicle_speeding(sim, kmh=r.uniform(36, 48), duration_s=45)
+        except (ScenarioError, IndexError, StopIteration):
+            continue  # this one is not possible right now: try another kind
+    return "нет подходящей аварии", []
+
+
 def load(path: Path) -> dict[str, Scenario]:
     data = yaml.safe_load(path.read_text(encoding="utf-8"))
     scenarios = {}
@@ -180,6 +237,9 @@ class Runner:
         self.sim = sim
         self.send = send
         self.runs: dict[str, Run] = {}
+        self.chaos: asyncio.Task | None = None
+        self.chaos_every_s = 20.0
+        self.chaos_log: list[dict[str, Any]] = []
 
     def validate_first_step(self, scenario: Scenario) -> None:
         """Fail fast on the request for obvious mistakes instead of inside a background task."""
@@ -212,7 +272,30 @@ class Runner:
         finally:
             run.done = True
 
+    def start_chaos(self, every_s: float) -> None:
+        self.chaos_every_s = every_s
+        if self.chaos is None or self.chaos.done():
+            self.chaos = asyncio.create_task(self._chaos())
+
+    def stop_chaos(self) -> None:
+        if self.chaos and not self.chaos.done():
+            self.chaos.cancel()
+        self.chaos = None
+
+    @property
+    def chaos_on(self) -> bool:
+        return self.chaos is not None and not self.chaos.done()
+
+    async def _chaos(self) -> None:
+        while True:
+            what, out = random_incident(self.sim)
+            self.chaos_log = [{"at": time.time(), "what": what}, *self.chaos_log][:8]
+            if out:
+                await self.send(out)
+            await asyncio.sleep(self.chaos_every_s * self.sim.rnd.uniform(0.7, 1.3))
+
     def stop_all(self) -> None:
+        self.stop_chaos()
         for run in self.runs.values():
             if run.task and not run.task.done():
                 run.task.cancel()

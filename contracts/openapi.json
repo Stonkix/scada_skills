@@ -1563,13 +1563,13 @@
             "required": false,
             "schema": {
               "type": "number",
-              "maximum": 100,
+              "maximum": 500,
               "minimum": 2,
-              "description": "Размер ячейки, м",
+              "description": "Размер ячейки, м (сотни метров — обзор всего региона)",
               "default": 10,
               "title": "Cell"
             },
-            "description": "Размер ячейки, м"
+            "description": "Размер ячейки, м (сотни метров — обзор всего региона)"
           },
           {
             "name": "source",
@@ -4075,6 +4075,75 @@
         ],
         "title": "ReplayTrack"
       },
+      "Reporting": {
+        "properties": {
+          "heartbeat_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat S",
+            "description": "Отчёт при отсутствии изменений; null — только по событиям"
+          },
+          "moving_period_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Moving Period S",
+            "description": "Транспорт в движении: не реже, чем раз в N с"
+          },
+          "idle_period_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Idle Period S",
+            "description": "Транспорт стоит с работающим двигателем"
+          },
+          "on_change": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "On Change",
+            "description": "Внеочередной отчёт при изменении метрики на величину (distance_m — пройденный путь, м)"
+          },
+          "min_interval_s": {
+            "type": "number",
+            "title": "Min Interval S",
+            "description": "Чаще коннекторы не принимают (защита от «болтливых» устройств)",
+            "default": 0
+          },
+          "offline_after_s": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Offline After S",
+            "description": "Молчание дольше — датчик «нет связи»"
+          }
+        },
+        "type": "object",
+        "title": "Reporting",
+        "description": "How often a device of the type reports: by time, plus \"by exception\" (on a significant change) in between.\n\nDevices own the schedule (trackers and loggers are configured this way: Teltonika FMB defaults are\n300 s / 100 m / 10° moving and 3600 s parked; Russian rules for monitored transport ask for at least\none fix every 30 s; GDP cold-chain practice logs temperature every 5 min). Connectors reject reports\nfaster than `min_interval_s`; the offline rule fires after `offline_after_s` of silence."
+      },
       "Road": {
         "properties": {
           "id": {
@@ -4643,6 +4712,10 @@
             },
             "type": "array",
             "title": "Metrics"
+          },
+          "reporting": {
+            "$ref": "#/components/schemas/Reporting",
+            "description": "Частота передачи данных устройствами этого типа"
           }
         },
         "type": "object",
@@ -4650,7 +4723,8 @@
           "id",
           "name",
           "is_mobile",
-          "metrics"
+          "metrics",
+          "reporting"
         ],
         "title": "SensorTypeInfo"
       },

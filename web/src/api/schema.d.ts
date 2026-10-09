@@ -1455,6 +1455,50 @@ export interface components {
             /** Points */
             points: components["schemas"]["RoutePoint"][];
         };
+        /**
+         * Reporting
+         * @description How often a device of the type reports: by time, plus "by exception" (on a significant change) in between.
+         *
+         *     Devices own the schedule (trackers and loggers are configured this way: Teltonika FMB defaults are
+         *     300 s / 100 m / 10° moving and 3600 s parked; Russian rules for monitored transport ask for at least
+         *     one fix every 30 s; GDP cold-chain practice logs temperature every 5 min). Connectors reject reports
+         *     faster than `min_interval_s`; the offline rule fires after `offline_after_s` of silence.
+         */
+        Reporting: {
+            /**
+             * Heartbeat S
+             * @description Отчёт при отсутствии изменений; null — только по событиям
+             */
+            heartbeat_s?: number | null;
+            /**
+             * Moving Period S
+             * @description Транспорт в движении: не реже, чем раз в N с
+             */
+            moving_period_s?: number | null;
+            /**
+             * Idle Period S
+             * @description Транспорт стоит с работающим двигателем
+             */
+            idle_period_s?: number | null;
+            /**
+             * On Change
+             * @description Внеочередной отчёт при изменении метрики на величину (distance_m — пройденный путь, м)
+             */
+            on_change?: {
+                [key: string]: number;
+            };
+            /**
+             * Min Interval S
+             * @description Чаще коннекторы не принимают (защита от «болтливых» устройств)
+             * @default 0
+             */
+            min_interval_s: number;
+            /**
+             * Offline After S
+             * @description Молчание дольше — датчик «нет связи»
+             */
+            offline_after_s?: number | null;
+        };
         /** Road */
         Road: {
             /**
@@ -1694,6 +1738,8 @@ export interface components {
             is_mobile: boolean;
             /** Metrics */
             metrics: components["schemas"]["MetricSpec"][];
+            /** @description Частота передачи данных устройствами этого типа */
+            reporting: components["schemas"]["Reporting"];
         };
         /**
          * SensorUpdate
@@ -2923,7 +2969,7 @@ export interface operations {
                 from?: string | null;
                 /** @description По умолчанию — сейчас */
                 to?: string | null;
-                /** @description Размер ячейки, м */
+                /** @description Размер ячейки, м (сотни метров — обзор всего региона) */
                 cell?: number;
                 /** @description vehicles — все позиции; stops — где стоят */
                 source?: "vehicles" | "stops";

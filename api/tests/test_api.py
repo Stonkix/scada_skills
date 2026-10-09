@@ -264,7 +264,8 @@ def test_api_key_issue_use_restrict_revoke(client: TestClient, tokens: dict) -> 
         listed = client.get("/connectors/keys", headers=admin).json()
         assert issued["id"] in [k["id"] for k in listed] and all("key" not in k for k in listed), "secret never listed"
 
-        ts_ms = int(time.time() * 1000)
+        # a minute old: the live device keeps reporting, and connectors only throttle readings newer than its last
+        ts_ms = int(time.time() * 1000) - 60_000
         body = {"device": "clim-wh1-dock", "temperature": 18.2, "humidity": 50, "ts_ms": ts_ms}
         try:
             resp = httpx.post("http://127.0.0.1:8001/ingest/climate", json=body, headers={"X-API-Key": issued["key"]},

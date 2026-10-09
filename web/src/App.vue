@@ -17,6 +17,9 @@ const router = useRouter()
 const nav = computed(() =>
   [
     { to: '/', label: 'Карта', show: auth.can('map:view') },
+    { to: '/sites', label: 'Объекты', show: auth.can('map:view') },
+    { to: '/fleet', label: 'Транспорт', show: auth.can('map:view') },
+    { to: '/telemetry', label: 'Телеметрия', show: auth.can('map:view') },
     { to: '/alerts', label: 'Тревоги', show: auth.can('map:view') },
     { to: '/kpi', label: 'KPI', show: auth.can('kpi:view') },
     { to: '/analytics', label: 'Replay', show: auth.can('kpi:view') },

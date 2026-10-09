@@ -29,6 +29,26 @@ export const useObjects = defineStore('objects', () => {
     data.value?.geozones.forEach((z) => names.set(z.id, z.name))
     return names
   })
+  const sites = computed(() => new Map((data.value?.sites ?? []).map((s) => [s.id, s])))
+  const siteBounds = computed(() =>
+    [...sites.value.values()].map((s) => {
+      const ring = s.geometry.coordinates[0] as [number, number][]
+      const xs = ring.map((p) => p[0])
+      const ys = ring.map((p) => p[1])
+      return { id: s.id, x0: Math.min(...xs), y0: Math.min(...ys), x1: Math.max(...xs), y1: Math.max(...ys) }
+    }),
+  )
+  /** The site a plan point lies on, or null (on the road between sites). */
+  function siteAt(x: number, y: number): string | null {
+    return siteBounds.value.find((b) => x >= b.x0 && x <= b.x1 && y >= b.y0 && y <= b.y1)?.id ?? null
+  }
+  /** The site of a sensor: by its building, else by where it stands. */
+  function siteOfSensor(id: string): string | null {
+    const s = sensors.value.get(id)
+    if (!s) return null
+    if (s.building_id) return buildings.value.get(s.building_id)?.site_id ?? null
+    return s.geo ? siteAt(s.geo.x, s.geo.y) : null
+  }
   const maxFloor = computed(() => Math.max(1, ...(data.value?.buildings ?? []).map((b) => b.floors)))
 
   function metric(sensorType: string, key: string) {
@@ -42,5 +62,5 @@ export const useObjects = defineStore('objects', () => {
     else data.value.sensors.push(s)
   }
 
-  return { data, loading, load, sensors, vehicles, buildings, types, zoneNames, maxFloor, metric, upsertSensor }
+  return { data, loading, load, sensors, vehicles, buildings, sites, types, zoneNames, maxFloor, metric, upsertSensor, siteAt, siteOfSensor }
 })

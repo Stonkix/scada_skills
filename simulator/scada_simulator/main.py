@@ -109,6 +109,23 @@ def set_time(body: TimeScale, request: Request) -> dict[str, float]:
     return {"time_scale": request.app.state.sim.set_time_scale(body.scale)}
 
 
+class Chaos(BaseModel):
+    on: bool
+    every_s: float = Field(20, ge=5, le=600, description="Средний интервал между авариями")
+
+
+@app.post("/chaos", tags=["scenarios"])
+async def set_chaos(body: Chaos, request: Request) -> dict[str, Any]:
+    """Случайные аварии по всем площадкам, пока включено: перегрев, поломка, чужой номер или пропуск,
+    движение в пустом здании, превышение скорости. Каждая сразу даёт тревогу."""
+    runner = request.app.state.runner
+    if body.on:
+        runner.start_chaos(body.every_s)
+    else:
+        runner.stop_chaos()
+    return {"on": runner.chaos_on, "every_s": runner.chaos_every_s}
+
+
 @app.get("/status", tags=["system"])
 def status(request: Request) -> dict[str, Any]:
     t: Transport = request.app.state.transport
@@ -117,6 +134,8 @@ def status(request: Request) -> dict[str, Any]:
         "sent": dict(t.sent), "failed": dict(t.failed), "last_error": t.last_error,
         "runs": [{"id": r.id, "scenario": r.scenario, "step": r.step, "done": r.done, "error": r.error}
                  for r in request.app.state.runner.runs.values()],
+        "chaos": {"on": request.app.state.runner.chaos_on, "every_s": request.app.state.runner.chaos_every_s,
+                  "recent": request.app.state.runner.chaos_log},
     }
 
 

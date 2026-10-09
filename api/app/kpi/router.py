@@ -124,7 +124,7 @@ def heatmap(
     _: CanView,
     start: FromQ = None,
     end: ToQ = None,
-    cell: Annotated[float, Query(ge=2, le=100, description="Размер ячейки, м")] = 10,
+    cell: Annotated[float, Query(ge=2, le=500, description="Размер ячейки, м (сотни метров — обзор всего региона)")] = 10,
     source: Annotated[Literal["vehicles", "stops"], Query(description="vehicles — все позиции; stops — где стоят")] = "vehicles",
 ) -> Heatmap:
     """Загруженность территории по ГЛОНАСС: сколько замеров попало в каждую ячейку сетки."""

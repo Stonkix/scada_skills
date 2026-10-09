@@ -304,3 +304,24 @@ def test_fast_forward_moves_trucks_faster_and_shortens_eta(sim: Simulation) -> N
     assert all(o.adapter != "gnss" or o.payload["speed"] < 100 for o in out), "trackers still report road speed"
     sim.set_time_scale(1)
     assert sim.status()["time_scale"] == 1
+
+
+def test_incidents_report_at_once(sim: Simulation) -> None:
+    [msg] = sc.climate_drift(sim, sensor="clim-wh2-storage", delta_c=9, duration_s=600)
+    assert msg.payload["temperature"] > 8, "past the critical bound of the cold store in the same message"
+    [motion] = sc.motion_alarm(sim, sensor="mot-wh3", duration_s=60)
+    assert motion.payload["state"] == "alarm"
+    sc.vehicle_arrival(sim, vehicle="v-truck-8")
+    out = run(sim, 2)
+    assert any(o.device_id == sim.main.cam_in and o.payload["plate"] == "Р135ЕК99" for o in out)
+
+
+def test_random_incidents_happen_anywhere(sim: Simulation) -> None:
+    run(sim, 120)
+    seen = set()
+    for _ in range(40):
+        what, out = sc.random_incident(sim)
+        seen.add(what.split(":")[0])
+        assert what != "нет подходящей аварии"
+        run(sim, 3)
+    assert {"Перегрев", "Номер вне базы", "Чужой пропуск", "Движение в пустом здании"} <= seen

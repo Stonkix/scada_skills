@@ -2,7 +2,7 @@
 #
 # A scenario is a list of steps run in order. A step is either {wait_s: N} or an action
 # with parameters; actions start a time-limited effect and return immediately.
-# Actions: vehicle_breakdown, vehicle_speeding, vehicle_arrival, climate_drift,
+# Actions: vehicle_breakdown, vehicle_speeding, vehicle_arrival, plate_at_gate, climate_drift,
 #          sensor_offline, motion_alarm, card_swipe, evacuate.
 # What becomes an alert is decided by the worker's rules (alert_rules), not here.
 
@@ -12,8 +12,8 @@ scenarios:
     description: >
       Едущая по территории техника (грузовик, а если все грузовики в рейсах — погрузчик
       или служебная машина) глохнет посреди проезда. Если сейчас по площадкам никто не едет,
-      служебная машина сломается, как только выедет на проезд. Правило rule-breakdown
-      срабатывает через stopped_min (3 мин).
+      глохнет стоящая на проезде служебная машина. Тревога сразу: двигатель заглушен
+      вне стоянки и рампы.
     steps:
       - {action: vehicle_breakdown, duration_s: 600}
 
@@ -41,9 +41,9 @@ scenarios:
 
   overheat:
     title: Перегрев холодного склада
-    description: Температура на складе №2 растёт на 7 °C за 2 минуты и держится 10 минут.
+    description: Температура на складе №2 скачком уходит выше аварийного порога (+9 °C) и держится 10 минут.
     steps:
-      - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 7, ramp_s: 120, duration_s: 720}
+      - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 9, duration_s: 600}
 
   after_hours:
     title: Движение в пустом складе
@@ -52,7 +52,7 @@ scenarios:
       внутри кто-то, кто не проходил турникет. Работает в любое время суток.
     steps:
       - {action: evacuate, building: b-wh3, duration_s: 600}
-      - {wait_s: 10}
+      - {wait_s: 2}
       - {action: motion_alarm, sensor: mot-wh3, duration_s: 300}
 
   sensor_offline:
@@ -67,10 +67,16 @@ scenarios:
     steps:
       - {action: vehicle_arrival, vehicle: v-truck-8}
       - {wait_s: 30}
-      - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 7, ramp_s: 60, duration_s: 600}
+      - {action: climate_drift, sensor: clim-wh2-storage, delta_c: 9, duration_s: 600}
       - {wait_s: 60}
       - {action: vehicle_breakdown, duration_s: 600}
       - {wait_s: 30}
       - {action: vehicle_speeding, vehicle: v-car-1, kmh: 38, duration_s: 60}
       - {wait_s: 30}
       - {action: card_swipe, reader: acs-wh2, card: unknown, granted: false}
+
+  plate_anywhere:
+    title: Чужой номер на случайном КПП
+    description: Машина с номером, которого нет в базе, подъезжает к камере КПП одной из площадок.
+    steps:
+      - {action: plate_at_gate}

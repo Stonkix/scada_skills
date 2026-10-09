@@ -186,3 +186,19 @@ def test_schedule_across_midnight_belongs_to_start_day() -> None:
     sun_3am = datetime(2026, 10, 11, 0, 0, tzinfo=UTC)
     assert in_schedule(night, "Europe/Moscow", sat_3am) and not in_schedule(night, "Europe/Moscow", sun_3am)
     assert in_schedule([{"days": [3], "start": "00:00", "end": "24:00"}], "Europe/Moscow", T0)
+
+
+def test_critical_value_alarms_at_once_warning_waits() -> None:
+    st = RuleState()
+    assert ("open", "rule-threshold", "clim:temperature_c", "critical") in run("clim", climate(12), st)
+    assert not opens(run("clim", climate(7), RuleState()))  # a warning still holds for min_duration_s
+
+
+def test_engine_off_outside_allowed_zones_alarms_at_once_with_zero_stopped_min() -> None:
+    snapshot = snap()
+    instant = Rule("rule-breakdown", 1, "Поломка", "breakdown", "critical",
+                   {"stopped_min": 0, "allowed_zone_types": ["parking", "docks"]}, None, None)
+    snapshot.rules = {"rule-breakdown": instant}
+    c = Context(ev("gnss", gnss(0, engine=False)), SENSORS["gnss"], snapshot.vehicles["v1"], zones=[SITE])
+    out = [(x.action, x.severity) for x in evaluate(c, snapshot, RuleState())]
+    assert ("open", "critical") in out

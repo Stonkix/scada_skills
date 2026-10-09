@@ -42,7 +42,8 @@ SCHEDULES = [
 ALERT_RULES = [
     # escalate_after_s: unacknowledged alerts gain a level every N seconds, up to MAX_ESCALATION
     ("rule-threshold", "Выход метрики за пороги", AlertKind.THRESHOLD, Severity.WARNING,
-     {"hysteresis_pct": 5, "min_duration_s": 30, "critical_severity": "critical",
+     # warnings hold 30 s against noise; a critical value alarms at once (critical_min_duration_s: 0)
+     {"hysteresis_pct": 5, "min_duration_s": 30, "critical_min_duration_s": 0, "critical_severity": "critical",
       "exclude_metrics": ["speed_kmh", "heading_deg"]}, None, 300),  # speed has its own rule
     # every site has a speed geozone; public roads between sites have none, so highway speed is not an alert
     ("rule-speed", "Превышение скорости на территории", AlertKind.SPEED, Severity.WARNING,
@@ -53,9 +54,11 @@ ALERT_RULES = [
      {"sensor_type": "access_control", "list": "card"}, None, 300),
     ("rule-after-hours", "Движение без прохода по СКУД", AlertKind.SCHEDULE, Severity.CRITICAL,
      {"sensor_type": "motion", "building_types": ["warehouse", "production"], "require_empty": True,
-      "min_duration_s": 20, "quiet_s": 300}, "work-hours", 60),
+      # motion reports only on change: a second report may be minutes away, so no hold time
+      "min_duration_s": 0, "quiet_s": 300}, "work-hours", 60),
     ("rule-breakdown", "Остановка техники вне стоянки", AlertKind.BREAKDOWN, Severity.CRITICAL,
-     {"stopped_min": 3, "allowed_zone_types": ["parking", "docks", "restricted"]}, None, 300),
+     # vehicles switch the engine off only at docks and parkings: off anywhere else is an alarm at once
+     {"stopped_min": 0, "allowed_zone_types": ["parking", "docks", "restricted"]}, None, 300),
     ("rule-offline", "Датчик не на связи", AlertKind.OFFLINE, Severity.WARNING,
      # cameras and turnstiles report only when someone passes: silence is normal for them
      # 3 missed heartbeats (scada_common.catalog.REPORTING): climate/motion 120 s, parked tracker 60 s → 5 min
