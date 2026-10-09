@@ -163,7 +163,7 @@ const ruleNames = computed(() => new Map<string, string>([
 
       <div class="charts">
         <section class="panel box">
-          <h2>КПП-1: въезды и выезды{{ data.gate.bucket_minutes === 5 ? ' по 5 минут' : data.gate.bucket_minutes === 60 ? ' по часам' : ' по дням' }}</h2>
+          <h2>КПП всех площадок: въезды и выезды{{ data.gate.bucket_minutes === 5 ? ' по 5 минут' : data.gate.bucket_minutes === 60 ? ' по часам' : ' по дням' }}</h2>
           <div v-if="!data.gate.by_hour.length" class="empty-state">Проездов за период не было</div>
           <VChart v-else class="chart" :option="gateOption" autoresize />
           <small class="muted">Номеров распознано камерами: {{ data.gate.plates_recognized }}</small>
@@ -191,8 +191,8 @@ const ruleNames = computed(() => new Map<string, string>([
 
         <section class="panel box">
           <h2>Проходы в здания по СКУД</h2>
-          <VChart class="chart" :option="buildingOption" autoresize />
-          <small class="muted">Сейчас внутри:
+          <VChart class="chart" :style="{ height: `${Math.max(240, data.buildings.length * 26 + 40)}px` }" :option="buildingOption" autoresize />
+          <small class="muted people">Сейчас внутри:
             <span v-for="b in data.buildings" :key="b.building_id" class="mono people-now">{{ objects.buildings.get(b.building_id)?.name ?? b.building_id }} — {{ b.people_now }}</span>
           </small>
         </section>
@@ -247,11 +247,14 @@ const ruleNames = computed(() => new Map<string, string>([
   grid-template-columns: repeat(auto-fit, minmax(min(520px, 100%), 1fr));
   gap: 12px;
 }
-.box { padding: 14px; display: grid; gap: 10px; align-content: start; }
-.chart { height: 240px; }
+/* min-width: 0 — a grid cell must not grow to its content: echarts would size its canvas to that and push
+   the next cards over each other */
+.box { padding: 14px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+.chart { height: 240px; width: 100%; min-width: 0; }
 .chart.tall { height: 380px; }
 .chart.short { height: 130px; }
 .table-wrap { max-height: 380px; overflow: auto; }
-.people-now { margin-left: 10px; white-space: nowrap; }
+.people { display: flex; flex-wrap: wrap; gap: 4px 12px; }
+.people-now { white-space: nowrap; }
 tr.clickable { cursor: pointer; }
 </style>
