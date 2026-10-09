@@ -6,7 +6,7 @@ import type { Building, Room, Sensor, Vehicle, VehicleLive } from '@/api/types'
  * Built from primitives on purpose: no binary assets to ship, license or load offline.
  */
 
-export type Pickable = { kind: 'building' | 'vehicle' | 'sensor'; id: string }
+export type Pickable = { kind: 'building' | 'vehicle' | 'sensor' | 'room'; id: string }
 
 export const STATUS_COLOR: Record<VehicleLive['status'], string> = {
   moving: '#fbbf24',
@@ -267,6 +267,7 @@ export function storey(b: Building, floor: number, rooms: Room[], roomColor: (id
   for (const r of rooms) {
     const rr = r.geometry.coordinates[0] as [number, number][]
     const slab = extrude(rr, 0.15, new THREE.MeshLambertMaterial({ color: roomColor(r.id), transparent: true, opacity: 0.55 }), z + 0.3)
+    slab.userData.pick = { kind: 'room', id: r.id } satisfies Pickable
     g.add(slab)
     // walls: a thin band along the room outline, the Sims cutaway height
     for (let i = 0; i < rr.length - 1; i++) {

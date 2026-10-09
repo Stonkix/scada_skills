@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { diff, inPolygon, locate, newRoom, newSensor, nextId, relocateSensors, validate, type Feature, type Layout, type Pt } from './editor'
+import {
+  buildingProblem, diff, dragCorner, inPolygon, locate, newBuilding, newRoom, newSensor, newZone, nextId, partsOf, relocateSensors,
+  removeWithParts, siteAt, translate, validate, type Feature, type Layout, type Pt,
+} from './editor'
 
 const rect = (x0: number, y0: number, x1: number, y1: number): Pt[][] => [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]]
 const f = (id: string, kind: string, coordinates: unknown, props: Record<string, unknown> = {}): Feature => ({
@@ -95,6 +98,59 @@ describe('save checks', () => {
     b.features.push(newSensor(b, 'motion', [300, 380], 1, new Set(), 'Движение'))
     ;(b.features[4].geometry.coordinates as Pt)[0] = 260
     b.features = b.features.filter((x) => x.id !== 'r-wh1-dock')
-    expect(diff(a, b)).toEqual({ sensors: { added: 1, removed: 0, changed: 1 }, rooms: { added: 0, removed: 1, changed: 0 } })
+    expect(diff(a, b)).toMatchObject({ sensors: { added: 1, removed: 0, changed: 1 }, rooms: { added: 0, removed: 1, changed: 0 } })
+  })
+})
+
+describe('sims-style building', () => {
+  const sq = (x0: number, y0: number, x1: number, y1: number): Pt[][] => [[[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]]
+  const make = (): Layout => ({
+    type: 'FeatureCollection',
+    metadata: { units: 'm', extent: [-1000, -1000, 5000, 5000], georef: { origin_lat: 55.4, origin_lon: 37.5, rotation_deg: 0 } },
+    features: [
+      { type: 'Feature', id: 's-podolsk', geometry: { type: 'Polygon', coordinates: sq(0, 0, 400, 300) }, properties: { id: 's-podolsk', kind: 'site', name: 'Завод' } },
+      { type: 'Feature', id: 'b-wh1', geometry: { type: 'Polygon', coordinates: sq(100, 100, 200, 160) }, properties: { id: 'b-wh1', kind: 'building', name: 'Склад 1', building_type: 'warehouse', floors: 1 } },
+      { type: 'Feature', id: 'r-wh1', geometry: { type: 'Polygon', coordinates: sq(100, 100, 150, 160) }, properties: { id: 'r-wh1', kind: 'room', name: 'Хранение', building_id: 'b-wh1', floor: 1, room_type: 'storage' } },
+      { type: 'Feature', id: 'clim-wh1', geometry: { type: 'Point', coordinates: [120, 130] }, properties: { id: 'clim-wh1', kind: 'sensor', name: 'Климат', sensor_type: 'climate', building_id: 'b-wh1', zone_id: 'r-wh1', floor: 1 } },
+    ],
+  })
+
+  it('draws a building on the grid, inside the site, not over another one', () => {
+    const l = make()
+    const b = newBuilding(l, [250.4, 20.2], [300.6, 80.1], 'office', new Set())
+    expect(b).toMatchObject({ id: 'b-pod-office1', properties: { name: 'Офис 1', building_type: 'office', floors: 2 } })
+    expect((b as Feature).geometry.coordinates).toEqual([[[250, 20], [301, 20], [301, 80], [250, 80], [250, 20]]])
+    expect(newBuilding(l, [150, 120], [250, 200], 'warehouse', new Set())).toBe('Пересекается со зданием «Склад 1»')
+    expect(newBuilding(l, [380, 10], [450, 50], 'warehouse', new Set())).toBe('Здание должно целиком стоять на площадке')
+    expect(newBuilding(l, [10, 10], [13, 13], 'warehouse', new Set())).toBe('Здание меньше 6×6 м')
+  })
+
+  it('moves a building with its rooms and sensors', () => {
+    const l = make()
+    translate(partsOf(l, 'b-wh1'), 10, -5)
+    expect(l.features.find((f) => f.id === 'clim-wh1')!.geometry.coordinates).toEqual([130, 125])
+    expect((l.features.find((f) => f.id === 'r-wh1')!.geometry.coordinates as Pt[][])[0][0]).toEqual([110, 95])
+  })
+
+  it('resizes by a corner but keeps the rooms inside', () => {
+    const l = make()
+    expect(dragCorner([100, 100, 200, 160], 2, [230.2, 170.7])).toEqual([100, 100, 230, 171])
+    expect(dragCorner([100, 100, 200, 160], 0, [90, 95])).toEqual([90, 95, 200, 160])
+    expect(buildingProblem(l, [100, 100, 140, 160], 'b-wh1')).toBe('Помещения не помещаются в здание')
+    expect(buildingProblem(l, [100, 100, 220, 160], 'b-wh1')).toBeNull()
+  })
+
+  it('removing a building takes its rooms and placed sensors', () => {
+    const l = make()
+    expect(removeWithParts(l, 'b-wh1').sort()).toEqual(['b-wh1', 'clim-wh1', 'r-wh1'])
+    expect(l.features.map((f) => f.id)).toEqual(['s-podolsk'])
+  })
+
+  it('zones go on the site, sensors off-site are invalid', () => {
+    const l = make()
+    expect(newZone(l, [10, 10], [40, 30], 'parking', new Set())).toMatchObject({ id: 'z-pod-parking', properties: { zone_type: 'parking' } })
+    expect(siteAt(l, [1000, 1000])).toBeUndefined()
+    l.features.push({ type: 'Feature', id: 'mot-far', geometry: { type: 'Point', coordinates: [1000, 1000] }, properties: { id: 'mot-far', kind: 'sensor', name: 'x', sensor_type: 'motion' } })
+    expect(validate(l)).toContain('mot-far: за пределами площадки')
   })
 })

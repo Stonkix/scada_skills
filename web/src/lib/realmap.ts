@@ -119,6 +119,9 @@ export interface InspectState {
   rooms: ObjectsResponse['rooms']
   sensorStatus: (id: string) => string
   roomStatus: (id: string) => string
+  /** Overrides the status colours (the editor colours pins by sensor type). */
+  sensorColor?: (id: string) => string
+  roomColor?: (id: string) => string
 }
 
 /**
@@ -270,12 +273,12 @@ export class SiteLayer implements CustomLayerInterface {
         entry.model.group.visible = false
         group.add(xrayShell(b))
         const rooms = state.rooms.filter((r) => r.building_id === b.id && r.floor === state.floor)
-        group.add(storey(b, state.floor, rooms, (id) => SENSOR_STATUS_COLOR[state.roomStatus(id)] ?? '#475569'))
+        group.add(storey(b, state.floor, rooms, (id) => state.roomColor?.(id) ?? SENSOR_STATUS_COLOR[state.roomStatus(id)] ?? '#475569'))
         z += floorBase(b, state.floor)
       }
       const pins = state.sensors
         .filter((s) => s.geo)
-        .map((s) => sensorPin(s, s.building_id ? z : 0, SENSOR_STATUS_COLOR[state.sensorStatus(s.id)] ?? '#64748b'))
+        .map((s) => sensorPin(s, s.building_id ? z : 0, state.sensorColor?.(s.id) ?? SENSOR_STATUS_COLOR[state.sensorStatus(s.id)] ?? '#64748b'))
       if (pins.length) group.add(...pins)
       this.sites[siteIdx].group.add(group)
       this.inspect = { id: entry ? b!.id : null, group, pins, siteIdx }

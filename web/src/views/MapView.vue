@@ -387,7 +387,8 @@ function init(o: ObjectsResponse) {
   })
   m.on('click', (e) => {
     const hit = layer?.pick(e.point.x, e.point.y)
-    if (hit) return select(hit)
+    if (hit?.kind === 'room') return // a room slab of the x-rayed building: keep the building
+    if (hit) return select(hit as Selection) // building, vehicle or sensor pin
     const v = m.queryRenderedFeatures(e.point, { layers: ['vehicles'] })[0]
     if (v) return select({ kind: 'vehicle', id: String(v.properties.id) })
     select(null) // empty space: drop the selection, the focus and the sensors

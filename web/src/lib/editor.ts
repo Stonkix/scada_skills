@@ -91,9 +91,119 @@ export function locate(l: Layout, p: Pt, floor: number): { building_id: string |
   return { building_id: null, zone_id: zone?.id ?? null, floor: null }
 }
 
+/** The site whose territory contains the point. */
+export const siteAt = (l: Layout, p: Pt) => of(l, 'site').find((s) => inPolygon(p, outer(s)))
+
+/** On a site (plans without sites: inside the extent). */
 export const insideSite = (l: Layout, p: Pt) => {
+  if (of(l, 'site').length) return !!siteAt(l, p)
   const [x0, y0, x1, y1] = l.metadata.extent
   return p[0] >= x0 && p[0] <= x1 && p[1] >= y0 && p[1] <= y1
+}
+
+// --- Sims-style building: rectangles dragged on the ground, snapped to a 1 m grid -------------------
+
+export const BUILDING_KINDS = [
+  { type: 'warehouse', label: 'Склад', floors: 1, prefix: 'wh' },
+  { type: 'production', label: 'Цех', floors: 2, prefix: 'prod' },
+  { type: 'office', label: 'Офис', floors: 2, prefix: 'office' },
+  { type: 'garage', label: 'Гараж', floors: 1, prefix: 'garage' },
+] as const
+export type BuildingKind = (typeof BUILDING_KINDS)[number]['type']
+
+export const ZONE_KINDS = [
+  { type: 'gate', label: 'КПП' },
+  { type: 'docks', label: 'Рампа' },
+  { type: 'parking', label: 'Стоянка' },
+  { type: 'restricted', label: 'Запретная зона' },
+] as const
+export type ZoneKind = (typeof ZONE_KINDS)[number]['type']
+
+export type Rect = [number, number, number, number]
+export const snap = (v: number) => Math.round(v)
+export function rectOf(a: Pt, b: Pt): Rect {
+  return [snap(Math.min(a[0], b[0])), snap(Math.min(a[1], b[1])), snap(Math.max(a[0], b[0])), snap(Math.max(a[1], b[1]))]
+}
+export const rectRing = ([x0, y0, x1, y1]: Rect): Pt[] => [[x0, y0], [x1, y0], [x1, y1], [x0, y1], [x0, y0]]
+export function boundsOf(ring: Pt[]): Rect {
+  const xs = ring.map((p) => p[0])
+  const ys = ring.map((p) => p[1])
+  return [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)]
+}
+const overlaps = (a: Rect, b: Rect) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3]
+const siteShort = (id: string) => id.replace(/^s-/, '').slice(0, 3)
+
+/** Why a building can't stand on this rectangle, or null. `except`: the building being moved or resized. */
+export function buildingProblem(l: Layout, r: Rect, except?: string): string | null {
+  if (r[2] - r[0] < 6 || r[3] - r[1] < 6) return 'Здание меньше 6×6 м'
+  const ring = rectRing(r)
+  const site = siteAt(l, ring[0])
+  if (!site || !ring.every((p) => inPolygon(p, outer(site)))) return 'Здание должно целиком стоять на площадке'
+  const clash = of(l, 'building').find((b) => b.id !== except && overlaps(boundsOf(outer(b)), r))
+  if (clash) return `Пересекается со зданием «${clash.properties.name}»`
+  if (except) {
+    const rooms = of(l, 'room').filter((x) => x.properties.building_id === except)
+    if (rooms.some((x) => !outer(x).every((p) => inPolygon(p, ring)))) return 'Помещения не помещаются в здание'
+  }
+  return null
+}
+
+export function newBuilding(l: Layout, a: Pt, b: Pt, type: BuildingKind, taken: Set<string>): Feature | string {
+  const r = rectOf(a, b)
+  const problem = buildingProblem(l, r)
+  if (problem) return problem
+  const kind = BUILDING_KINDS.find((k) => k.type === type)!
+  const site = siteAt(l, [r[0], r[1]])!
+  const n = of(l, 'building').filter((x) => x.properties.building_type === type && siteAt(l, outer(x)[0])?.id === site.id).length + 1
+  const id = nextId(`b-${siteShort(site.id)}-${kind.prefix}${n}`, taken)
+  return {
+    type: 'Feature', id, geometry: { type: 'Polygon', coordinates: [rectRing(r)] },
+    properties: { id, kind: 'building', name: `${kind.label} ${n}`, building_type: type, floors: kind.floors },
+  }
+}
+
+export function newZone(l: Layout, a: Pt, b: Pt, type: ZoneKind, taken: Set<string>): Feature | string {
+  const r = rectOf(a, b)
+  if (r[2] - r[0] < 3 || r[3] - r[1] < 3) return 'Зона меньше 3×3 м'
+  const ring = rectRing(r)
+  const site = siteAt(l, ring[0])
+  if (!site || !ring.every((p) => inPolygon(p, outer(site)))) return 'Зона должна лежать на площадке'
+  const label = ZONE_KINDS.find((k) => k.type === type)!.label
+  const id = nextId(`z-${siteShort(site.id)}-${type}`, taken)
+  return { type: 'Feature', id, geometry: { type: 'Polygon', coordinates: [ring] }, properties: { id, kind: 'geozone', name: `${label}: ${site.properties.name}`, zone_type: type } }
+}
+
+/** A building with what belongs to it: its rooms and the sensors placed in it. */
+export function partsOf(l: Layout, buildingId: string): Feature[] {
+  return l.features.filter((f) => f.id === buildingId || ((f.properties.kind === 'room' || f.properties.kind === 'sensor') && f.properties.building_id === buildingId))
+}
+
+/** Shift features by (dx, dy) metres. */
+export function translate(features: Feature[], dx: number, dy: number) {
+  const mv = (p: Pt): Pt => [round(p[0] + dx), round(p[1] + dy)]
+  for (const f of features) {
+    const g = f.geometry
+    if (g.type === 'Point') g.coordinates = mv(g.coordinates)
+    else if (g.type === 'Polygon') g.coordinates = g.coordinates.map((ring) => ring.map(mv))
+    else g.coordinates = g.coordinates.map(mv)
+  }
+}
+
+/** Drag corner `i` (0 SW, 1 SE, 2 NE, 3 NW) of a rectangle to p. */
+export function dragCorner(r: Rect, i: number, p: Pt): Rect {
+  const [x, y] = [snap(p[0]), snap(p[1])]
+  const opposite: Pt = [i === 0 || i === 3 ? r[2] : r[0], i === 0 || i === 1 ? r[3] : r[1]]
+  return rectOf(opposite, [x, y])
+}
+
+/** Remove a feature; a building takes its rooms and placed sensors along. Returns the removed ids. */
+export function removeWithParts(l: Layout, id: string): string[] {
+  const f = l.features.find((x) => x.id === id)
+  if (!f) return []
+  const gone = new Set(f.properties.kind === 'building' ? partsOf(l, id).map((x) => x.id) : [id])
+  l.features = l.features.filter((x) => !gone.has(x.id))
+  if (f.properties.kind === 'room') relocateSensors(l)
+  return [...gone]
 }
 
 /** First free id like `clim-wh1-storage-2`, unique among plan features and registered sensors. */
@@ -192,7 +302,7 @@ export function diff(before: Layout, after: Layout) {
       changed: [...b.keys()].filter((k) => a.has(k) && a.get(k) !== b.get(k)).length,
     }
   }
-  return { sensors: count('sensor'), rooms: count('room') }
+  return { sensors: count('sensor'), rooms: count('room'), buildings: count('building'), zones: count('geozone') }
 }
 
 /** Shape the working layout like GET /objects so the shared plan renderer can draw it. */
